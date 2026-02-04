@@ -1,0 +1,6 @@
+Source URL: https://research.nicola-santoro.com/DADA.html
+Final URL: https://research.nicola-santoro.com/DADA.html
+================================================================================
+
+# Design and Analysis of Distributed Algorithms
+Description of Chapters

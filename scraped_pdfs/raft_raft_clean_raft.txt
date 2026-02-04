@@ -1,0 +1,1361 @@
+Source URL: https://raft.github.io/raft.pdf
+Project: raft
+Model: raft_clean
+================================================================================
+
+In Search of an Understandable Consensus Algorithm
+(Extended Version)
+DiegoOngaroand JohnOusterhout
+Stanford University
+Abstract state space reduction(relativeto Paxos,Raftreducesthe
+Raftisaconsensusalgorithmformanagingareplicated degreeofnondeterminismandthewaysserverscanbein-
+log.It producesa resultequivalentto (multi-)Paxos,and consistentwitheachother).Auserstudywith43students
+it is as efficient as Paxos, but its structure is different at two universitiesshowsthat Raft is significantlyeasier
+from Paxos; this makes Raft more understandable than tounderstandthanPaxos:afterlearningbothalgorithms,
+Paxos and also provides a better foundation for build- 33ofthesestudentswereabletoanswerquestionsabout
+ingpracticalsystems.Inordertoenhanceunderstandabil- RaftbetterthanquestionsaboutPaxos.
+ity,Raftseparatesthekeyelementsofconsensus,suchas Raftissimilar in manywaystoexistingconsensusal-
+leaderelection,logreplication,andsafety,anditenforces gorithms (most notably, Oki and Liskov’s Viewstamped
+a stronger degree of coherency to reduce the number of Replication[29,22]),butithasseveralnovelfeatures:
+statesthatmustbeconsidered.Resultsfromauserstudy • Strongleader:Raftusesa strongerformofleader-
+demonstrate that Raft is easier for students to learn than ship than other consensusalgorithms. For example,
+Paxos.Raftalsoincludesanewmechanismforchanging logentriesonlyflowfromtheleadertootherservers.
+the cluster membership, which uses overlappingmajori- Thissimplifiesthemanagementofthereplicatedlog
+tiestoguaranteesafety. andmakesRafteasiertounderstand.
+• Leader election: Raft uses randomized timers to
+1 Introduction
+elect leaders. This adds only a small amount of
+Consensus algorithms allow a collection of machines
+mechanismtotheheartbeatsalreadyrequiredforany
+to work as a coherent group that can survive the fail-
+consensus algorithm, while resolving conflicts sim-
+uresofsomeofitsmembers.Becauseofthis,theyplaya
+plyandrapidly.
+keyroleinbuildingreliablelarge-scalesoftwaresystems.
+• Membership changes: Raft’s mechanism for
+Paxos [15, 16] has dominated the discussion of consen-
+changingthesetofserversintheclusterusesanew
+susalgorithmsoverthelastdecade:mostimplementations
+joint consensus approach where the majorities of
+ofconsensusarebasedonPaxosorinfluencedbyit,and
+two different configurations overlap during transi-
+Paxoshasbecometheprimaryvehicleusedtoteachstu-
+tions. This allows the cluster to continue operating
+dentsaboutconsensus.
+normallyduringconfigurationchanges.
+Unfortunately,Paxosisquitedifficulttounderstand,in
+WebelievethatRaftissuperiortoPaxosandothercon-
+spiteofnumerousattemptstomakeitmoreapproachable.
+sensusalgorithms,bothforeducationalpurposesandasa
+Furthermore, its architecture requires complex changes
+foundationforimplementation.Itissimplerandmoreun-
+to support practical systems. As a result, both system
+derstandable than other algorithms; it is described com-
+buildersandstudentsstrugglewithPaxos.
+pletely enough to meet the needs of a practical system;
+After struggling with Paxos ourselves, we set out to
+it has several open-source implementations and is used
+findanewconsensusalgorithmthatcouldprovideabet-
+byseveralcompanies;itssafetypropertieshavebeenfor-
+terfoundationforsystembuildingandeducation.Ourap-
+mallyspecifiedandproven;anditsefficiencyiscompara-
+proachwas unusualin that our primarygoal was under-
+bletootheralgorithms.
+standability: could we define a consensus algorithm for
+The remainder of the paper introduces the replicated
+practicalsystems anddescribe it in a way thatis signifi-
+statemachineproblem(Section2),discussesthestrengths
+cantlyeasiertolearnthanPaxos?Furthermore,wewanted
+andweaknessesofPaxos(Section3),describesourgen-
+the algorithm to facilitate the development of intuitions
+eral approach to understandability (Section 4), presents
+thatareessentialforsystembuilders.Itwasimportantnot
+the Raft consensus algorithm (Sections 5–8), evaluates
+justforthealgorithmtowork,butforittobeobviouswhy
+Raft(Section9),anddiscussesrelatedwork(Section10).
+itworks.
+Theresultofthisworkisaconsensusalgorithmcalled 2 Replicated statemachines
+Raft.IndesigningRaftweappliedspecifictechniquesto
+Consensus algorithmstypically arise in the contextof
+improveunderstandability,includingdecomposition(Raft
+replicatedstatemachines[37].Inthisapproach,statema-
+separatesleaderelection,logreplication,andsafety)and
+chinesonacollectionofserverscomputeidenticalcopies
+ofthesamestateandcancontinueoperatingevenifsome
+Thistechreportis anextended versionof[32];additional material is
+notedwithagraybarinthemargin.PublishedMay20,2014. of the servers are down. Replicated state machines are
+1
+
+tencyofthelogs:faultyclocksandextrememessage
+delayscan,atworst,causeavailabilityproblems.
+• In the common case, a command can complete as
+soonasa majorityofthe clusterhasrespondedtoa
+singleroundofremoteprocedurecalls;aminorityof
+slow serversneednotimpactoverallsystemperfor-
+mance.
+3 What’s wrong withPaxos?
+Overthelasttenyears,Leslie Lamport’sPaxosproto-
+Figure 1: Replicated state machine architecture. The con- col[15]hasbecomealmostsynonymouswithconsensus:
+sensus algorithm manages a replicated log containing state
+it is the protocolmost commonly taught in courses, and
+machinecommandsfromclients.Thestatemachinesprocess
+most implementations of consensus use it as a starting
+identicalsequencesofcommandsfromthelogs,sotheypro-
+point. Paxos first defines a protocol capable of reaching
+ducethesameoutputs.
+agreementonasingledecision,suchasasinglereplicated
+usedtosolveavarietyoffaulttoleranceproblemsindis- logentry.We referto thissubsetassingle-decreePaxos.
+tributed systems. For example, large-scale systems that Paxosthencombinesmultipleinstancesofthisprotocolto
+haveasingleclusterleader,suchasGFS[8],HDFS[38], facilitateaseriesofdecisionssuchasalog(multi-Paxos).
+and RAMCloud [33], typically use a separate replicated Paxos ensures both safety and liveness, and it supports
+statemachinetomanageleaderelectionandstoreconfig- changes in cluster membership. Its correctness has been
+urationinformationthatmustsurviveleadercrashes.Ex- proven,anditisefficientinthenormalcase.
+amples of replicated state machines include Chubby [2]
+Unfortunately, Paxos has two significant drawbacks.
+andZooKeeper[11].
+The first drawback is that Paxos is exceptionally diffi-
+Replicated state machines are typically implemented cult to understand. The full explanation [15] is notori-
+usingareplicatedlog,asshowninFigure1.Eachserver ouslyopaque;fewpeoplesucceedinunderstandingit,and
+stores a log containing a series of commands, which its onlywithgreateffort.Asaresult,therehavebeenseveral
+state machine executes in order. Each log contains the attempts to explain Paxos in simpler terms [16, 20, 21].
+same commands in the same order, so each state ma- Theseexplanationsfocusonthesingle-decreesubset,yet
+chine processes the same sequence of commands. Since theyarestillchallenging.Inaninformalsurveyofatten-
+the state machines are deterministic, each computes the deesatNSDI2012,wefoundfewpeoplewhowerecom-
+samestateandthesamesequenceofoutputs. fortable with Paxos, even among seasoned researchers.
+Keeping the replicated log consistent is the job of the We struggled with Paxos ourselves;we were notable to
+consensus algorithm.The consensus module on a server understandthecompleteprotocoluntilafterreadingsev-
+receivescommandsfromclientsandaddsthemtoitslog. eralsimplifiedexplanationsanddesigningourownalter-
+It communicates with the consensus modules on other nativeprotocol,aprocessthattookalmostayear.
+servers to ensure that every log eventually contains the We hypothesize that Paxos’ opaqueness derives from
+samerequestsinthesameorder,evenifsomeserversfail. its choice of the single-decree subset as its foundation.
+Once commands are properly replicated, each server’s Single-decreePaxosisdenseandsubtle:itisdividedinto
+state machine processes them in log order, and the out- twostagesthatdonothavesimpleintuitiveexplanations
+putsarereturnedtoclients.Asaresult,theserversappear andcannotbeunderstoodindependently.Becauseofthis,
+toformasingle,highlyreliablestatemachine. it is difficult to develop intuitions about why the single-
+Consensus algorithms for practical systems typically decree protocolworks. The compositionrules for multi-
+havethefollowingproperties: Paxosaddsignificantadditionalcomplexityandsubtlety.
+• Theyensure safety (neverreturningan incorrectre- Webelievethattheoverallproblemofreachingconsensus
+sult) under all non-Byzantine conditions, including onmultipledecisions(i.e.,aloginsteadofasingleentry)
+networkdelays,partitions,andpacketloss,duplica- canbedecomposedinotherwaysthataremoredirectand
+tion,andreordering. obvious.
+• Theyare fully functional(available)as longas any ThesecondproblemwithPaxosisthatitdoesnotpro-
+majorityoftheserversareoperationalandcancom- vide a goodfoundationforbuildingpracticalimplemen-
+municate with each other and with clients. Thus, a tations. One reason is that there is no widely agreed-
+typicalclusteroffiveserverscantoleratethefailure upon algorithm for multi-Paxos. Lamport’s descriptions
+of any two servers. Servers are assumed to fail by aremostlyaboutsingle-decreePaxos;hesketchedpossi-
+stopping;theymaylaterrecoverfromstateonstable bleapproachestomulti-Paxos,butmanydetailsaremiss-
+storageandrejointhecluster. ing.Therehavebeenseveralattemptstofleshoutandop-
+• Theydonotdependontimingtoensuretheconsis- timizePaxos,suchas[26],[39],and[13],butthesediffer
+2
+
+from each other and from Lamport’s sketches. Systems There were numerous points in the design of Raft
+such as Chubby [4] have implemented Paxos-like algo- where we had to choose among alternative approaches.
+rithms,butinmostcasestheirdetailshavenotbeenpub- Inthesesituationsweevaluatedthealternativesbasedon
+lished. understandability:howhardisit to explaineachalterna-
+Furthermore, the Paxos architecture is a poor one for tive(forexample,howcomplexisitsstatespace,anddoes
+buildingpracticalsystems;thisisanotherconsequenceof ithavesubtleimplications?),andhoweasywillitbefora
+thesingle-decreedecomposition.Forexample,thereislit- readertocompletelyunderstandtheapproachanditsim-
+tlebenefittochoosingacollectionoflogentriesindepen- plications?
+dently and then melding them into a sequential log; this We recognize that there is a high degree of subjectiv-
+just adds complexity. It is simpler and more efficient to ityinsuchanalysis;nonetheless,weusedtwotechniques
+design a system arounda log, wherenew entriesare ap- that are generally applicable. The first technique is the
+pendedsequentiallyinaconstrainedorder.Anotherprob- well-known approach of problem decomposition: wher-
+lemisthatPaxosusesasymmetricpeer-to-peerapproach ever possible, we divided problems into separate pieces
+atits core(thoughiteventuallysuggestsa weakformof thatcouldbesolved,explained,andunderstoodrelatively
+leadership as a performance optimization). This makes independently.For example,in Raft we separated leader
+sense inasimplifiedworldwhereonlyonedecisionwill election,logreplication,safety,andmembershipchanges.
+bemade,butfewpracticalsystemsusethisapproach.Ifa Our second approach was to simplify the state space
+seriesofdecisionsmustbemade,itissimplerandfaster byreducingthenumberofstatestoconsider,makingthe
+tofirstelectaleader,thenhavetheleadercoordinatethe system more coherent and eliminating nondeterminism
+decisions. wherepossible.Specifically,logsarenotallowedtohave
+As a result, practical systems bear little resemblance holes,andRaftlimitsthewaysinwhichlogscanbecome
+to Paxos. Each implementation begins with Paxos, dis- inconsistentwith each other. Althoughin most cases we
+covers the difficulties in implementing it, and then de- tried to eliminate nondeterminism, there are some situ-
+velopsasignificantlydifferentarchitecture.Thisistime- ations where nondeterminism actually improves under-
+consuminganderror-prone,andthedifficultiesofunder- standability. In particular, randomized approaches intro-
+standing Paxosexacerbatethe problem.Paxos’ formula- duce nondeterminism, but they tend to reduce the state
+tionmaybeagoodoneforprovingtheoremsaboutitscor- spacebyhandlingallpossiblechoicesinasimilarfashion
+rectness, but real implementations are so different from (“chooseany;itdoesn’tmatter”).Weusedrandomization
+Paxosthattheproofshavelittlevalue.Thefollowingcom- tosimplifytheRaftleaderelectionalgorithm.
+mentfromtheChubbyimplementersistypical:
+5 The Raftconsensus algorithm
+Therearesignificantgapsbetweenthedescriptionof
+Raft is an algorithm for managing a replicated log of
+the Paxos algorithm and the needs of a real-world
+theformdescribedinSection2.Figure2summarizesthe
+system.... the final system willbe based on an un-
+algorithmin condensedformforreference,andFigure3
+provenprotocol[4].
+listskeypropertiesofthealgorithm;theelementsofthese
+Because of these problems, we concluded that Paxos
+figures are discussed piecewise over the rest of this sec-
+does not provide a good foundation either for system
+tion.
+building or for education. Given the importance of con-
+Raft implements consensus by first electing a distin-
+sensusinlarge-scalesoftwaresystems,wedecidedtosee
+guishedleader,thengivingtheleadercompleteresponsi-
+if we could design an alternative consensus algorithm
+bilityformanagingthereplicatedlog.Theleaderaccepts
+withbetterpropertiesthanPaxos.Raftistheresultofthat
+logentriesfromclients,replicatesthemonotherservers,
+experiment.
+and tells servers when it is safe to apply log entries to
+4 Designing forunderstandability theirstatemachines.Havingaleadersimplifiestheman-
+WehadseveralgoalsindesigningRaft:itmustprovide agementofthereplicatedlog.Forexample,theleadercan
+a completeandpracticalfoundationforsystem building, decidewheretoplacenewentriesinthelogwithoutcon-
+sothatitsignificantlyreducestheamountofdesignwork sulting other servers, and data flows in a simple fashion
+requiredofdevelopers;itmustbesafeunderallconditions fromthe leader to other servers. A leader can fail or be-
+and available under typical operating conditions; and it comedisconnectedfromtheotherservers,inwhichcase
+must be efficient for common operations. But our most anewleaderiselected.
+important goal—and most difficult challenge—was un- Given the leader approach, Raft decomposes the con-
+derstandability.Itmustbepossibleforalargeaudienceto sensusproblemintothreerelativelyindependentsubprob-
+understandthealgorithmcomfortably.Inaddition,itmust lems,whicharediscussedinthesubsectionsthatfollow:
+be possible to developintuitions aboutthe algorithm,so • Leaderelection:anewleadermustbechosenwhen
+thatsystembuilderscanmaketheextensionsthatarein- anexistingleaderfails(Section5.2).
+evitableinreal-worldimplementations. • Log replication: the leader must accept log entries
+3
+
+State RequestVoteRPC
+Persistentstateonallservers: Invokedbycandidatestogathervotes(§5.2).
+(UpdatedonstablestoragebeforerespondingtoRPCs)
+Arguments:
+currentTerm latesttermserverhasseen(initializedto0
+term candidate’sterm
+onfirstboot,increasesmonotonically)
+candidateId candidaterequestingvote
+votedFor candidateIdthatreceivedvoteincurrent
+lastLogIndex indexofcandidate’slastlogentry(§5.4)
+term(ornullifnone)
+lastLogTerm termofcandidate’slastlogentry(§5.4)
+log[] logentries;eachentrycontainscommand
+forstatemachine,andtermwhenentry Results:
+wasreceivedbyleader(firstindexis1)
+term currentTerm,forcandidatetoupdateitself
+voteGranted truemeanscandidatereceivedvote
+Volatilestateonallservers:
+commitIndex indexofhighestlogentryknowntobe
+Receiverimplementation:
+committed(initializedto0,increases 1. Replyfalseifterm<currentTerm(§5.1)
+monotonically) 2. IfvotedForisnullorcandidateId,andcandidate’slogisat
+lastApplied indexofhighestlogentryappliedtostate
+leastasup-to-dateasreceiver’slog,grantvote(§5.2,§5.4)
+machine(initializedto0,increases
+monotonically)
+RulesforServers
+Volatilestateonleaders:
+AllServers:
+(Reinitializedafterelection) • IfcommitIndex>lastApplied:incrementlastApplied,apply
+nextIndex[] foreachserver,indexofthenextlogentry
+log[lastApplied]tostatemachine(§5.3)
+tosendtothatserver(initializedtoleader • IfRPCrequestorresponsecontainstermT>currentTerm:
+lastlogindex+1)
+setcurrentTerm=T,converttofollower(§5.1)
+matchIndex[] foreachserver,indexofhighestlogentry
+knowntobereplicatedonserver Followers(§5.2):
+(initializedto0,increasesmonotonically) • RespondtoRPCsfromcandidatesandleaders
+• IfelectiontimeoutelapseswithoutreceivingAppendEntries
+AppendEntriesRPC RPCfromcurrentleaderorgrantingvotetocandidate:
+converttocandidate
+Invokedbyleadertoreplicatelogentries(§5.3);alsousedas
+heartbeat(§5.2). Candidates(§5.2):
+• Onconversiontocandidate,startelection:
+Arguments:
+term leader’sterm • IncrementcurrentTerm
+• Voteforself
+leaderId sofollowercanredirectclients
+prevLogIndex indexoflogentryimmediatelypreceding • Resetelectiontimer
+newones • SendRequestVoteRPCstoallotherservers
+• Ifvotesreceivedfrommajorityofservers:becomeleader
+prevLogTerm termofprevLogIndexentry
+entries[] logentriestostore(emptyforheartbeat; • IfAppendEntriesRPCreceivedfromnewleader:convertto
+follower
+maysendmorethanoneforefficiency)
+leaderCommit leader’scommitIndex • Ifelectiontimeoutelapses:startnewelection
+Results: Leaders:
+• Uponelection:sendinitialemptyAppendEntriesRPCs
+term currentTerm,forleadertoupdateitself
+success trueiffollowercontainedentrymatching (heartbeat)toeachserver;repeatduringidleperiodsto
+preventelectiontimeouts(§5.2)
+prevLogIndexandprevLogTerm
+• Ifcommandreceivedfromclient:appendentrytolocallog,
+Receiverimplementation: respondafterentryappliedtostatemachine(§5.3)
+1. Replyfalseifterm<currentTerm(§5.1) • Iflastlogindex≥nextIndexforafollower:send
+2. Replyfalseiflogdoesn’tcontainanentryatprevLogIndex AppendEntriesRPCwithlogentriesstartingatnextIndex
+whosetermmatchesprevLogTerm(§5.3) • Ifsuccessful:updatenextIndexandmatchIndexfor
+3. Ifanexistingentryconflictswithanewone(sameindex follower(§5.3)
+butdifferentterms),deletetheexistingentryandallthat • IfAppendEntriesfailsbecauseofloginconsistency:
+followit(§5.3) decrementnextIndexandretry(§5.3)
+4. Appendanynewentriesnotalreadyinthelog • IfthereexistsanNsuchthatN>commitIndex,amajority
+5. IfleaderCommit>commitIndex,setcommitIndex= ofmatchIndex[i]≥N,andlog[N].term==currentTerm:
+min(leaderCommit,indexoflastnewentry) setcommitIndex=N(§5.3,§5.4).
+Figure2:AcondensedsummaryoftheRaftconsensusalgorithm(excludingmembershipchangesandlogcompaction).Theserver
+behaviorintheupper-leftboxisdescribedasasetofrulesthattriggerindependentlyandrepeatedly.Sectionnumberssuchas§5.2
+indicatewhereparticularfeaturesarediscussed.Aformalspecification[31]describesthealgorithmmoreprecisely.
+4
+
+ElectionSafety: at most one leader can be elected in a
+giventerm.§5.2
+LeaderAppend-Only: aleaderneveroverwritesordeletes
+entriesinitslog;itonlyappendsnewentries.§5.3
+LogMatching: iftwologscontainanentrywiththesame
+indexandterm,thenthelogsareidenticalinallentries
+upthroughthegivenindex.§5.3
+LeaderCompleteness: if a log entry is committed in a Figure4: Server states. Followersonly respond to requests
+given term,thenthatentrywillbepresent inthelogs fromotherservers.Ifafollowerreceivesnocommunication,
+oftheleadersforallhigher-numberedterms.§5.4 itbecomesacandidateandinitiatesanelection.Acandidate
+StateMachineSafety: if a server has applied a log entry thatreceivesvotesfromamajorityofthefullclusterbecomes
+at a given index to its state machine, no other server thenewleader.Leaderstypicallyoperateuntiltheyfail.
+willeverapplyadifferentlogentryforthesameindex.
+§5.4.3
+Figure3:Raftguaranteesthateachofthesepropertiesistrue
+atalltimes.Thesectionnumbersindicatewhereeachprop-
+ertyisdiscussed.
+from clients and replicate them across the cluster,
+forcing the other logs to agree with its own (Sec-
+Figure5: Timeisdivided intoterms,and eachtermbegins
+tion5.3).
+withanelection.Afterasuccessful election,asingleleader
+• Safety:the keysafety propertyforRaftis the State
+managestheclusteruntiltheendoftheterm.Someelections
+Machine Safety Property in Figure 3: if any server
+fail,inwhichcasethetermendswithoutchoosing aleader.
+hasappliedaparticularlogentrytoitsstatemachine, Thetransitions between termsmay be observed at different
+thennootherservermayapplyadifferentcommand timesondifferentservers.
+for the same log index. Section 5.4 describes how
+will begin shortly. Raft ensures that there is at most one
+Raft ensures this property; the solution involves an
+leaderinagiventerm.
+additionalrestrictionontheelectionmechanismde-
+Differentservers may observe the transitions between
+scribedinSection5.2.
+terms at different times, and in some situations a server
+Afterpresentingtheconsensusalgorithm,thissectiondis-
+may notobservean election or evenentire terms. Terms
+cussestheissueofavailabilityandtheroleoftiminginthe
+actasalogicalclock[14]inRaft,andtheyallowservers
+system.
+todetectobsoleteinformationsuchasstaleleaders.Each
+5.1 Raftbasics server stores a current term number, which increases
+monotonically over time. Current terms are exchanged
+ARaftclustercontainsseveralservers;fiveisatypical
+whenever servers communicate; if one server’s current
+number,whichallowsthesystemtotoleratetwofailures.
+termissmallerthantheother’s,thenitupdatesitscurrent
+At any given time each server is in one of three states:
+termtothelargervalue.Ifacandidateorleaderdiscovers
+leader,follower,orcandidate.Innormaloperationthere
+that its term is outof date, it immediately revertsto fol-
+is exactlyone leader and all of the other serversare fol-
+lowerstate.Ifaserverreceivesarequestwithastaleterm
+lowers. Followers are passive: they issue no requests on
+number,itrejectstherequest.
+their own but simply respond to requests from leaders
+Raftserverscommunicateusingremoteprocedurecalls
+and candidates. The leader handlesall client requests (if
+(RPCs), andthebasicconsensusalgorithmrequiresonly
+aclientcontactsafollower,thefollowerredirectsittothe
+two types of RPCs. RequestVote RPCs are initiated by
+leader).Thethirdstate, candidate,is usedto electa new
+candidates during elections (Section 5.2), and Append-
+leader as described in Section 5.2. Figure 4 shows the
+EntriesRPCs areinitiated byleadersto replicatelogen-
+states and their transitions; the transitions are discussed
+triesandtoprovideaformofheartbeat(Section5.3).Sec-
+below.
+tion7addsathirdRPCfortransferringsnapshotsbetween
+Raft divides time into terms of arbitrary length, as
+servers. Servers retry RPCs if they do not receive a re-
+showninFigure5.Termsarenumberedwithconsecutive
+sponseinatimelymanner,andtheyissueRPCsinparallel
+integers.Eachtermbeginswithanelection,inwhichone
+forbestperformance.
+ormorecandidatesattempttobecomeleaderasdescribed
+in Section 5.2. If a candidate wins the election, then it 5.2 Leaderelection
+servesasleaderfortherestoftheterm.Insomesituations Raftusesaheartbeatmechanismtotriggerleaderelec-
+anelectionwillresultinasplitvote.Inthiscasetheterm tion. When servers start up, they begin as followers. A
+willendwithnoleader;anewterm(withanewelection) serverremainsinfollowerstateaslongasitreceivesvalid
+5
+
+RPCs from a leader or candidate. Leaders send periodic
+heartbeats(AppendEntriesRPCsthatcarrynologentries)
+to all followers in order to maintain their authority. If a
+followerreceivesnocommunicationoveraperiodoftime
+calledtheelectiontimeout,thenitassumesthereisnovi-
+ableleaderandbeginsanelectiontochooseanewleader.
+Tobeginanelection,a followerincrementsitscurrent
+term and transitions to candidate state. It then votes for
+itselfandissuesRequestVoteRPCsinparalleltoeachof
+the otherserversin the cluster. A candidatecontinuesin
+thisstateuntiloneofthreethingshappens:(a)itwinsthe
+election,(b)anotherserverestablishesitselfasleader,or
+(c) a period of time goes by with no winner. These out-
+comesarediscussedseparatelyintheparagraphsbelow. Figure6:Logsarecomposedofentries,whicharenumbered
+sequentially. Each entry contains the term in which it was
+A candidate wins an election if it receives votes from
+created(thenumberineachbox)andacommandforthestate
+a majority of the servers in the full cluster for the same
+machine.Anentryisconsideredcommittedifitissafeforthat
+term.Eachserverwillvoteforatmostonecandidateina
+entrytobeappliedtostatemachines.
+given term, on a first-come-first-servedbasis (note:Sec-
+Elections are an example of how understandability
+tion5.4addsanadditionalrestrictiononvotes).Thema-
+guided our choice between design alternatives. Initially
+jorityruleensuresthatatmostonecandidatecanwinthe
+we plannedto use a rankingsystem:eachcandidatewas
+election for a particular term (the Election Safety Prop-
+assignedauniquerank,whichwasusedtoselectbetween
+erty in Figure 3). Once a candidate wins an election, it
+competing candidates. If a candidate discovered another
+becomesleader.Itthensendsheartbeatmessagestoallof
+candidate with higher rank, it would return to follower
+theotherserverstoestablishitsauthorityandpreventnew
+statesothatthehigherrankingcandidatecouldmoreeas-
+elections.
+ily win the next election. We found that this approach
+While waiting for votes, a candidate may receive an
+created subtle issues around availability (a lower-ranked
+AppendEntries RPC from another server claiming to be
+server might need to time out and become a candidate
+leader.Iftheleader’sterm(includedinitsRPC)isatleast
+againifa higher-rankedserverfails, butif it doesso too
+aslargeasthecandidate’scurrentterm,thenthecandidate
+soon,itcanresetprogresstowardselectingaleader).We
+recognizestheleaderaslegitimateandreturnstofollower
+madeadjustmentstothealgorithmseveraltimes,butafter
+state.IfthetermintheRPCissmallerthanthecandidate’s
+each adjustment new corner cases appeared. Eventually
+currentterm,thenthecandidaterejectstheRPCandcon-
+weconcludedthattherandomizedretryapproachismore
+tinuesincandidatestate.
+obviousandunderstandable.
+The third possible outcomeis that a candidateneither
+wins nor loses the election: if many followers become 5.3 Logreplication
+candidates at the same time, votes could be split so that Once a leader has been elected, it begins servicing
+nocandidateobtainsamajority.Whenthishappens,each clientrequests.Eachclientrequestcontainsacommandto
+candidatewilltimeoutandstartanewelectionbyincre- be executedbythe replicatedstate machines.Theleader
+mentingitstermandinitiatinganotherroundofRequest- appendsthe command to its log as a new entry, then is-
+Vote RPCs. However,withoutextra measuressplit votes suesAppendEntriesRPCsinparalleltoeachoftheother
+couldrepeatindefinitely. servers to replicate the entry. When the entry has been
+Raft uses randomizedelection timeouts to ensure that safelyreplicated(asdescribedbelow),the leaderapplies
+splitvotesarerareandthattheyareresolvedquickly.To theentrytoitsstatemachineandreturnstheresultofthat
+preventsplitvotesinthefirstplace,electiontimeoutsare execution to the client. If followers crash or run slowly,
+chosenrandomlyfromafixedinterval(e.g.,150–300ms). orifnetworkpacketsarelost,theleaderretriesAppend-
+Thisspreadsoutthe serversso thatin mostcases onlya EntriesRPCs indefinitely(evenafter it hasrespondedto
+singleserverwilltimeout;itwinstheelectionandsends the client) until all followers eventually store all log en-
+heartbeats before any other servers time out. The same tries.
+mechanism is used to handle split votes. Each candidate LogsareorganizedasshowninFigure6.Eachlogen-
+restartsits randomizedelectiontimeoutat thestartof an try stores a state machinecommandalongwith the term
+election, and it waits for that timeout to elapse before number when the entry was received by the leader. The
+starting the next election; this reduces the likelihood of term numbers in log entries are used to detect inconsis-
+anothersplit votein the newelection.Section9.3 shows tenciesbetweenlogsandtoensuresomeoftheproperties
+thatthisapproachelectsaleaderrapidly. inFigure3.Eachlogentryalsohasanintegerindexiden-
+6
+
+tifyingitspositioninthelog.
+The leader decides when it is safe to apply a log en-
+trytothestatemachines;suchanentryiscalledcommit-
+ted. Raft guarantees that committed entries are durable
+and will eventually be executed by all of the available
+statemachines.Alogentryiscommittedoncetheleader
+that created the entry has replicated it on a majority of
+the servers(e.g.,entry7 in Figure6).Thisalso commits
+allprecedingentriesintheleader’slog,includingentries
+created by previous leaders. Section 5.4 discusses some
+subtleties when applying this rule after leader changes,
+and it also shows that this definition of commitment is Figure7: When the leader at the top comes to power, it is
+safe.Theleaderkeepstrackofthehighestindexitknows possible that any of scenarios (a–f) could occur in follower
+to be committed, and it includes that index in future logs. Each box represents one log entry; the number in the
+AppendEntries RPCs (including heartbeats) so that the boxisitsterm.Afollowermaybemissingentries(a–b),may
+other servers eventuallyfind out. Once a follower learns haveextrauncommittedentries(c–d),orboth(e–f).Forex-
+ample,scenario(f)couldoccur ifthatserverwastheleader
+that a log entry is committed, it applies the entry to its
+forterm2,addedseveralentriestoitslog,thencrashedbefore
+localstatemachine(inlogorder).
+committinganyofthem;itrestartedquickly, becameleader
+WedesignedtheRaftlogmechanismtomaintainahigh forterm3,andaddedafewmoreentriestoitslog;beforeany
+levelofcoherencybetweenthelogsondifferentservers. oftheentriesineitherterm2orterm3werecommitted,the
+Not only does this simplify the system’s behavior and servercrashedagainandremaineddownforseveralterms.
+makeitmorepredictable,butitisanimportantcomponent
+be missing entries that are present on the leader, it may
+of ensuring safety. Raft maintains the following proper-
+have extra entries that are not present on the leader, or
+ties,whichtogetherconstitutetheLogMatchingProperty
+both. Missing and extraneous entries in a log may span
+inFigure3:
+multipleterms.
+• If two entries in differentlogs have the same index
+In Raft, the leader handles inconsistencies by forcing
+andterm,thentheystorethesamecommand.
+the followers’logs to duplicateits own.Thismeansthat
+• If two entries in differentlogs have the same index
+conflicting entries in follower logs will be overwritten
+andterm,thenthelogsareidenticalinallpreceding
+with entries fromthe leader’slog. Section 5.4 will show
+entries.
+thatthisissafewhencoupledwithonemorerestriction.
+The first property follows from the fact that a leader Tobringafollower’slogintoconsistencywithitsown,
+createsatmostoneentrywithagivenlogindexinagiven the leader must find the latest log entry where the two
+term, and log entries never change their position in the logs agree, delete any entries in the follower’s log after
+log.The secondpropertyis guaranteedbya simplecon- thatpoint,andsendthefolloweralloftheleader’sentries
+sistencycheckperformedbyAppendEntries.Whensend- after that point. All of these actions happen in response
+inganAppendEntriesRPC,theleaderincludestheindex to the consistency check performed by AppendEntries
+andtermoftheentryinitslogthatimmediatelyprecedes RPCs.TheleadermaintainsanextIndexforeachfollower,
+the new entries. If the followerdoesnot find an entryin which is the index of the next log entry the leader will
+its log with the same index and term, then it refuses the sendtothatfollower.Whenaleaderfirstcomestopower,
+new entries. The consistency check acts as an induction itinitializesallnextIndexvaluestotheindexjustafterthe
+step: the initial empty state of the logs satisfies the Log last one in its log (11 in Figure 7). If a follower’s log is
+Matching Property, and the consistency check preserves inconsistentwiththeleader’s,theAppendEntriesconsis-
+the Log Matching Propertywhenever logs are extended. tencycheckwillfailinthenextAppendEntriesRPC.Af-
+Asaresult,wheneverAppendEntriesreturnssuccessfully, terarejection,theleaderdecrementsnextIndexandretries
+theleaderknowsthatthefollower’slogisidenticaltoits theAppendEntriesRPC.EventuallynextIndexwillreach
+ownlogupthroughthenewentries. a pointwherethe leader and followerlogsmatch. When
+During normal operation, the logs of the leader and thishappens,AppendEntrieswillsucceed,whichremoves
+followers stay consistent, so the AppendEntries consis- any conflicting entriesin the follower’slog and appends
+tencycheckneverfails.However,leadercrashescanleave entriesfromtheleader’slog(ifany).OnceAppendEntries
+the logs inconsistent (the old leader may not have fully succeeds,thefollower’slogisconsistentwiththeleader’s,
+replicatedalloftheentriesinitslog).Theseinconsisten- anditwillremainthatwayfortherestoftheterm.
+cies can compound over a series of leader and follower Ifdesired,theprotocolcanbeoptimizedtoreducethe
+crashes.Figure7illustratesthewaysinwhichfollowers’ number of rejected AppendEntries RPCs. For example,
+logsmaydifferfromthatofanewleader.Afollowermay when rejecting an AppendEntries request, the follower
+7
+
+canincludethetermoftheconflictingentryandthefirst
+index it stores for that term. With this information, the
+leadercandecrementnextIndextobypassallofthecon-
+flictingentriesinthatterm;oneAppendEntriesRPCwill
+be requiredfor each term with conflictingentries, rather
+than one RPC per entry. In practice, we doubtthis opti-
+mization is necessary,since failureshappeninfrequently
+anditisunlikelythattherewillbemanyinconsistenten-
+tries.
+Figure8:Atimesequenceshowingwhyaleadercannotde-
+Withthismechanism,aleaderdoesnotneedtotakeany
+termine commitment using log entries from older terms. In
+specialactionstorestorelogconsistencywhenitcomesto
+(a)S1isleaderandpartiallyreplicatesthelogentryatindex
+power.Itjustbeginsnormaloperation,andthelogsauto- 2.In(b)S1crashes;S5iselectedleaderforterm3withvotes
+maticallyconvergeinresponsetofailuresoftheAppend- from S3, S4, and itself, and accepts a different entry at log
+Entries consistency check. A leader never overwrites or index2.In(c)S5crashes;S1restarts,iselectedleader,and
+deletes entries in its own log (the Leader Append-Only continuesreplication.Atthispoint,thelogentryfromterm2
+PropertyinFigure3). hasbeenreplicatedonamajorityoftheservers,butitisnot
+This log replication mechanism exhibits the desirable committed.IfS1crashesasin(d),S5couldbeelectedleader
+(withvotesfromS2,S3,andS4)andoverwritetheentrywith
+consensuspropertiesdescribedinSection2:Raftcanac-
+itsownentryfromterm3. However, ifS1replicatesanen-
+cept,replicate,andapplynewlogentriesaslongasama-
+tryfromitscurrenttermonamajorityoftheserversbefore
+jorityoftheserversareup;inthenormalcaseanewentry
+crashing, as in (e), then this entry is committed (S5 cannot
+can be replicated with a single round of RPCs to a ma-
+winanelection).Atthispointallprecedingentriesinthelog
+jority of the cluster; and a single slow follower will not
+arecommittedaswell.
+impactperformance.
+termsarepresentoneachnewleaderfromthemomentof
+5.4 Safety
+its election, without the need to transfer those entries to
+The previoussections describedhow Raft elects lead- theleader.Thismeansthatlogentriesonlyflowinonedi-
+ers and replicates log entries. However, the mechanisms rection,fromleaderstofollowers,andleadersneverover-
+describedsofararenotquitesufficienttoensurethateach writeexistingentriesintheirlogs.
+statemachineexecutesexactlythesamecommandsinthe
+Raftusesthevotingprocesstopreventacandidatefrom
+sameorder.Forexample,afollowermightbeunavailable
+winninganelectionunlessitslogcontainsallcommitted
+whiletheleadercommitsseverallogentries,thenitcould
+entries.Acandidatemustcontactamajorityofthecluster
+be elected leader and overwrite these entries with new
+inordertobeelected,whichmeansthateverycommitted
+ones; as a result, differentstate machines might execute
+entrymustbepresentinatleastoneofthoseservers.Ifthe
+differentcommandsequences.
+candidate’s log is at least as up-to-date as any other log
+ThissectioncompletestheRaftalgorithmbyaddinga
+in that majority (where “up-to-date”is defined precisely
+restriction on which servers may be elected leader. The
+below), then it will hold all the committed entries. The
+restrictionensuresthattheleaderforanygiventermcon-
+RequestVote RPC implements this restriction: the RPC
+tains all of the entries committed in previous terms (the
+includes information about the candidate’s log, and the
+LeaderCompletenessPropertyfromFigure3).Giventhe
+voterdeniesitsvoteifitsownlogismoreup-to-datethan
+election restriction, we then make the rules for commit-
+thatofthecandidate.
+mentmoreprecise.Finally,wepresentaproofsketchfor
+Raft determineswhich of two logs is more up-to-date
+theLeaderCompletenessPropertyandshowhowitleads
+bycomparingtheindexandtermofthelastentriesinthe
+tocorrectbehaviorofthereplicatedstatemachine.
+logs.Ifthelogshavelastentrieswithdifferentterms,then
+5.4.1 Electionrestriction
+thelogwiththelatertermismoreup-to-date.Ifthelogs
+In any leader-based consensus algorithm, the leader end with the same term, then whichever log is longer is
+musteventuallystoreallofthecommittedlogentries.In moreup-to-date.
+someconsensusalgorithms,suchasViewstampedRepli-
+5.4.2 Committingentriesfrompreviousterms
+cation [22], a leader can be elected even if it doesn’t
+initially contain all of the committed entries. These al- AsdescribedinSection5.3,aleaderknowsthatanen-
+gorithms contain additional mechanisms to identify the try from its currentterm is committed once that entry is
+missing entries and transmit them to the new leader, ei- storedonamajorityoftheservers.Ifaleadercrashesbe-
+therduringtheelectionprocessorshortlyafterwards.Un- fore committing an entry, future leaders will attempt to
+fortunately,thisresultsinconsiderableadditionalmecha- finishreplicatingtheentry.However,aleadercannotim-
+nismandcomplexity.Raftusesasimplerapproachwhere mediatelyconcludethatanentryfromaprevioustermis
+itguaranteesthatallthecommittedentriesfromprevious committedonceitisstoredonamajorityofservers.Fig-
+8
+
+leader , as shown in Figure 9. The voter is key to
+U
+reachingacontradiction.
+3. The voter must have accepted the committed entry
+fromleader beforevotingforleader ;otherwiseit
+T U
+wouldhaverejectedtheAppendEntriesrequestfrom
+leader (itscurrenttermwouldhavebeenhigherthan
+T
+T).
+Figure9:IfS1(leaderfortermT)commitsanewlogentry
+4. The voter still stored the entry when it voted for
+fromitsterm,andS5iselectedleaderforalatertermU,then
+leader ,sinceeveryinterveningleadercontainedthe
+there must be at least one server (S3) that accepted the log U
+entry(byassumption),leadersneverremoveentries,
+entryandalsovotedforS5.
+and followers only remove entries if they conflict
+ure8illustratesasituationwhereanoldlogentryisstored
+withtheleader.
+onamajorityofservers,yetcanstillbeoverwrittenbya
+5. The voter granted its vote to leader , so leader ’s
+U U
+futureleader.
+logmusthavebeenasup-to-dateasthevoter’s.This
+To eliminate problems like the one in Figure 8, Raft
+leadstooneoftwocontradictions.
+nevercommitslogentriesfromprevioustermsbycount-
+6. First, if the voter and leader shared the same last
+ing replicas. Only log entries from the leader’s current U
+logterm,thenleader ’slogmusthavebeenatleast
+term are committed by counting replicas; once an entry U
+aslongasthevoter’s,soitslogcontainedeveryentry
+from the current term has been committed in this way,
+in the voter’s log. This is a contradiction, since the
+then all prior entries are committed indirectly because
+votercontainedthecommittedentryandleader was
+oftheLogMatchingProperty.Therearesomesituations U
+assumednotto.
+wherealeadercouldsafelyconcludethatanolderlogen-
+tryiscommitted(forexample,ifthatentryisstoredonev- 7. Otherwise, leader U ’s last log term must have been
+ery server),but Rafttakes a more conservativeapproach largerthan the voter’s.Moreover,it was largerthan
+forsimplicity. T,sincethevoter’slastlogtermwasatleastT(itcon-
+Raft incurs this extra complexity in the commitment tainsthe committedentryfromtermT). Theearlier
+rules because log entries retain their original term num- leaderthatcreatedleader U ’slastlogentrymusthave
+bers when a leader replicates entries from previous containedthecommittedentryinitslog(byassump-
+terms. Inotherconsensusalgorithms,if a new leaderre- tion).Then,bytheLogMatchingProperty,leader U ’s
+replicates entries from prior “terms,” it must do so with logmustalsocontainthecommittedentry,whichis
+its new “term number.” Raft’s approach makes it easier acontradiction.
+toreasonaboutlogentries,sincetheymaintainthesame 8. This completes the contradiction. Thus, the leaders
+termnumberovertimeandacrosslogs.Inaddition,new of all terms greater than T must contain all entries
+leadersinRaftsendfewerlogentriesfrompreviousterms fromtermTthatarecommittedintermT.
+than in other algorithms(otheralgorithmsmust send re- 9. The Log Matching Property guarantees that future
+dundantlogentriestorenumberthembeforetheycanbe leaders will also contain entries that are committed
+committed). indirectly,suchasindex2inFigure8(d).
+5.4.3 Safetyargument
+GiventheLeaderCompletenessProperty,wecanprove
+Given the complete Raft algorithm, we can now ar-
+the State MachineSafety PropertyfromFigure3, which
+gue more precisely that the Leader Completeness Prop-
+states that if a server has applied a log entry at a given
+ertyholds(thisargumentisbasedonthesafetyproof;see
+indextoitsstatemachine,nootherserverwilleverapplya
+Section 9.2). We assume that the Leader Completeness
+differentlogentryforthesameindex.Atthetimeaserver
+Property does not hold, then we prove a contradiction.
+applies a log entry to its state machine, its log must be
+Suppose the leader for term T (leader ) commits a log
+T
+identicaltotheleader’slogupthroughthatentryandthe
+entryfromitsterm,butthatlogentryisnotstoredbythe
+entry must be committed.Now considerthe lowest term
+leaderofsomefutureterm.ConsiderthesmallesttermU
+>Twhoseleader(leader )doesnotstoretheentry. in which any server applies a given log index; the Log
+U
+CompletenessPropertyguaranteesthattheleadersforall
+1. The committed entry must have been absent from highertermswillstorethatsamelogentry,soserversthat
+leader U ’slogatthetimeofitselection(leadersnever applythe indexin later termswillapplythe same value.
+deleteoroverwriteentries). Thus,theStateMachineSafetyPropertyholds.
+2. leader replicatedtheentryonamajorityoftheclus- Finally,Raftrequiresserverstoapplyentriesinlogin-
+T
+ter, and leader received votes from a majority of dexorder.CombinedwiththeStateMachineSafetyProp-
+U
+the cluster. Thus, at least one server (“the voter”) erty,thismeansthatallserverswillapplyexactlythesame
+both accepted the entry from leader and voted for setoflogentriestotheirstatemachines,inthesameorder.
+T
+9
+
+5.5 Followerandcandidatecrashes
+Untilthispointwehavefocusedonleaderfailures.Fol-
+lower and candidate crashes are much simpler to han-
+dle thanleadercrashes, andtheyare bothhandledin the
+same way. If a follower or candidate crashes, then fu-
+tureRequestVoteandAppendEntriesRPCssenttoitwill
+fail. Raft handles these failures by retrying indefinitely;
+ifthecrashedserverrestarts,thentheRPCwillcomplete
+successfully.IfaservercrashesaftercompletinganRPC
+butbeforeresponding,thenitwillreceivethesameRPC
+again after it restarts. Raft RPCs are idempotent, so this Figure10:Switchingdirectlyfromoneconfigurationtoan-
+causes no harm. For example, if a follower receives an other is unsafe because different servers will switch at dif-
+ferent times. In this example, the cluster grows from three
+AppendEntries request that includes log entries already
+serverstofive.Unfortunately,thereisapointintimewhere
+present in its log, it ignores those entries in the new re-
+two different leaders can be elected for the same term, one
+quest.
+with a majority of the old configuration (C ) and another
+old
+5.6 Timingandavailability withamajorityofthenewconfiguration(Cnew).
+One of our requirements for Raft is that safety must
+server MTBFs are severalmonthsor more, which easily
+notdependontiming:thesystemmustnotproduceincor-
+satisfiesthetimingrequirement.
+rectresultsjustbecausesomeeventhappensmorequickly
+orslowlythanexpected.However,availability(theability 6 Cluster membership changes
+of the system to respond to clients in a timely manner) Upuntilnowwehaveassumedthattheclusterconfig-
+must inevitably depend on timing. For example, if mes- uration (the set of servers participating in the consensus
+sageexchangestakelongerthanthetypicaltimebetween algorithm)isfixed.Inpractice,itwilloccasionallybenec-
+servercrashes,candidateswillnotstayuplongenoughto essarytochangetheconfiguration,forexampletoreplace
+winanelection;withoutasteadyleader,Raftcannotmake serverswhentheyfailortochangethedegreeofreplica-
+progress. tion.Althoughthiscanbedonebytakingtheentirecluster
+Leader election is the aspect of Raft where timing is off-line, updating configuration files, and then restarting
+most critical. Raft will be able to elect and maintain a the cluster, this would leave the cluster unavailable dur-
+steady leader as long as the system satisfies the follow- ing the changeover. In addition, if there are any manual
+ingtimingrequirement: steps, theyrisk operatorerror.In orderto avoid these is-
+broadcastTime≪electionTimeout≪MTBF sues, we decided to automate configurationchangesand
+incorporatethemintotheRaftconsensusalgorithm.
+In this inequality broadcastTime is the average time it
+takes a server to send RPCs in parallel to every server For the configuration change mechanism to be safe,
+in the cluster and receive their responses; electionTime- there must be no point during the transition where it
+out is the election timeout described in Section 5.2; and is possible for two leaders to be elected for the same
+MTBF is the average time between failures for a single term. Unfortunately, any approach where servers switch
+server. The broadcast time should be an order of mag- directlyfromtheoldconfigurationtothenewconfigura-
+nitude less than the election timeout so that leaders can tionisunsafe.Itisn’tpossibletoatomicallyswitchallof
+reliablysendtheheartbeatmessagesrequiredtokeepfol- theserversatonce,sotheclustercanpotentiallysplitinto
+lowersfromstartingelections;giventhe randomizedap- twoindependentmajoritiesduringthetransition(seeFig-
+proach used for election timeouts, this inequality also ure10).
+makessplitvotesunlikely.Theelectiontimeoutshouldbe In order to ensure safety, configuration changes must
+afewordersofmagnitudelessthanMTBFsothatthesys- use a two-phase approach. There are a variety of ways
+temmakessteadyprogress.Whentheleadercrashes,the toimplementthetwophases.Forexample,somesystems
+systemwillbeunavailableforroughlytheelectiontime- (e.g.,[22])usethefirstphasetodisabletheoldconfigura-
+out;wewouldlikethistorepresentonlyasmallfraction tion so it cannotprocessclientrequests;thenthe second
+ofoveralltime. phase enables the new configuration. In Raft the cluster
+ThebroadcasttimeandMTBFarepropertiesoftheun- first switchesto a transitionalconfigurationwe call joint
+derlyingsystem, whiletheelectiontimeoutissomething consensus;oncethejointconsensushasbeencommitted,
+wemustchoose.Raft’sRPCstypicallyrequiretherecip- thesystemthentransitionstothenewconfiguration.The
+ienttopersistinformationtostablestorage,sothebroad- jointconsensuscombinesboth the old and new configu-
+cast time may range from 0.5ms to 20ms, dependingon rations:
+storage technology. As a result, the election timeout is • Logentriesarereplicatedtoallserversinbothcon-
+likelytobesomewherebetween10msand500ms.Typical figurations.
+10
+
+Therearethreemoreissuestoaddressforreconfigura-
+tion. The first issue is that new servers may not initially
+store any log entries. If they are added to the cluster in
+this state, it could take quite a while for them to catch
+up, during which time it might not be possible to com-
+mit new log entries. In order to avoid availability gaps,
+Raft introduces an additional phase before the configu-
+ration change, in which the new servers join the cluster
+Figure11:Timelineforaconfigurationchange.Dashedlines as non-voting members(the leader replicates log entries
+show configuration entries that have been created but not tothem,buttheyarenotconsideredformajorities).Once
+committed,andsolidlinesshowthelatestcommittedconfigu- thenewservershavecaughtupwiththerestofthecluster,
+rationentry.TheleaderfirstcreatestheC old,new configuration thereconfigurationcanproceedasdescribedabove.
+entryinitslogandcommitsittoC old,new (amajorityofC old The second issue is that the cluster leader may not be
+and amajority ofCnew). Then it creates theCnew entry and
+partofthenewconfiguration.Inthiscase,theleadersteps
+commitsittoamajorityofCnew.Thereisnopointintimein
+down(returnstofollowerstate)onceithascommittedthe
+whichC
+old
+andCnewcanbothmakedecisionsindependently.
+C log entry.This meansthattherewill be a periodof
+new
+• Any server from either configuration may serve as time(whileitiscommittingC )whentheleaderisman-
+new
+leader. agingaclusterthatdoesnotincludeitself;itreplicateslog
+• Agreement(forelectionsandentrycommitment)re- entriesbutdoesnotcountitself inmajorities.Theleader
+quiresseparatemajoritiesfromboththeoldandnew transitionoccurswhenC iscommittedbecausethisis
+new
+configurations. thefirstpointwhenthenewconfigurationcanoperatein-
+Thejointconsensusallowsindividualserverstotransition dependently(itwillalwaysbepossibletochoosealeader
+between configurations at different times without com- fromC ).Beforethispoint,itmaybethecasethatonly
+new
+promisingsafety.Furthermore,jointconsensusallowsthe aserverfromC canbeelectedleader.
+old
+cluster to continue servicing client requests throughout The third issue is that removed servers (those not in
+theconfigurationchange. C ) can disrupt the cluster. These servers will not re-
+new
+Cluster configurations are stored and communicated ceiveheartbeats,sotheywilltimeoutandstartnewelec-
+usingspecialentriesinthereplicatedlog;Figure11illus- tions. They will then send RequestVote RPCs with new
+tratestheconfigurationchangeprocess.Whentheleader term numbers, and this will cause the current leader to
+receives a request to change the configuration fromC old revert to follower state. A new leader will eventually be
+to C new , it stores the configuration for joint consensus elected, but the removedservers will time out again and
+(C old,new in the figure) as a log entry and replicates that theprocesswillrepeat,resultinginpooravailability.
+entryusingthemechanismsdescribedpreviously.Oncea
+Topreventthisproblem,serversdisregardRequestVote
+given server adds the new configurationentry to its log,
+RPCs when they believe a current leader exists. Specif-
+itusesthatconfigurationforallfuturedecisions(aserver ically, if a server receives a RequestVote RPC within
+always uses the latest configurationin its log, regardless
+the minimum election timeout of hearing from a cur-
+of whether the entry is committed). This means that the
+rent leader, it does not update its term or grant its vote.
+leaderwillusetherulesofC old,new todeterminewhenthe Thisdoesnotaffectnormalelections,where eachserver
+logentryforC iscommitted.If the leadercrashes,
+old,new waitsatleastaminimumelectiontimeoutbeforestarting
+anewleadermaybechosenundereitherC old orC old,new , an election.However,ithelpsavoiddisruptionsfromre-
+dependingonwhetherthewinningcandidatehasreceived
+movedservers: if a leader is able to get heartbeatsto its
+C . In any case, C cannot make unilateral deci-
+old,new new cluster, then it will not be deposed by larger term num-
+sionsduringthisperiod. bers.
+OnceC hasbeencommitted,neitherC norC
+old,new old new
+7 Log compaction
+canmakedecisionswithoutapprovaloftheother,andthe
+Leader Completeness Property ensures that only servers Raft’s log grows during normal operation to incorpo-
+with theC log entry can be elected as leader. It is ratemoreclientrequests,butinapracticalsystem,itcan-
+old,new
+now safe for the leader to create a log entry describing not grow withoutbound.As the log growslonger,it oc-
+C andreplicateittothecluster.Again,thisconfigura- cupies more space and takes more time to replay. This
+new
+tion will take effect on each server as soon as it is seen. willeventuallycauseavailabilityproblemswithoutsome
+When the new configuration has been committed under mechanismtodiscardobsoleteinformationthathasaccu-
+the rules ofC , the old configuration is irrelevant and mulatedinthelog.
+new
+serversnotinthenewconfigurationcanbeshutdown.As Snapshotting is the simplest approach to compaction.
+showninFigure11,thereisnotimewhenC andC Insnapshotting,theentirecurrentsystemstate iswritten
+old new
+canbothmakeunilateraldecisions;thisguaranteessafety. to a snapshoton stable storage,then the entire log upto
+11
+
+InstallSnapshotRPC
+Invokedbyleadertosendchunksofasnapshottoafollower.
+Leadersalwayssendchunksinorder.
+Arguments:
+term leader’sterm
+leaderId sofollowercanredirectclients
+lastIncludedIndex thesnapshotreplacesallentriesupthrough
+andincludingthisindex
+lastIncludedTerm termoflastIncludedIndex
+offset byteoffsetwherechunkispositionedinthe
+snapshotfile
+data[] rawbytesofthesnapshotchunk,startingat
+Figure12:Aserverreplacesthecommittedentriesinitslog offset
+(indexes1through5)withanewsnapshot,whichstoresjust done trueifthisisthelastchunk
+thecurrentstate(variablesxandyinthisexample).Thesnap-
+Results:
+shot’slastincludedindexandtermservetopositionthesnap-
+term currentTerm,forleadertoupdateitself
+shotinthelogprecedingentry6.
+Receiverimplementation:
+that point is discarded. Snapshotting is used in Chubby 1. Replyimmediatelyifterm<currentTerm
+and ZooKeeper, and the remainder of this section de- 2. Createnewsnapshotfileiffirstchunk(offsetis0)
+scribessnapshottinginRaft. 3. Writedataintosnapshotfileatgivenoffset
+4. Replyandwaitformoredatachunksifdoneisfalse
+Incremental approaches to compaction, such as log
+5. Savesnapshotfile,discardanyexistingorpartialsnapshot
+cleaning [36] and log-structuredmerge trees [30, 5], are withasmallerindex
+also possible. These operate on a fraction of the data at 6. Ifexistinglogentryhassameindexandtermassnapshot’s
+lastincludedentry,retainlogentriesfollowingitandreply
+once,sotheyspreadtheloadofcompactionmoreevenly
+7. Discardtheentirelog
+over time. They first select a region of data that has ac-
+8. Resetstatemachineusingsnapshotcontents(andload
+cumulated many deleted and overwritten objects, then snapshot’sclusterconfiguration)
+they rewrite the live objectsfromthat regionmorecom-
+pactlyandfreetheregion.Thisrequiressignificantaddi- Figure 13: A summary of the InstallSnapshot RPC. Snap-
+shotsaresplitintochunksfortransmission;thisgivesthefol-
+tionalmechanismandcomplexitycomparedtosnapshot-
+lowerasignoflifewitheachchunk,soitcanresetitselection
+ting, which simplifies the problem by always operating
+timer.
+on the entire data set. While log cleaning would require
+modificationstoRaft,statemachinescanimplementLSM leaderwouldalreadyhavethisentry.However,anexcep-
+treesusingthesameinterfaceassnapshotting. tionallyslowfolloweroranewserverjoiningthecluster
+(Section6)wouldnot.Theway tobringsucha follower
+Figure12showsthebasicideaofsnapshottinginRaft.
+up-to-dateisfortheleadertosendita snapshotoverthe
+Eachservertakessnapshotsindependently,coveringjust
+network.
+the committed entries in its log. Most of the work con-
+sists of the state machine writing its current state to the The leader uses a new RPC called InstallSnapshot to
+snapshot.Raft also includesa small amountof metadata send snapshots to followers that are too far behind; see
+inthesnapshot:thelastincludedindexistheindexofthe Figure13.Whenafollowerreceivesasnapshotwiththis
+lastentryinthelogthatthesnapshotreplaces(thelasten- RPC, it must decide what to do with its existing log en-
+try the state machine had applied),and the last included tries. Usually the snapshotwill contain new information
+termisthetermofthisentry.Thesearepreservedtosup- notalreadyintherecipient’slog.Inthiscase,thefollower
+porttheAppendEntriesconsistencycheckforthefirstlog discardsitsentirelog;itisallsupersededbythesnapshot
+entryfollowingthesnapshot,sincethatentryneedsapre- andmay possiblyhaveuncommittedentriesthatconflict
+viouslog index and term. To enable cluster membership withthesnapshot.Ifinsteadthefollowerreceivesasnap-
+changes(Section6),thesnapshotalsoincludesthelatest shot that describesa prefix of its log (due to retransmis-
+configurationinthelogasoflastincludedindex.Oncea sionorbymistake),thenlogentriescoveredbythesnap-
+servercompleteswritingasnapshot,itmaydeletealllog shotaredeletedbutentriesfollowingthesnapshotarestill
+entriesupthroughthelastincludedindex,aswellasany validandmustberetained.
+priorsnapshot. ThissnapshottingapproachdepartsfromRaft’sstrong
+Although servers normally take snapshots indepen- leaderprinciple,sincefollowerscantakesnapshotswith-
+dently, the leader must occasionally send snapshots to out the knowledgeof the leader. However,we think this
+followers that lag behind. This happens when the leader departure is justified. While having a leader helps avoid
+has already discarded the next log entry that it needs to conflicting decisions in reaching consensus, consensus
+send to a follower. Fortunately, this situation is unlikely has already been reached when snapshotting, so no de-
+innormaloperation:a followerthathaskeptupwiththe cisionsconflict.Datastillonlyflowsfromleaderstofol-
+12
+
+lowers,justfollowerscannowreorganizetheirdata. crashesaftercommittingthelogentrybutbeforerespond-
+Weconsideredanalternativeleader-basedapproachin ingtotheclient,theclientwillretrythecommandwitha
+which only the leader would create a snapshot, then it newleader,causingittobeexecutedasecondtime.The
+would send this snapshot to each of its followers. How- solution is for clients to assign uniqueserial numbersto
+ever,thishastwo disadvantages.First,sendingthesnap- everycommand.Then,thestatemachinetracksthelatest
+shottoeachfollowerwouldwastenetworkbandwidthand serialnumberprocessedforeachclient,alongwiththeas-
+slowthesnapshottingprocess.Eachfolloweralreadyhas sociatedresponse.Ifitreceivesacommandwhoseserial
+theinformationneededtoproduceitsownsnapshots,and number has already been executed, it responds immedi-
+itistypicallymuchcheaperforaservertoproduceasnap- atelywithoutre-executingtherequest.
+shotfromitslocalstatethanitistosendandreceiveone Read-only operations can be handled without writing
+over the network. Second, the leader’s implementation anythinginto the log. However,with no additionalmea-
+would be more complex. For example, the leader would sures,thiswouldruntheriskofreturningstaledata,since
+needtosendsnapshotstofollowersinparallelwithrepli- theleaderrespondingtotherequestmighthavebeensu-
+cating new log entries to them, so as not to block new perseded by a newer leader of which it is unaware. Lin-
+clientrequests. earizablereadsmustnotreturnstaledata,andRaftneeds
+Therearetwomoreissuesthatimpactsnapshottingper- twoextraprecautionstoguaranteethiswithoutusingthe
+formance.First,serversmustdecidewhentosnapshot.If log. First, a leader must have the latest information on
+aserversnapshotstoooften,itwastesdiskbandwidthand which entries are committed. The Leader Completeness
+energy; if it snapshots too infrequently,it risks exhaust- Property guarantees that a leader has all committed en-
+ingitsstoragecapacity,anditincreasesthetimerequired tries, but at the start of its term, it may not know which
+to replay the log during restarts. One simple strategy is those are. To find out, it needs to commit an entry from
+to take a snapshot when the log reaches a fixed size in its term. Raft handles this by having each leader com-
+bytes.Ifthissizeissettobesignificantlylargerthanthe mit a blank no-op entry into the log at the start of its
+expectedsizeofasnapshot,thenthediskbandwidthover- term.Second,aleadermustcheckwhetherithasbeende-
+headforsnapshottingwillbesmall. posedbeforeprocessingaread-onlyrequest(itsinforma-
+The second performance issue is that writing a snap- tionmaybestaleifamorerecentleaderhasbeenelected).
+shot can take a significant amount of time, and we do Raft handles this by having the leader exchange heart-
+notwantthistodelaynormaloperations.Thesolutionis beat messages with a majority of the cluster before re-
+to use copy-on-writetechniquesso thatnew updatescan sponding to read-only requests. Alternatively, the leader
+be accepted without impacting the snapshot being writ- couldrelyontheheartbeatmechanismtoprovideaform
+ten.Forexample,statemachinesbuiltwithfunctionaldata of lease [9], but this would rely on timing for safety (it
+structuresnaturallysupportthis.Alternatively,theoperat- assumesboundedclockskew).
+ing system’scopy-on-writesupport(e.g.,forkon Linux) 9 Implementation and evaluation
+canbeusedtocreateanin-memorysnapshotoftheentire
+We have implemented Raft as part of a replicated
+statemachine(ourimplementationusesthisapproach).
+state machine that stores configuration information for
+8 Clientinteraction RAMCloud[33]andassistsinfailoveroftheRAMCloud
+coordinator. The Raft implementation contains roughly
+This section describes how clients interact with Raft,
+2000linesofC++code,notincludingtests,comments,or
+includinghowclientsfindtheclusterleaderandhowRaft
+blanklines.Thesourcecodeisfreelyavailable[23].There
+supports linearizable semantics [10]. These issues apply
+arealsoabout25independentthird-partyopensourceim-
+to all consensus-based systems, and Raft’s solutions are
+plementations [34] of Raft in various stages of develop-
+similartoothersystems.
+ment,basedondraftsofthispaper.Also,variouscompa-
+Clients of Raft send all of their requeststo the leader.
+niesaredeployingRaft-basedsystems[34].
+When a client first starts up, it connects to a randomly-
+TheremainderofthissectionevaluatesRaftusingthree
+chosenserver.Iftheclient’sfirstchoiceisnottheleader,
+criteria:understandability,correctness,andperformance.
+that server will reject the client’s request and supply in-
+formationaboutthemostrecentleaderithasheardfrom 9.1 Understandability
+(AppendEntriesrequests include the network address of To measure Raft’s understandabilityrelativeto Paxos,
+theleader).Iftheleadercrashes,clientrequestswilltime weconductedanexperimentalstudyusingupper-levelun-
+out;clientsthentryagainwithrandomly-chosenservers. dergraduateandgraduatestudentsinanAdvancedOper-
+Our goalfor Raft is to implementlinearizableseman- ating Systems course at Stanford University and a Dis-
+tics (each operation appears to execute instantaneously, tributedComputingcourseatU.C.Berkeley.Werecorded
+exactly once, at some point between its invocation and avideolectureofRaftandanotherofPaxos,andcreated
+itsresponse).However,asdescribedso farRaftcanexe- correspondingquizzes.TheRaftlecturecoveredthecon-
+cuteacommandmultipletimes:forexample,iftheleader tent of this paper except for log compaction; the Paxos
+13
+
+60
+50
+40
+30
+20
+10
+0
+0 10 20 30 40 50 60
+edarg
+tfaR
+20
+15
+10
+5
+0
+implement explain
+Raft then Paxos
+Paxos then Raft
+Paxos grade
+Figure14:Ascatterplotcomparing43participants’perfor-
+manceontheRaftandPaxosquizzes.Pointsabovethediag-
+onal(33)representparticipantswhoscoredhigherforRaft.
+lecture covered enough material to create an equivalent
+replicated state machine, including single-decree Paxos,
+multi-decreePaxos,reconfiguration,andafewoptimiza-
+tions needed in practice (such as leader election). The
+quizzestested basic understandingofthe algorithmsand
+alsorequiredstudentstoreasonaboutcornercases.Each
+studentwatchedonevideo,tookthe correspondingquiz,
+watched the second video, and took the second quiz.
+Abouthalf of the participantsdid the Paxos portionfirst
+and the other half did the Raft portion first in order to
+account for both individual differences in performance
+andexperiencegainedfromthefirstportionofthestudy.
+We comparedparticipants’scores on each quiz to deter-
+minewhetherparticipantsshowedabetterunderstanding
+ofRaft.
+We tried to make the comparison between Paxos and
+Raftasfairaspossible.TheexperimentfavoredPaxosin
+twoways:15ofthe43participantsreportedhavingsome
+priorexperiencewithPaxos,andthePaxosvideois14%
+longerthantheRaftvideo.AssummarizedinTable1,we
+havetakenstepstomitigatepotentialsourcesofbias.All
+ofourmaterialsareavailableforreview[28,31].
+Onaverage,participantsscored4.9pointshigheronthe
+Raft quiz than on the Paxos quiz (out of a possible 60
+points,themeanRaftscorewas25.7andthemeanPaxos
+scorewas20.8);Figure14showstheirindividualscores.
+A pairedt-teststates that, with 95%confidence,the true
+distributionof Raft scoreshasa mean atleast 2.5 points
+largerthanthetruedistributionofPaxosscores.
+Wealsocreatedalinearregressionmodelthatpredicts
+anewstudent’squizscoresbasedonthreefactors:which
+quiztheytook,theirdegreeofpriorPaxosexperience,and
+stnapicitrap
+fo
+rebmun
+Paxos much easier
+Paxos somewhat easier
+Roughly equal
+Raft somewhat easier
+Raft much easier
+Figure 15: Using a 5-point scale, participants were asked
+(left)whichalgorithmtheyfeltwouldbeeasiertoimplement
+in a functioning, correct, and efficient system, and (right)
+whichwouldbeeasiertoexplaintoaCSgraduatestudent.
+theorderinwhichtheylearnedthealgorithms.Themodel
+predictsthatthechoiceofquizproducesa12.5-pointdif-
+ferencein favorofRaft. Thisis significantlyhigherthan
+theobserveddifferenceof4.9points,becausemanyofthe
+actualstudentshadpriorPaxosexperience,whichhelped
+Paxos considerably,whereas it helped Raft slightly less.
+Curiously,themodelalsopredictsscores6.3pointslower
+onRaftforpeoplethathavealreadytakenthePaxosquiz;
+althoughwe don’tknowwhy,thisdoesappeartobesta-
+tisticallysignificant.
+Wealsosurveyedparticipantsaftertheirquizzestosee
+which algorithm they felt would be easier to implement
+orexplain;theseresultsareshowninFigure15.Anover-
+whelmingmajorityofparticipantsreportedRaftwouldbe
+easiertoimplementandexplain(33of41foreachques-
+tion). However, these self-reported feelings may be less
+reliable than participants’ quiz scores, and participants
+may have been biased by knowledge of our hypothesis
+thatRaftiseasiertounderstand.
+AdetaileddiscussionoftheRaftuserstudyisavailable
+at[31].
+9.2 Correctness
+We havedevelopeda formalspecification anda proof
+ofsafetyfortheconsensusmechanismdescribedinSec-
+tion5. Theformalspecification[31] makesthe informa-
+tionsummarizedinFigure2completelypreciseusingthe
+TLA+ specification language [17]. It is about 400 lines
+longandservesasthesubjectoftheproof.Itisalsouse-
+ful on its own for anyone implementing Raft. We have
+mechanicallyproventheLogCompletenessPropertyus-
+ingtheTLAproofsystem[7].However,thisproofrelies
+on invariants that have not been mechanically checked
+(for example, we have not proven the type safety of the
+specification).Furthermore,we havewritten aninformal
+proof [31] of the State Machine Safety property which
+iscomplete(itreliesonthespecificationalone)andrela-
+Concern Stepstakentomitigatebias Materialsforreview[28,31]
+Equallecturequality Samelecturerforboth.Paxoslecturebasedonandimprovedfromexist- videos
+ingmaterialsusedinseveraluniversities.Paxoslectureis14%longer.
+Equalquizdifficulty Questionsgroupedindifficultyandpairedacrossexams. quizzes
+Fairgrading Usedrubric.Gradedinrandomorder,alternatingbetweenquizzes. rubric
+Table1:ConcernsofpossiblebiasagainstPaxosinthestudy,stepstakentocountereach,andadditionalmaterialsavailable.
+14
+
+100%
+80%
+60%
+40%
+20%
+0%
+100 1000 10000 100000
+tnecrep
+evitalumuc 150-150ms
+150-151ms
+150-155ms
+150-175ms
+150-200ms
+150-300ms
+100%
+80%
+60%
+40%
+20%
+0%
+0 100 200 300 400 500 600
+tnecrep
+evitalumuc
+ing).Theleaderwascrasheduniformlyrandomlywithin
+its heartbeat interval, which was half of the minimum
+election timeoutfor all tests. Thus,the smallest possible
+downtimewas abouthalf ofthe minimumelectiontime-
+out.
+ThetopgraphinFigure16showsthatasmallamount
+of randomization in the election timeout is enough to
+avoid split votes in elections. In the absence of random-
+ness,leaderelectionconsistentlytooklongerthan10sec-
+ondsinourtestsduetomanysplitvotes.Addingjust5ms
+of randomness helps significantly, resulting in a median
+12-24ms downtime of 287ms. Using more randomness improves
+25-50ms
+worst-casebehavior:with50msofrandomnesstheworst-
+50-100ms
+100-200ms casecompletiontime(over1000trials)was513ms.
+150-300ms
+The bottom graph in Figure 16 shows that downtime
+can be reduced by reducing the election timeout. With
+time without leader (ms)
+Figure16: Thetimetodetect andreplaceacrashedleader. an election timeout of 12–24ms, it takes only 35ms on
+The top graph varies the amount of randomness in election average to elect a leader (the longest trial took 152ms).
+timeouts,andthebottomgraphscalestheminimumelection However,loweringthetimeoutsbeyondthispointviolates
+timeout.Eachlinerepresents1000trials(exceptfor100tri- Raft’s timing requirement:leaders have difficultybroad-
+alsfor“150–150ms”)andcorrespondstoaparticularchoice castingheartbeatsbeforeotherserversstartnewelections.
+ofelectiontimeouts;forexample, “150–155ms” meansthat This can cause unnecessary leader changes and lower
+election timeouts were chosen randomly and uniformly be-
+overall system availability. We recommend using a con-
+tween150msand155ms.Themeasurementsweretakenona
+servativeelectiontimeoutsuchas150–300ms;suchtime-
+clusteroffiveserverswithabroadcasttimeofroughly15ms.
+outsareunlikelytocauseunnecessaryleaderchangesand
+Resultsforaclusterofnineserversaresimilar.
+willstillprovidegoodavailability.
+tivelyprecise(itisabout3500wordslong).
+10 Related work
+9.3 Performance
+Therehavebeennumerouspublicationsrelatedtocon-
+Raft’sperformanceis similarto otherconsensusalgo- sensusalgorithms,manyofwhichfallintooneofthefol-
+rithms such as Paxos. The most important case for per- lowingcategories:
+formanceiswhenanestablishedleaderisreplicatingnew • Lamport’soriginaldescriptionofPaxos[15],andat-
+logentries.Raftachievesthisusingthe minimalnumber
+temptstoexplainitmoreclearly[16,20,21].
+ofmessages(asingleround-tripfromtheleadertohalfthe • Elaborations of Paxos, which fill in missing details
+cluster).Itis also possible tofurtherimproveRaft’s per-
+andmodifythealgorithmtoprovideabetterfounda-
+formance. For example, it easily supports batching and
+tionforimplementation[26,39,13].
+pipelining requests for higher throughput and lower la- • Systemsthatimplementconsensusalgorithms,such
+tency. Various optimizations have been proposed in the
+as Chubby [2, 4], ZooKeeper [11, 12], and Span-
+literatureforotheralgorithms;manyofthesecouldbeap- ner [6]. The algorithms for Chubby and Spanner
+pliedtoRaft,butweleavethistofuturework. havenotbeenpublishedindetail,thoughbothclaim
+We used our Raft implementationto measure the per- to be based on Paxos. ZooKeeper’s algorithm has
+formanceof Raft’s leader election algorithmand answer beenpublishedinmoredetail,butitisquitedifferent
+two questions. First, does the election process converge fromPaxos.
+quickly?Second,whatistheminimumdowntimethatcan • Performance optimizations that can be applied to
+beachievedafterleadercrashes? Paxos[18,19,3,25,1,27].
+To measureleaderelection,we repeatedlycrashedthe • OkiandLiskov’sViewstampedReplication(VR),an
+leader of a cluster of five servers and timed how long it alternativeapproachtoconsensusdevelopedaround
+took to detectthe crash and elect a new leader (see Fig- thesametimeasPaxos.Theoriginaldescription[29]
+ure16).Togenerateaworst-casescenario,theserversin wasintertwinedwithaprotocolfordistributedtrans-
+each trial had different log lengths, so some candidates actions, but the core consensus protocol has been
+were not eligible to become leader. Furthermore, to en- separatedinarecentupdate[22].VRusesaleader-
+courage split votes, our test script triggered a synchro- basedapproachwithmanysimilaritiestoRaft.
+nizedbroadcastofheartbeatRPCsfromtheleaderbefore The greatest difference between Raft and Paxos is
+terminating its process (this approximates the behavior Raft’s strong leadership: Raft uses leader election as an
+of the leader replicating a new log entry prior to crash- essential part of the consensus protocol, and it concen-
+15
+
+tratesasmuchfunctionalityaspossibleintheleader.This Several different approaches for cluster member-
+approach results in a simpler algorithm that is easier to ship changes have been proposed or implemented in
+understand.For example,in Paxos,leader election is or- other work, including Lamport’s original proposal [15],
+thogonaltothebasicconsensusprotocol:itservesonlyas VR[22],andSMART[24].Wechosethejointconsensus
+aperformanceoptimizationandisnotrequiredforachiev- approachforRaftbecauseitleveragestherestofthecon-
+ingconsensus.However,thisresultsinadditionalmecha- sensus protocol,so that verylittle additionalmechanism
+nism:Paxosincludesbothatwo-phaseprotocolforbasic is requiredfor membershipchanges. Lamport’sα-based
+consensusanda separatemechanismforleaderelection. approach was not an option for Raft because it assumes
+Incontrast,Raftincorporatesleaderelectiondirectlyinto consensuscanbereachedwithoutaleader.Incomparison
+theconsensusalgorithmandusesitasthefirstofthetwo toVRandSMART,Raft’sreconfigurationalgorithmhas
+phasesofconsensus.Thisresultsinlessmechanismthan the advantage that membership changescan occur with-
+inPaxos. out limiting the processing of normal requests; in con-
+trast, VR stops all normal processing during configura-
+Like Raft, VR and ZooKeeper are leader-based and tionchanges,andSMARTimposesanα-likelimitonthe
+therefore share many of Raft’s advantages over Paxos.
+numberofoutstandingrequests.Raft’sapproachalsoadds
+However,RafthaslessmechanismthatVRorZooKeeper
+lessmechanismthaneitherVRorSMART.
+becauseitminimizesthefunctionalityinnon-leaders.For
+example, log entries in Raft flow in only one direction: 11 Conclusion
+outward fromthe leader in AppendEntriesRPCs. In VR Algorithms are often designed with correctness, effi-
+log entries flow in both directions (leaders can receive ciency,and/orconcisenessastheprimarygoals.Although
+log entries during the election process); this results in theseareallworthygoals,webelievethatunderstandabil-
+additionalmechanismandcomplexity.Thepublishedde- ity is just as important. None of the other goals can be
+scription of ZooKeeper also transfers log entries both to achieveduntildevelopersrenderthealgorithmintoaprac-
+andfromtheleader,buttheimplementationisapparently tical implementation,which will inevitablydeviate from
+morelikeRaft[35]. and expand upon the published form. Unless developers
+havea deepunderstandingof thealgorithmandcan cre-
+Raft has fewer message types than any other algo-
+ateintuitionsaboutit,itwillbedifficultforthemtoretain
+rithm for consensus-based log replication that we are
+itsdesirablepropertiesintheirimplementation.
+awareof.Forexample,wecountedthemessagetypesVR
+andZooKeeperuseforbasicconsensusandmembership Inthispaperweaddressedtheissueofdistributedcon-
+changes(excludinglogcompactionandclientinteraction, sensus, where a widely accepted but impenetrable algo-
+as these are nearly independent of the algorithms). VR rithm,Paxos,haschallengedstudentsanddevelopersfor
+and ZooKeeper each define 10 different message types, manyyears.We developedanewalgorithm,Raft,which
+while Raft has only 4 message types (two RPC requests we have shown to be more understandable than Paxos.
+andtheirresponses).Raft’smessagesareabitmoredense We also believe that Raft provides a better foundation
+than the other algorithms’, but they are simpler collec- for system building. Using understandability as the pri-
+tively. In addition, VR and ZooKeeper are described in marydesigngoalchangedthewayweapproachedthede-
+terms of transmitting entire logs during leader changes; signofRaft;asthedesignprogressedwefoundourselves
+additional message types will be required to optimize reusingafewtechniquesrepeatedly,suchasdecomposing
+thesemechanismssothattheyarepractical. the problemandsimplifyingthe state space. Thesetech-
+niques not only improved the understandability of Raft
+Raft’s strong leadership approach simplifies the algo- but also made it easier to convince ourselves of its cor-
+rithm, but it precludes some performanceoptimizations. rectness.
+For example, Egalitarian Paxos (EPaxos) can achieve
+12 Acknowledgments
+higher performance under some conditions with a lead-
+erless approach [27]. EPaxos exploits commutativity in The user study would not have been possible with-
+statemachinecommands.Anyservercancommitacom- out the support of Ali Ghodsi, David Mazie`res, and the
+mand with just one round of communication as long as students of CS 294-91 at Berkeley and CS 240 at Stan-
+othercommandsthatareproposedconcurrentlycommute ford. Scott Klemmer helped us design the user study,
+with it. However, if commands that are proposed con- and Nelson Ray advised us on statistical analysis. The
+currently do not commute with each other, EPaxos re- Paxos slides for the user study borrowed heavily from
+quires an additional round of communication. Because a slide deck originally created by Lorenzo Alvisi. Spe-
+anyservermaycommitcommands,EPaxosbalancesload cial thanks go to David Mazie`res and Ezra Hoch for
+wellbetweenserversandisabletoachievelowerlatency findingsubtle bugsin Raft. Many peopleprovidedhelp-
+than Raft in WAN settings. However, it adds significant ful feedback on the paper and user study materials,
+complexitytoPaxos. including Ed Bugnion, Michael Chan, Hugues Evrard,
+16
+
+Daniel Giffin, Arjun Gopalan, Jon Howell, Vimalkumar [7] COUSINEAU, D., DOLIGEZ, D., LAMPORT, L., MERZ,
+Jeyakumar, Ankita Kejriwal, Aleksandar Kracun, Amit S., RICKETTS, D., AND VANZETTO, H. TLA+ proofs.
+Levy,JoelMartin,SatoshiMatsushita,OlegPesok,David In Proc. FM’12, Symposium on Formal Methods (2012),
+Ramos,RobbertvanRenesse,MendelRosenblum,Nico- D.Giannakopoulou andD.Me´ry,Eds.,vol.7436ofLec-
+tureNotesinComputerScience,Springer,pp.147–154.
+lasSchiper,DeianStefan,AndrewStone,RyanStutsman,
+David Terei, Stephen Yang, Matei Zaharia, 24 anony- [8] GHEMAWAT,S.,GOBIOFF,H., ANDLEUNG,S.-T. The
+mous conference reviewers (with duplicates), and espe- Googlefilesystem. InProc.SOSP’03,ACMSymposium
+ciallyourshepherdEddieKohler.WernerVogelstweeted onOperatingSystemsPrinciples(2003),ACM,pp.29–43.
+a linkto an earlierdraft,which gaveRaft significantex- [9] GRAY,C.,ANDCHERITON,D.Leases:Anefficientfault-
+posure. This work was supported by the Gigascale Sys- tolerantmechanismfordistributedfilecacheconsistency.
+tems Research Center and the Multiscale Systems Cen- InProceedingsofthe12thACMSsymposiumonOperating
+ter, two of six research centers funded under the Fo- SystemsPrinciples(1989),pp.202–210.
+cusCenterResearchProgram,aSemiconductorResearch [10] HERLIHY, M. P., AND WING, J. M. Linearizability: a
+Corporationprogram,bySTARnet,aSemiconductorRe- correctnessconditionforconcurrentobjects. ACMTrans-
+search Corporation program sponsored by MARCO and actionsonProgrammingLanguagesandSystems12(July
+DARPA,bytheNationalScienceFoundationunderGrant 1990),463–492.
+No.0963859,andbygrantsfromFacebook,Google,Mel-
+[11] HUNT, P., KONAR, M., JUNQUEIRA, F. P., AND REED,
+lanox,NEC,NetApp,SAP,andSamsung.DiegoOngaro B. ZooKeeper: wait-free coordination for internet-scale
+issupportedbyTheJungleeCorporationStanfordGradu- systems.InProcATC’10,USENIXAnnualTechnicalCon-
+ateFellowship. ference(2010),USENIX,pp.145–158.
+References [12] JUNQUEIRA, F. P., REED, B. C., AND SERAFINI, M.
+Zab:High-performancebroadcastforprimary-backupsys-
+[1] BOLOSKY, W. J., BRADSHAW, D., HAAGENS, R. B.,
+tems. InProc.DSN’11,IEEE/IFIPInt’lConf.onDepend-
+KUSTERS, N. P., AND LI, P. Paxos replicated state
+ableSystems&Networks(2011),IEEEComputerSociety,
+machines as the basis of a high-performance data store.
+pp.245–256.
+In Proc. NSDI’11, USENIX Conference on Networked
+Systems Design and Implementation (2011), USENIX, [13] KIRSCH, J., AND AMIR, Y. Paxos for system builders.
+pp.141–154. Tech. Rep. CNDS-2008-2, Johns Hopkins University,
+2008.
+[2] BURROWS, M. The Chubby lock service for loosely-
+coupled distributed systems. In Proc. OSDI’06, Sympo- [14] LAMPORT,L. Time,clocks,andtheorderingofeventsin
+sium on Operating Systems Design and Implementation adistributedsystem.CommununicationsoftheACM21,7
+(2006),USENIX,pp.335–350. (July1978),558–565.
+[3] CAMARGOS, L. J., SCHMIDT,R. M., AND PEDONE,F. [15] LAMPORT, L. Thepart-timeparliament. ACMTransac-
+Multicoordinated Paxos. In Proc. PODC’07, ACMSym- tionsonComputerSystems16,2(May1998),133–169.
+posium on Principles of Distributed Computing (2007),
+[16] LAMPORT, L. Paxosmadesimple. ACMSIGACTNews
+ACM,pp.316–317.
+32,4(Dec.2001),18–25.
+[4] CHANDRA,T.D.,GRIESEMER,R.,ANDREDSTONE,J.
+[17] LAMPORT, L. Specifying Systems, The TLA+Language
+Paxos made live: an engineering perspective. In Proc.
+andToolsforHardwareandSoftwareEngineers.Addison-
+PODC’07,ACMSymposium onPrinciplesofDistributed
+Wesley,2002.
+Computing(2007),ACM,pp.398–407.
+[18] LAMPORT, L. Generalized consensus and Paxos. Tech.
+[5] CHANG, F., DEAN, J., GHEMAWAT, S., HSIEH, W. C.,
+Rep.MSR-TR-2005-33,MicrosoftResearch,2005.
+WALLACH, D. A., BURROWS, M., CHANDRA, T.,
+FIKES, A., AND GRUBER, R. E. Bigtable:adistributed [19] LAMPORT, L. Fastpaxos. DistributedComputing 19, 2
+storage system for structured data. In Proc. OSDI’06, (2006),79–103.
+USENIX Symposium on Operating Systems Design and [20] LAMPSON,B.W. Howtobuildahighlyavailablesystem
+Implementation(2006),USENIX,pp.205–218. usingconsensus. InDistributedAlgorithms,O.Baboaglu
+andK.Marzullo,Eds.Springer-Verlag,1996,pp.1–17.
+[6] CORBETT, J. C., DEAN, J., EPSTEIN, M., FIKES, A.,
+FROST,C.,FURMAN,J. J.,GHEMAWAT,S.,GUBAREV, [21] LAMPSON, B. W. The ABCD’s of Paxos. In Proc.
+A., HEISER, C., HOCHSCHILD, P., HSIEH, W., KAN- PODC’01,ACMSymposium onPrinciplesofDistributed
+THAK, S., KOGAN, E., LI, H., LLOYD, A., MELNIK, Computing(2001),ACM,pp.13–13.
+S., MWAURA, D., NAGLE,D., QUINLAN,S., RAO, R.,
+[22] LISKOV, B., AND COWLING, J. Viewstamped replica-
+ROLIG, L., SAITO, Y., SZYMANIAK, M., TAYLOR, C.,
+tionrevisited.Tech.Rep.MIT-CSAIL-TR-2012-021,MIT,
+WANG, R., AND WOODFORD, D. Spanner: Google’s
+July2012.
+globally-distributeddatabase. InProc.OSDI’12,USENIX
+ConferenceonOperatingSystemsDesignandImplemen- [23] LogCabin source code. http://github.com/
+tation(2012),USENIX,pp.251–264. logcabin/logcabin.
+17
+
+[24] LORCH, J. R., ADYA, A., BOLOSKY, W. J., CHAIKEN, http://ramcloud.stanford.edu/˜ongaro/
+R., DOUCEUR, J. R., AND HOWELL, J. The SMART thesis.pdf.
+way tomigrate replicated stateful services. InProc. Eu-
+[32] ONGARO, D., AND OUSTERHOUT, J. In search of an
+roSys’06,ACMSIGOPS/EuroSysEuropeanConferenceon
+understandable consensus algorithm. In Proc ATC’14,
+ComputerSystems(2006),ACM,pp.103–115.
+USENIXAnnualTechnicalConference(2014),USENIX.
+[25] MAO, Y., JUNQUEIRA, F. P., AND MARZULLO, K.
+Mencius: building efficient replicated state machines for [33] OUSTERHOUT, J., AGRAWAL, P., ERICKSON, D.,
+WANs. In Proc. OSDI’08, USENIX Conference on KOZYRAKIS, C., LEVERICH, J., MAZIE`RES, D., MI-
+Operating Systems Design and Implementation (2008), TRA, S., NARAYANAN, A., ONGARO, D., PARULKAR,
+USENIX,pp.369–384. G., ROSENBLUM, M., RUMBLE, S. M., STRATMANN,
+E.,ANDSTUTSMAN,R. ThecaseforRAMCloud. Com-
+[26] MAZIE`RES, D. Paxos made practical. http:
+municationsoftheACM54(July2011),121–130.
+//www.scs.stanford.edu/˜dm/home/
+papers/paxos.pdf,Jan.2007. [34] Raftconsensusalgorithmwebsite.
+http://raftconsensus.github.io.
+[27] MORARU, I., ANDERSEN, D. G., AND KAMINSKY, M.
+There is more consensus in egalitarian parliaments. In [35] REED,B. Personalcommunications,May17,2013.
+Proc. SOSP’13, ACM Symposium on Operating System
+Principles(2013),ACM. [36] ROSENBLUM,M.,ANDOUSTERHOUT,J.K. Thedesign
+andimplementationofalog-structuredfilesystem. ACM
+[28] Raft user study. http://ramcloud.stanford.
+Trans.Comput.Syst.10(February1992),26–52.
+edu/˜ongaro/userstudy/.
+[37] SCHNEIDER, F. B. Implementing fault-tolerant services
+[29] OKI, B. M., AND LISKOV, B. H. Viewstamped
+usingthestatemachineapproach: atutorial. ACMCom-
+replication: A new primary copy method to support
+putingSurveys22,4(Dec.1990),299–319.
+highly-availabledistributedsystems. InProc.PODC’88,
+ACMSymposiumonPrinciplesofDistributedComputing [38] SHVACHKO, K., KUANG, H., RADIA, S., AND
+(1988),ACM,pp.8–17. CHANSLER, R. The Hadoop distributed file system.
+[30] O’NEIL,P.,CHENG,E.,GAWLICK,D.,ANDONEIL,E. In Proc. MSST’10, Symposium on Mass Storage Sys-
+Thelog-structuredmerge-tree(LSM-tree). ActaInformat- tems and Technologies (2010), IEEE Computer Society,
+ica33,4(1996),351–385. pp.1–10.
+[31] ONGARO,D. Consensus:BridgingTheoryandPractice. [39] VAN RENESSE, R. Paxos made moderately complex.
+PhDthesis,StanfordUniversity,2014(workinprogress). Tech.rep.,CornellUniversity,2012.
+18

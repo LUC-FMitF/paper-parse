@@ -1,0 +1,41 @@
+Source URL: https://github.com/nano-o/MultiPaxos
+Final URL: https://github.com/nano-o/MultiPaxos
+================================================================================
+
+# Search code, repositories, users, issues, pull requests...
+# Provide feedback
+We read every piece of feedback, and take your input very seriously.
+Cancel Submit feedback
+# Saved searches
+## Use saved searches to filter your results more quickly
+To see all available qualifiers, see our .
+Cancel Create saved search
+You signed in with another tab or window. to refresh your session. You signed out in another tab or window. to refresh your session. You switched accounts on another tab or window. to refresh your session. Dismiss alert
+You must be signed in to change notification settings
+MultiPaxos and Disk Paxos in TLA+ and PlusCal
+### License
+You must be signed in to change notification settings
+# nano-o/MultiPaxos
+## Folders and files
+Name| Name| Last commit message| Last commit date
+## Latest commit
+## History
+## Repository files navigation
+# MultiPaxos
+A formalization of the Multi-Paxos algorithm. Heavily inspired by a few of Leslie Lamport's papers.
+Also contains a formalization of Disk Paxos in PlusCal.
+## About
+MultiPaxos and Disk Paxos in TLA+ and PlusCal
+### Resources
+### License
+### Uh oh!
+There was an error while loading. .
+### Stars
+### Watchers
+### Forks
+No releases published
+No packages published
+## Languages
+(C) 2026 GitHub, Inc.
+* Do not share my personal information
+You can’t perform that action at this time.

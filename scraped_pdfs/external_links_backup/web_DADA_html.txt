@@ -1,0 +1,83 @@
+Source URL: https://research.nicola-santoro.com/DADA.html
+Final URL: https://research.nicola-santoro.com/DADA.html
+================================================================================
+
+<html><head> 
+     <link rel="stylesheet" type="text/css" href="style.css"><title>Nicola Santoro: Design
+     and Analysis of Distributed Algorithms </title></head> 
+     
+     <meta name="Keywords" content="distributed algorithms, distributed computing, network computing, communication complexity, decentralized, protocols">
+     
+     
+<body>
+
+<h1>Design
+     and Analysis of Distributed Algorithms</h1>
+<br>
+<table COLS=2 WIDTH="100%" >
+
+<tbody>
+
+<tr>
+<hr WIDTH="100%">
+
+<th class="grey"  colspan=2>
+<h3><font color="#4618C6">   </font></h3>
+<br>
+
+</th>
+</tr>
+
+
+<tr>
+
+<td>
+<a 
+href="http://ca.wiley.com/WileyCDA/WileyTitle/productCd-0471719978,descCd-description.html">
+<img SRC="DADA.jpg" BORDER=0 height=274 width=181> </a>
+<br>
+<hr>
+<a href="index.html">NS home</a> 
+</td>
+
+
+<td> 
+
+<ul>
+<br>
+<li>
+<a href="DADA-Preface.html">Introduction</a> 
+</li>
+
+<br>
+<li>
+<a href="DADA-ToC.html">Table of Contents </a> </li>
+</li>
+
+<br>
+<li>
+<a href="DADA-Chapters.html">Description of Chapters</a> 
+</li>
+
+
+<br>
+<li>
+<a href="DADA-Auxiliary.html">
+Auxiliary Material </a> </li>
+</li>
+
+<br>
+<li>
+<a href="DADA-Errata.pdf">
+ERRATA CORRIGE </a> </li>
+</li>
+
+</ul>
+</td>
+
+</tr>
+
+
+</tbody></table>
+
+</body></html>

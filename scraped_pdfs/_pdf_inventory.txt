@@ -1,0 +1,39 @@
+PDF Links Inventory
+================================================================================
+
+Project: Chameneos
+Model: Chameneos
+URL: https://cedric.cnam.fr/fichiers/RC474.pdf
+--------------------------------------------------------------------------------
+Project: diskpaxos
+Model: DiskSynod
+URL: https://lamport.azurewebsites.net/pubs/disk-paxos.pdf
+--------------------------------------------------------------------------------
+Project: diskpaxos
+Model: DiskSynod
+URL: https://lamport.azurewebsites.net/pubs/disk-paxos.pdf
+--------------------------------------------------------------------------------
+Project: diskpaxos
+Model: HDiskSynod
+URL: https://lamport.azurewebsites.net/pubs/disk-paxos.pdf
+--------------------------------------------------------------------------------
+Project: diskpaxos
+Model: HDiskSynod
+URL: https://lamport.azurewebsites.net/pubs/disk-paxos.pdf
+--------------------------------------------------------------------------------
+Project: diskpaxos
+Model: Synod
+URL: https://lamport.azurewebsites.net/pubs/disk-paxos.pdf
+--------------------------------------------------------------------------------
+Project: diskpaxos
+Model: Synod
+URL: https://lamport.azurewebsites.net/pubs/disk-paxos.pdf
+--------------------------------------------------------------------------------
+Project: raft
+Model: raft
+URL: https://raft.github.io/raft.pdf
+--------------------------------------------------------------------------------
+Project: raft
+Model: raft_clean
+URL: https://raft.github.io/raft.pdf
+--------------------------------------------------------------------------------

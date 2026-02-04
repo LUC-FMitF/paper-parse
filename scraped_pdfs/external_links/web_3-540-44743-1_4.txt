@@ -1,0 +1,98 @@
+Source URL: https://link.springer.com/chapter/10.1007/3-540-44743-1_4
+Final URL: https://link.springer.com/chapter/10.1007/3-540-44743-1_4
+================================================================================
+
+3. Conference paper
+# Consensus in One Communication Step
+First Online: 01 January 2001
+Cite this conference paper
+Parallel Computing Technologies ](/book/10.1007/3-540-44743-1) (PaCT 2001)
+Part of the book series: ((LNCS,volume 2127))
+Included in the following conference series:
+## Abstract
+This paper presents a very simple consensus protocol that converges in a single communication step in favorable circumstances. Those situations occur when “enough” processes propose the same value. (“Enough” means “at least (n - f)” where f is the maximum number of processes that can crash in a set of n processes). The protocol requires f n/3. It is shown that this requirement is necessary. Moreover, if all the processes that propose a value do propose the same value, the protocol always terminates in one communication step. It is also shown that additional assumptions can help weaken the f n/3 requirement to f n/2.
+This author is supported by a grant of the CNPq/Brazil #200323-97.
+This is a preview of subscription content, to check access.
+## Access this chapter
+from $39.99 /Month
+Starting from 10 chapters or articles per month
+Access and download chapters and articles from more than 300k books and 2,500 journals
+## Buy Now
+Price excludes VAT (USA)
+Price excludes VAT (USA)
+Price excludes VAT (USA)
+Compact, lightweight edition
+Dispatched in 3 to 5 business days
+Free shipping worldwide -
+Tax calculation will be finalised at checkout
+Purchases are for personal use only
+## Preview
+Unable to display preview.
+Unable to display preview.
+### Similar content being viewed by others
+### Explore related subjects
+Discover the latest articles, books and news in related subjects, suggested using machine learning.
+## References
+1. Aguilera M.K. and Toueg S., Failure Detection and Randomization: a Hybrid Approach to Solve Consensus. SIAM Journal of Computing, 28(3):890–903, 1998.
+2. Ben-Or M., Another Advantage of Free Choice: Completely Asynchronous Agreement Protocols. 2nd ACM Symposium on Principles of Distributed Computing, (PODC’83), Montréal (CA), pp. 27–30, 1983.
+3. Chandra T. and Toueg S., Unreliable Failure Detectors for Reliable Distributed Systems. Journal of the ACM, 43(2):225–267, 1996.
+4. Fischer M.J., Lynch N. and Paterson M.S., Impossibility of Distributed Consensus with One Faulty Process. Journal of the ACM, 32(2):374–382, 1985.
+5. Gray J. and Reuter A., Transaction Processing: Concepts and Techniques. Morgan Kaufmann, 1993.
+6. Guerraoui R., Hurfin M., Mostefaoui A., Oliveira R., Raynal M. and Schiper A., Consensus in Asynchronous Distributed Systems: a Concise Guided Tour. In Advances in Distributed Systems, Springer-Verlag LNCS #1752 (Krakowiak S. and Shrivastava S. Eds), pp. 33–47, 2000.
+7. Mostefaoui A., Rajsbaum S. and Raynal M., Conditions on Input Vectors for Consensus Solvability in Asynchronous Distributed Systems. Proc. 33rd ACM Symposium on Theory of Computing (STOC’01), ACM Press, Crete (Greece), July 2001.
+8. Mostefaoui A., Rajsbaum S., Raynal M. and Roy M., A Hierarchy of Conditions for Consensus Solvability. Proc. 20th ACM Symposium on Principles of Distributed Computing (PODC’01), ACM Press, Newport (RI), August 2001.
+9. Mostefaoui A., Rajsbaum S., Raynal M. and Roy M., Condition-Based Protocols for Set Agreement Problems. Research Report #1393, IRISA, University of Rennes, France, April 2001, 21 pages. .
+10. Mostefaoui A., Rajsbaum S., Raynal M. and Roy M., Efficient Condition-Based Consensus. 8th Int. Colloquium on Structural Information and Communication Complexity (SIROCCO’00), Carleton Univ. Press, Val de Nuria, Catalonia (Spain), June 2001.
+11. Mostéfaoui A. and Raynal M., Solving Consensus Using Chandra-Toueg’s Unreliable Failure Detectors: a General Quorum-Based Approach. 13th Int. Symposium on DIStributed Computing (DISC’99), Springer-Verlag LNCS #1693 (P. Jayanti Ed.), pp. 49–63, 1999.
+12. Mostéfaoui A., Raynal M. and Tronel F., The Best of Both Worlds: a Hybrid Approach to Solve Consensus. Int. Conference on Dependable Systems and Networks (DSN’00, Formerly FTCS), IEEE Computer Society Press, New-York City, pp. 513–522, June 2000.
+## Author information
+### Authors and Affiliations
+1. IRISA, Université de Rennes 1, Campus de Beaulieu, 35042, Rennes, France
+Francisco Brasileiro, Fabíola Greve, Achour Mostefaoui & Michel Raynal
+1. Francisco Brasileiro
+2. Fabíola Greve
+3. Achour Mostefaoui
+4. Michel Raynal
+## Editor information
+### Editors and Affiliations
+1. Supercomputer Software Department, ICMand MG SB RAS, pr. Lavrentiev 6, 630090, Novosibirsk, Russia
+## Rights and permissions
+## Copyright information
+© 2001 Springer-Verlag Berlin Heidelberg
+## About this paper
+### Cite this paper
+### Download citation
+Published: 24 August 2001
+Publisher Name: Springer, Berlin, Heidelberg
+Print ISBN: 978-3-540-42522-9
+Online ISBN: 978-3-540-44743-6
+### Share this paper
+Anyone you share the following link with will be able to read this content:
+Sorry, a shareable link is not currently available for this article.
+Copy shareable link to clipboard
+Provided by the Springer Nature SharedIt content-sharing initiative
+### Keywords
+## Publish with us
+### Profiles
+1. Francisco Brasileiro
+## Access this chapter
+from $39.99 /Month
+Starting from 10 chapters or articles per month
+Access and download chapters and articles from more than 300k books and 2,500 journals
+## Buy Now
+Price excludes VAT (USA)
+Price excludes VAT (USA)
+Price excludes VAT (USA)
+Compact, lightweight edition
+Dispatched in 3 to 5 business days
+Free shipping worldwide -
+Tax calculation will be finalised at checkout
+Purchases are for personal use only
+## Search
+### Discover content
+### Publish with us
+### Products and services
+### Our brands
+Consortium of Academic Research Libraries in Illinois (CARLI) (3000124689) - Loyola University Libraries (3000134652)
+(C) 2026 Springer Nature
+[DOI]: Digital Object Identifier

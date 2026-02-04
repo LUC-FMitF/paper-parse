@@ -1,0 +1,45 @@
+Source URL: https://github.com/ongardie/raft.tla
+Final URL: https://github.com/ongardie/raft.tla
+================================================================================
+
+# Search code, repositories, users, issues, pull requests...
+# Provide feedback
+We read every piece of feedback, and take your input very seriously.
+Cancel Submit feedback
+# Saved searches
+## Use saved searches to filter your results more quickly
+To see all available qualifiers, see our .
+Cancel Create saved search
+You signed in with another tab or window. to refresh your session. You signed out in another tab or window. to refresh your session. You switched accounts on another tab or window. to refresh your session. Dismiss alert
+You must be signed in to change notification settings
+TLA+ specification for the Raft consensus algorithm
+You must be signed in to change notification settings
+# ongardie/raft.tla
+## Folders and files
+Name| Name| Last commit message| Last commit date
+## Latest commit
+## History
+## Repository files navigation
+Formal TLA+ specification for the . This is slightly updated compared to the dissertation version.
+For more information, see Chapter 8 (Correctness) and Appendix B (Safety proof and formal specification) in .
+If you're trying to run the TLA+ model checker on this specification, check out Jin Li's changes in .
+Copyright 2014 Diego Ongaro.
+This work is licensed under the Creative Commons Attribution-4.0 International License .
+## About
+TLA+ specification for the Raft consensus algorithm
+### Resources
+### Uh oh!
+There was an error while loading. .
+### Stars
+### Watchers
+### Forks
+No releases published
+No packages published
+### Uh oh!
+There was an error while loading. .
+### Uh oh!
+There was an error while loading. .
+## Languages
+(C) 2026 GitHub, Inc.
+* Do not share my personal information
+You can’t perform that action at this time.

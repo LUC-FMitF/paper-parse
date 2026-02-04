@@ -1,0 +1,83 @@
+PDF Scraper for Comment Ratios Dataset
+================================================================================
+Input CSV: /home/espencer2/Papers-dataset/Comment Ratios Dataset(Comments Ratio).csv
+Output directory: /home/espencer2/FormaLLM/scraped_pdfs
+
+Processing CSV file...
+
+================================================================================
+Project: Chameneos, Model: Chameneos
+Found 1 PDF link(s):
+  - https://cedric.cnam.fr/fichiers/RC474.pdf
+    Downloading...
+    Converting to text...
+    ✓ Saved to: /home/espencer2/FormaLLM/scraped_pdfs/Chameneos_Chameneos_RC474.txt
+
+================================================================================
+Project: diskpaxos, Model: DiskSynod
+Found 1 PDF link(s):
+  - https://lamport.azurewebsites.net/pubs/disk-paxos.pdf
+    Downloading...
+    Converting to text...
+    ✓ Saved to: /home/espencer2/FormaLLM/scraped_pdfs/diskpaxos_DiskSynod_disk-paxos.txt
+
+================================================================================
+Project: diskpaxos, Model: DiskSynod
+Found 1 PDF link(s):
+  - https://lamport.azurewebsites.net/pubs/disk-paxos.pdf
+    Already exists: /home/espencer2/FormaLLM/scraped_pdfs/diskpaxos_DiskSynod_disk-paxos.txt
+
+================================================================================
+Project: diskpaxos, Model: HDiskSynod
+Found 1 PDF link(s):
+  - https://lamport.azurewebsites.net/pubs/disk-paxos.pdf
+    Downloading...
+    Converting to text...
+    ✓ Saved to: /home/espencer2/FormaLLM/scraped_pdfs/diskpaxos_HDiskSynod_disk-paxos.txt
+
+================================================================================
+Project: diskpaxos, Model: HDiskSynod
+Found 1 PDF link(s):
+  - https://lamport.azurewebsites.net/pubs/disk-paxos.pdf
+    Already exists: /home/espencer2/FormaLLM/scraped_pdfs/diskpaxos_HDiskSynod_disk-paxos.txt
+
+================================================================================
+Project: diskpaxos, Model: Synod
+Found 1 PDF link(s):
+  - https://lamport.azurewebsites.net/pubs/disk-paxos.pdf
+    Downloading...
+    Converting to text...
+    ✓ Saved to: /home/espencer2/FormaLLM/scraped_pdfs/diskpaxos_Synod_disk-paxos.txt
+
+================================================================================
+Project: diskpaxos, Model: Synod
+Found 1 PDF link(s):
+  - https://lamport.azurewebsites.net/pubs/disk-paxos.pdf
+    Already exists: /home/espencer2/FormaLLM/scraped_pdfs/diskpaxos_Synod_disk-paxos.txt
+
+================================================================================
+Project: raft, Model: raft
+Found 1 PDF link(s):
+  - https://raft.github.io/raft.pdf
+    Downloading...
+    Converting to text...
+    ✓ Saved to: /home/espencer2/FormaLLM/scraped_pdfs/raft_raft_raft.txt
+
+================================================================================
+Project: raft, Model: raft_clean
+Found 1 PDF link(s):
+  - https://raft.github.io/raft.pdf
+    Downloading...
+    Converting to text...
+    ✓ Saved to: /home/espencer2/FormaLLM/scraped_pdfs/raft_raft_clean_raft.txt
+
+================================================================================
+SUMMARY
+================================================================================
+Total rows processed: 386
+Rows with PDF links: 9
+Total PDF links found: 9
+Successful downloads: 9
+Failed downloads: 0
+
+Inventory saved to: /home/espencer2/FormaLLM/scraped_pdfs/_pdf_inventory.txt

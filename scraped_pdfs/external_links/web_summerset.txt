@@ -1,0 +1,104 @@
+Source URL: https://github.com/josehu07/summerset
+Final URL: https://github.com/josehu07/summerset
+================================================================================
+
+# Search code, repositories, users, issues, pull requests...
+# Provide feedback
+We read every piece of feedback, and take your input very seriously.
+Cancel Submit feedback
+# Saved searches
+## Use saved searches to filter your results more quickly
+To see all available qualifiers, see our .
+Cancel Create saved search
+You signed in with another tab or window. to refresh your session. You signed out in another tab or window. to refresh your session. You switched accounts on another tab or window. to refresh your session. Dismiss alert
+You must be signed in to change notification settings
+Distributed, Replicated, Protocol-generic Key-value Store in Async Rust For SMR Protocols Research 🌅
+### License
+You must be signed in to change notification settings
+# josehu07/summerset
+## Folders and files
+Name| Name| Last commit message| Last commit date
+## Latest commit
+## History
+## Repository files navigation
+# Summerset ](/josehu07/summerset/blob/main/publish/README-logo.png)
+Summerset is a distributed, replicated, protocol-generic key-value store supporting a wide range of state machine replication (SMR) protocols for research.
+author = {Hu, Guanzhou},
+title = {Cloud Consensus Protocols With Optimistic Connectivity},
+journal = {ProQuest Dissertations and Theses},
+keywords = {Cloud storage; Consensus protocols; Distributed systems; Formal methods; Optimistic connectivity; Computer science; Computer engineering; Information technology; 0489:Information Technology; 0984:Computer science; 0464:Computer Engineering},
+isbn = {9798286499199},
+language = {English},
+note = {Copyright - Database copyright ProQuest LLC; ProQuest does not claim copyright in the individual underlying works; Last updated - 2025-08-01},
+List of currently implemented protocols... Protocol | Description | Link
+RepNothing | Simplest protocol with no replication | -
+SimplePush | Pushing to peers w/o consistency guarantees | -
+ChainRep | Bare implementation of Chain Replication |
+MultiPaxos | Classic MultiPaxos w/ modern features |
+EPaxos | Leaderless-style Egalitarian Paxos |
+Raft | Raft with explicit log and strong leadership |
+RSPaxos | MultiPaxos w/ RS erasure code sharding |
+CRaft | Raft w/ erasure code sharding and fallback |
+Crossword | Quorum-shards tradeoff for dynamic payloads | tba
+QuorumLeases | Local reads at leaseholders when quiescent |
+Bodega | Always-local linearizable reads via roster leases | tba
+Formal TLA+ specification of some protocols are provided in tla+/.
+More exciting protocols, old and new, are actively being added!
+Why is Summerset different from other codebases...
+Async Rust : Summerset is written in Rust and demonstrates an orderly usage of async programming structures backed by the framework for distributed replication.
+Channel/event-based : Summerset adopts a channel-oriented, event-based system architecture; each replication protocol is basically just a set of event handlers plus a tokio::select! loop. The entire codebase contains 0 explicit usage of Mutex.
+Modularized : Common components of a distributed KV store, e.g. network transport and durable logger, as well as protocol-specific parallelism tasks, are cleanly separated from each other and connected through channels. This extends Go's philosophy of doing "synchronization by (low-cost) communication (of ownership transfers)".
+Protocol-generic : With the above points combined, Summerset is able (and strives) to support a set of different replication protocols in one codebase, with common functionalities abstracted out, leaving each protocol's implementation concise and to-the-point.
+These design choices make protocol implementation in Summerset rather straight-forward and understandable, without making a sacrifice on performance.
+Comments / issues / PRs / usage in your own projects are always welcome!
+## Build
+Install the latest if haven't. For nix:
+Build everything in debug or release (-r) mode:
+cargo build [-r] --workspace [--features ...]
+cargo test --workspace
+Generate & open documentation for the core library in browser:
+## Usage
+Summerset currently assumes a Linux environment and is tested on Ubuntu 24.04.
+### Launch a Cluster
+First, launch the cluster manager oracle (which only serves setup & testing purposes and does not participate in any of the protocol logic):
+cargo run [-r] -p summersetmanager -- -h
+Then, launch server replica executables:
+cargo run [-r] -p summersetserver -- -h
+The default logging level is set as >= info. To display debugging or even tracing logs, set the RUSTLOG environment variable to debug or trace, e.g.:
+RUSTLOG=debug cargo run ...
+### Run Client Endpoints
+To run a client endpoint executable:
+cargo run [-r] -p summersetclient -- -h
+Currently supported client utility modes include: repl for an interactive CLI, bench for performance benchmarking, tester for correctness testing, and mess for one-shot injection.
+### Helper Scripts
+Some helper scripts for running Summerset processes are provided. First, install uv and set up the environment:
+You can find the scripts for running Summerset processes locally in scripts/; use with:
+uv run -m scripts.localcluster.py -h
+uv run -m scripts.localclients.py -h
+And for a set of distributed machines (requiring correctly filled scripts/remotehosts.toml file):
+uv run -m scripts.distrcluster.py -h
+uv run -m scripts.distrclients.py -h
+Note that these scripts use sudo and assume specific ranges of available ports, so a Linux server machine environment is recommended.
+## Plans
+Please check out the page for to-do items planned for the codebase.
+Lore : is the name of an elvish archipelagic province in the Elder Scrolls series. The name also sounds like "a set of SMRs".
+## About
+Distributed, Replicated, Protocol-generic Key-value Store in Async Rust For SMR Protocols Research 🌅
+### Topics
+### Resources
+### License
+### Uh oh!
+There was an error while loading. .
+### Stars
+### Watchers
+### Forks
+No releases published
+No packages published
+### Uh oh!
+There was an error while loading. .
+### Uh oh!
+There was an error while loading. .
+## Languages
+(C) 2026 GitHub, Inc.
+Do not share my personal information
+You can’t perform that action at this time.

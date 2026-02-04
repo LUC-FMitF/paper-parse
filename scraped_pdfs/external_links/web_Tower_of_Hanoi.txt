@@ -1,0 +1,283 @@
+Source URL: https://en.wikipedia.org/wiki/Tower_of_Hanoi
+Final URL: https://en.wikipedia.org/wiki/Tower_of_Hanoi
+================================================================================
+
+! ! ](/wiki/MainPage)
+## Contents
+2 Solution Toggle Solution subsection
+2.1 Iterative solution
+2.1.1 Simpler statement of iterative solution
+2.2 Recursive solution
+2.2.1 Logical analysis of the recursive solution
+2.2.2 Non-recursive solution
+2.3 Binary solution
+2.4 Gray-code solution
+3 Graphical representation
+4 Variations Toggle Variations subsection
+4.1 Linear Hanoi
+4.2 Cyclic Hanoi
+4.3 With four pegs and beyond
+4.3.1 Frame–Stewart algorithm
+4.4 General shortest paths and the number 466/885
+4.5 Magnetic Hanoi
+4.6 Bicolor Towers of Hanoi
+4.7 Tower of Hanoy
+# Tower of Hanoi
+From Wikipedia, the free encyclopedia
+Mathematical puzzle game
+This article is about the mathematical disk game. For the card game, see . For the Vietnamese skyscraper, see .
+/wiki/File:TowerofHanoi.jpeg)A model set of the Tower of Hanoi (with 8 disks) ](/wiki/File:TowerofHanoi4.gif)An animated solution of the Tower of Hanoi puzzle for T(4, 3) ](/wiki/File:UniversumUNAM34.JPG)Tower of Hanoi interactive display at Mexico City's "Universum \(UNAM\)")
+The Tower of Hanoi (also called The problem of Benares Temple , or consisting of three rods and a number of disks of various , which can slide onto any rod. The puzzle begins with the disks stacked on one rod in order of decreasing size, the smallest at the top, thus approximating a shape. The objective of the puzzle is to move the entire stack to one of the other rods, obeying the following rules:[4]
+1. Only one disk may be moved at a time.
+2. Each move consists of taking the upper disk from one of the stacks and placing it on top of another stack or on an empty rod.
+3. No disk may be placed on top of a disk that is smaller than it.
+With three disks, the puzzle can be solved in seven moves. The minimum number of moves required to solve a Tower of Hanoi puzzle is 2 n − 1, where n is the number of disks.
+## Origins
+The puzzle was invented by the French , first presented in 1883 as a game discovered by "N. Claus (de Siam)" (an anagram of "Lucas d'Amiens"),, and claiming that according to legend, at a temple in have been carrying out the movement of the "Sacred Tower of ", consisting of 64 golden disks, according to the same rules as in the game, and that the completion of the tower would lead to the end of the world.[10] Numerous variations on this legend exist, regarding the ancient and mystical nature of the puzzle.[5]
+At a rate of one move per second, the minimum amount of time it would take to complete the 64 disks would be 264 − 1 seconds or 585 billion years, roughly 42 times the estimated current .[11]
+There are many variations on this legend. For instance, in some back stories, the temple is a , and the priests are . The temple or monastery may be in various locales including , and may be associated with any . In some versions, other elements are introduced, such as the fact that the tower was created at the beginning of the world, or that the priests or monks may make only one move per day.
+## Solution
+The puzzle can be played with any number of disks, although many toy versions have around 7 to 9 of them. The minimum number of moves required to solve a Tower of Hanoi puzzle with n disks is 2 n − 1.[12]
+### Iterative solution
+/wiki/File:Iterativealgorithmsolvinga6disksTowerofHanoi.gif)Animation of an iterative algorithm-solving 6-disk problem
+A simple solution for the toy puzzle is to alternate moves between the smallest piece and a non-smallest piece. When moving the smallest piece, always move it to the next position in the same direction (to the right if the starting number of pieces is even, to the left if the starting number of pieces is odd). If there is no tower position in the chosen direction, move the piece to the opposite end, but then continue to move in the correct direction. For example, if you started with three pieces, you would move the smallest piece to the opposite end, then continue in the left direction after that. When the turn is to move the non-smallest piece, there is only one legal move. Doing this will complete the puzzle in the fewest moves.[13]
+#### Simpler statement of iterative solution
+/wiki/File:Questionbook-new.svg)| This section needs additional citations for. Please help by in this section. Unsourced material may be challenged and removed. ( January 2024)_()
+The iterative solution is equivalent to repeated execution of the following sequence of steps until the goal has been achieved:
+Move one disk from peg A to peg B or vice versa, whichever move is legal.
+Move one disk from peg A to peg C or vice versa, whichever move is legal.
+Move one disk from peg B to peg C or vice versa, whichever move is legal.
+Following this approach, the stack will end up on peg B if the number of disks is odd and peg C if it is even.
+### Recursive solution
+/wiki/File:Questionbook-new.svg)| This section needs additional citations for. Please help by in this section. Unsourced material may be challenged and removed. ( January 2024)_()
+//upload.wikimedia.org/wikipedia/commons/2/20/TowerofHanoirecursionSMIL.svg)Illustration of a recursive solution for the Towers of Hanoi puzzle with 4 disks. In click a grey button to expand or collapse it.
+The key to solving a problem is to recognize that it can be broken down into a collection of smaller sub-problems, to each of which that same general solving procedure that we are seeking applies,] and the total solution is then found in some simple way from those sub-problems' solutions. Each of these created sub-problems being "smaller" guarantees that the base case(s) will eventually be reached. For the Towers of Hanoi:
+label the pegs A, B, C,
+let n be the total number of disks, and
+number the disks from 1 (smallest, topmost) to n (largest, bottom-most).
+Assuming all n disks are distributed in valid arrangements among the pegs; assuming there are m top disks on a source peg, and all the rest of the disks are larger than m , so they can be safely ignored; to move m disks from a source peg to a target peg using a spare peg, without violating the rules:
+1. Move m − 1 disks from the source to the spare peg, by the same general solving procedure. Rules are not violated, by assumption. This leaves the disk m as a top disk on the source peg.
+2. Move the disk m from the source to the target peg, which is guaranteed to be a valid move, by the assumptions — a simple step.
+3. Move the m − 1 disks that we have just placed on the spare, from the spare to the target peg by the same general solving procedure , so they are placed on top of the disk m without violating the rules.
+4. The base case is to move 0 disks (in steps 1 and 3), that is, do nothing—which does not violate the rules.
+The full Tower of Hanoi solution then moves n disks from the source peg A to the target peg C, using B as the spare peg.
+This approach can be given a rigorous mathematical proof with and is often used as an example of recursion when teaching programming.
+#### Logical analysis of the recursive solution
+/wiki/File:Questionbook-new.svg)| This section needs additional citations for. Please help by in this section. Unsourced material may be challenged and removed. ( January 2024)()
+As in many mathematical puzzles, finding a solution is made easier by solving a slightly more general problem: how to move a tower of h (height) disks from a starting peg f = A (from) onto a destination peg t = C (to), B being the remaining third peg and assuming t ≠ f. First, observe that the problem is symmetric for permutations of the names of the pegs (). If a solution is known moving from peg A to peg C , then, by renaming the pegs, the same solution can be used for every other choice of starting and destination peg. If there is only one disk (or even none at all), the problem is trivial. If h = 1, then move the disk from peg A to peg C. If h > 1, then somewhere along the sequence of moves, the largest disk must be moved from peg A to another peg, preferably to peg C. The only situation that allows this move is when all smaller h − 1 disks are on peg B. Hence, first all h − 1 smaller disks must go from A to B. Then move the largest disk and finally move the h − 1 smaller disks from peg B to peg C. The presence of the largest disk does not impede any move of the h − 1 smaller disks and can be temporarily ignored. Now the problem is reduced to moving h − 1 disks from one peg to another one, first from A to B and subsequently from B to C , but the same method can be used both times by renaming the pegs. The same strategy can be used to reduce the h − 1 problem to h − 2, h − 3, and so on until only one disk is left. This is called recursion. This algorithm can be schematized as follows.
+Identify the disks in order of increasing size by the natural numbers from 0 up to but not including h. Hence disk 0 is the smallest one, and disk h − 1 the largest one.
+The following is a procedure for moving a tower of h disks from a peg A onto a peg C , with B being the remaining third peg:
+1. If h > 1, then first use this procedure to move the h − 1 smaller disks from peg A to peg B.
+2. Now the largest disk, i.e. disk h can be moved from peg A to peg C.
+3. If h > 1, then again use this procedure to move the h − 1 smaller disks from peg B to peg C.
+By , it is easily proven that the above procedure requires the minimum number of moves possible and that the produced solution is the only one with this minimum number of moves. Using , the exact number of moves that this solution requires can be calculated by: 2 h − 1 {\displaystyle 2^{h}-1} !. This result is obtained by noting that steps 1 and 3 take T h − 1 {\displaystyle T{h-1}} ! moves, and step 2 takes one move, giving T h = 2 T h − 1 + 1 {\displaystyle T{h}=2T{h-1}+1} !.
+#### Non-recursive solution
+/wiki/File:Questionbook-new.svg)| This section needs additional citations for. Please help by in this section. Unsourced material may be challenged and removed. ( January 2024)()
+The list of moves for a tower being carried from one peg onto another one, as produced by the recursive algorithm, has many regularities. When counting the moves starting from 1, the ordinal of the disk to be moved during move m is the number of times m can be divided by 2. Hence every odd move involves the smallest disk. It can also be observed that the smallest disk traverses the pegs f , t , r , f , t , r , etc. for odd height of the tower and traverses the pegs f , r , t , f , r , t , etc. for even height of the tower. This provides the following algorithm, which is easier, carried out by hand, than the recursive algorithm.
+Move the smallest disk to the peg it has not recently come from.
+Move another disk legally (there will be only one possibility).
+For the very first move, the smallest disk goes to peg t if h is odd and to peg r if h is even.
+Disks whose ordinals have even parity move in the same sense as the smallest disk.
+Disks whose ordinals have odd parity move in opposite sense.
+If h is even, the remaining third peg during successive moves is t , r , f , t , r , f , etc.
+If h is odd, the remaining third peg during successive moves is r , t , f , r , t , f , etc.
+With this knowledge, a set of disks in the middle of an optimal solution can be recovered with no more state information than the positions of each disk:
+Call the moves detailed above a disk's "natural" move.
+Examine the smallest top disk that is not disk 0, and note what its only (legal) move would be: if there is no such disk, then we are either at the first or last move.
+If that move is the disk's "natural" move, then the disk has not been moved since the last disk 0 move, and that move should be taken.
+If that move is not the disk's "natural" move, then move disk 0.
+### Binary solution
+Disk positions for an n -disk puzzle can be determined directly from the representation of the move number, m. For example, all the details for move m =216 of an 8-disk Tower of Hanoi can be computed without any iteration or recursion, and without reference to any previous moves or distribution of disks. Conversely, given a legal disk distribution, the move number to achieve that distribution can be computed.
+Let the disks be labeled n , n -1,…,1, in decreasing size. Let the pegs A , B , and C be labeled 0, 1, and 2 respectively, with 0 always being the starting peg and 2 always being the ending peg. Further, let the bases for the pegs upon which the disks are stacked be labeled n +1, n +2, and n +3, for pegs 0, 1, and 2 respectively.
+The disk positions after move m can be mapped from the binary representation of m by the following rules:[14]
+There is 1 binary digit (bit) in m for each disk.
+The bitstring for m is read from left to right, and each bit can be used to map the location of the corresponding disk, from disk n to disk 1.
+The most significant (leftmost) bit represents the largest disk, disk n. A value of 0 indicates that the largest disk is on the starting peg 0 (A), while a 1 indicates that it is on the final peg 2 (C).
+1. Each disk is stacked on another disk, or an empty base, in opposite "Parity \(mathematics\)") order. That is to say: 5>4>3 (3 over 4 over 5) is valid; 5>4>2 (with 2 over 4) is invalid.
+2. Exactly 1 of the top labels (disk number or empty base) is even (for even n; otherwise exactly 1 is odd).
+3. A bit with the same value as the previous digit means that the corresponding disk is stacked on top of the previous disk. That is to say: a contiguous sequence of 1s or 0s means that the corresponding disks are all on the same peg.
+A bit with a different value than the previous one means that the corresponding disk is on another peg and not on the previous stack. Given 1) above, only 1 choice of the remaining 2 pegs is a legal placement. Note that after the placement of the first set of disks, every “placement round” starts and ends with 1 of the potential pegs having even parity, the other having odd.
+For example, in 8-disk Tower of Hanoi:
+Move 0 = 00000000.
+The largest disk (leftmost) bit is 0, so it is on the starting peg (0).
+All other disks are 0 as well, so they are stacked on top of it. Hence all disks are on the starting peg, in the puzzle's initial configuration.
+Move 25510 (28 − 1) = 11111111.
+The largest disk bit is 1, so it is on the final peg (2).
+All other disks are 1 as well, so they are stacked on top of it. Hence all disks are on the final peg and the puzzle is solved.
+Move 21610 = 11011000.
+The largest disk bit is 1, so disk 8 is on the final peg (2). Note that it sits on base number 11 (11>8).
+Disk 7 is also 1, so it is stacked on top of disk 8 (11>8>7).
+Disk 6 is 0, so it is on another peg. Peg 1 is empty but its base number is 10. The 6 disk cannot sit on the 10 base (both are even). Therefore disk 6 is placed on peg 0 (9>6).
+Disk 5 is 1, so it is on another peg. Since peg 2 is now topped with 7, it cannot go there. Therefore disk 5 is placed on peg 1 (10>5).
+Disk 4 is also 1, so it is stacked on top of disk 5 (10>5>4).
+Disk 3 is 0, so it is on another peg. Since peg 2 is topped with 7, it cannot go there. Disk 3 is placed on peg 0 (9>6>3).
+Disks 2 and 1 are also 0, so they are stacked on top of disk 3 (9>3>2>1).
+The source and destination pegs for the m th move (excluding move 0) can be found elegantly from the binary representation of m using . To use the syntax of the , move m is:
+from peg(m & m - 1) % 3 to peg ((m | m - 1) + 1) % 3.
+Another formulation for this is:
+from peg (m - (m & -m)) % 3 to peg (m + (m & -m)) % 3.
+These hold for odd n puzzles. For even n puzzles, the output references to pegs 1 and 2 need to be reversed.
+Furthermore, the single disk to be moved for any specific move is determined by the number of times the move count (m) can be divided by 2 (i.e. the number consecutive zero bits at the right of m), and then adding 1. In the example above for move 216, with 3 right hand 0s, disk 4 (3 + 1) is moved from peg 2 to peg 1.
+### Gray-code solution
+/wiki/File:Questionbook-new.svg)| This section needs additional citations for. Please help by in this section. Unsourced material may be challenged and removed. ( January 2024)_()
+The binary numeral system of gives an alternative way of solving the puzzle. In the Gray system, numbers are expressed in a binary combination of 0s and 1s, but rather than being a standard , the Gray code operates on the premise that each value differs from its predecessor by only one bit changed.
+If one counts in Gray code of a bit size equal to the number of disks in a particular Tower of Hanoi, begins at zero and counts up, then the bit changed each move corresponds to the disk to move, where the least-significant bit is the smallest disk, and the most-significant bit is the largest.
+Counting moves from 1 and identifying the disks by numbers starting from 0 in order of increasing size, the ordinal of the disk to be moved during move m is the number of times m can be divided by 2.
+This technique identifies which disk to move, but not where to move it to. For the smallest disk, there are always two possibilities. For the other disks there is always one possibility, except when all disks are on the same peg, but in that case either it is the smallest disk that must be moved or the objective has already been achieved. Luckily, there is a rule that does say where to move the smallest disk to. Let f be the starting peg, t the destination peg, and r the remaining third peg. If the number of disks is odd, the smallest disk cycles along the pegs in the order f → t → r → f → t → r , etc. If the number of disks is even, this must be reversed: f → r → t → f → r → t , etc.[15]
+The position of the bit change in the Gray code solution gives the size of the disk moved at each step: 1, 2, 1, 3, 1, 2, 1, 4, 1, 2, 1, 3, 1, 2, 1, ... (sequence in the ),, or one more than the power of 2 within the move number. In the , IntegerExponent[Range[2^8 - 1], 2] + 1 gives moves for the 8-disk puzzle.
+## Graphical representation
+The game can be represented by an #Undirectedgraph "Graph \(discrete mathematics\)"), the nodes representing distributions of disks and the edges representing moves. For one disk, the graph is a triangle:
+The graph for two disks is three triangles connected to form the corners of a larger triangle.
+A second letter is added to represent the larger disk. Clearly, it cannot initially be moved.
+The topmost small triangle now represents the one-move possibilities with two disks:
+The nodes at the vertices of the outermost triangle represent distributions with all disks on the same peg.
+For h + 1 disks, take the graph of h disks and replace each small triangle with the graph for two disks.
+For three disks the graph is:
+/w/index.php?title=File:Towerofhanoigraph.svg&lang=default) ](/wiki/File:Hanoi-Graph-7.svg)The game graph of level 7 shows the relatedness to the .
+call the pegs a, b, and c
+list disk positions from left to right in order of increasing size
+The sides of the outermost triangle represent the shortest ways of moving a tower from one peg to another one. The edge in the middle of the sides of the largest triangle represents a move of the largest disk. The edge in the middle of the sides of each next smaller triangle represents a move of each next smaller disk. The sides of the smallest triangles represent moves of the smallest disk.
+In general, for a puzzle with n disks, there are nodes in the graph; every node has three edges to other nodes, except the three corner nodes, which have two: it is always possible to move the smallest disk to one of the two other pegs, and it is possible to move one disk between those two pegs except in the situation where all disks are stacked on one peg. The corner nodes represent the three cases where all the disks are stacked on one peg. The diagram for n + 1 disks is obtained by taking three copies of the n -disk diagram—each one representing all the states and moves of the smaller disks for one particular position of the new largest disk—and joining them at the corners with three new edges, representing the only three opportunities to move the largest disk. The resulting figure thus has 3 n +1 nodes and still has three corners remaining with only two edges.
+As more disks are added, the graph representation of the game will resemble a figure, the . It is clear that the great majority of positions in the puzzle will never be reached when using the shortest possible solution; indeed, if the priests of the legend are using the longest possible solution (without re-visiting any position), it will take them 364 − 1 moves, or more than 1023 years.
+The longest non-repetitive way for three disks can be visualized by erasing the unused edges:
+Incidentally, this longest non-repetitive path can be obtained by forbidding all moves from a to c.
+The for three disks is:
+The graphs clearly show that:
+From every arbitrary distribution of disks, there is exactly one shortest way to move all disks onto one of the three pegs.
+Between every pair of arbitrary distributions of disks there are one or two different shortest paths.
+From every arbitrary distribution of disks, there are one or two different longest non-self-crossing paths to move all disks to one of the three pegs.
+Between every pair of arbitrary distributions of disks there are one or two different longest non-self-crossing paths.
+Let N h be the number of non-self-crossing paths for moving a tower of h disks from one peg to another one. Then:
+N h +1 = (N h)2 \+ (N h)3
+This gives N h to be 2, 12, 1872, 6563711232, ... (sequence in the )
+## Variations
+### Linear Hanoi
+If all moves must be between adjacent pegs (i.e. given pegs A, B, C, one cannot move directly between pegs A and C), then moving a stack of n disks from peg A to peg C takes 3 n − 1 moves. The solution uses all 3n valid positions, always taking the unique move that does not undo the previous move. The position with all disks at peg B is reached halfway, i.e. after (3 n − 1) / 2 moves.[17][18]
+### Cyclic Hanoi
+In Cyclic Hanoi, we are given three pegs (A, B, C), which are arranged as a circle with the clockwise and the counterclockwise directions being defined as A – B – C – A and A – C – B – A, respectively. The moving direction of the disk must be clockwise.[19] It suffices to represent the sequence of disks to be moved. The solution can be found using two mutually recursive procedures:
+To move n disks counterclockwise to the neighbouring target peg:
+1. move n − 1 disks counterclockwise to the target peg
+2. move disk #n one step clockwise
+3. move n − 1 disks clockwise to the start peg
+4. move disk #n one step clockwise
+5. move n − 1 disks counterclockwise to the target peg
+To move n disks clockwise to the neighbouring target peg:
+1. move n − 1 disks counterclockwise to a spare peg
+2. move disk #n one step clockwise
+3. move n − 1 disks counterclockwise to the target peg
+Let C(n) and A(n) represent moving n disks clockwise and counterclockwise, then we can write down both formulas:
+| C(n) = A(n−1) n A(n−1) | and | A(n) = A(n−1) n C(n−1) n A(n−1).
+Thus | C(1) = 1 | and | A(1) = 1 1,
+| C(2) = 1 1 2 1 1 | and | A(2) = 1 1 2 1 2 1 1.
+The solution for the Cyclic Hanoi has some interesting properties:
+1. The move-patterns of transferring a tower of disks from a peg to another peg are symmetric with respect to the center points.
+2. The smallest disk is the first and last disk to move.
+3. Groups of the smallest disk moves alternate with single moves of other disks.
+4. The number of disks moves specified by C(n) and A(n) are minimal.
+### With four pegs and beyond
+Although the three-peg version has a simple recursive solution long been known, the optimal solution for the Tower of Hanoi problem with four pegs (called Reve's puzzle) was not verified until 2014, by Bousch.[20]
+However, in case of four or more pegs, the Frame–Stewart algorithm is known without proof of optimality since 1941.[21]
+For the formal derivation of the exact number of minimum moves required to solve the problem by applying the Frame–Stewart algorithm (and other equivalent methods), see the following paper.[22]
+For other variants of the four-peg Tower of Hanoi problem, see Paul Stockmeyer's survey paper.[23]
+The so-called Towers of Bucharest and Towers of Klagenfurt game configurations yield and Gray codes.[24]
+#### Frame–Stewart algorithm
+The Frame–Stewart algorithm is described below:
+Let n {\displaystyle n} ! be the number of disks.
+Let r {\displaystyle r} ! be the number of pegs.
+Define T ( n , r ) {\displaystyle T(n,r)} ! to be the minimum number of moves required to transfer n disks using r pegs.
+The algorithm can be described recursively:
+1. For some k {\displaystyle k} !, 1 ≤ k n {\displaystyle 1\leq k ∞ {\displaystyle n\to \infty } !. Thus intuitively, we could interpret the fraction of 466 / 885 ≈ 52.6 % {\displaystyle 466/885\approx 52.6\%} ! as representing the ratio of the labor one has to perform when going from a randomly chosen configuration to another randomly chosen configuration, relative to the difficulty of having to cross the "most difficult" path of length 2 n − 1 {\displaystyle 2^{n}-1} ! which involves moving all the disks from one peg to another. An alternative explanation for the appearance of the constant 466/885, as well as a new and somewhat improved algorithm for computing the shortest path, was given by Romik.[31]
+### Magnetic Hanoi
+In Magnetic Tower of Hanoi, each disk has two distinct sides North and South (typically colored "red" and "blue"). Disks must not be placed with the similar poles together—magnets in each disk prevent this illegal move. Also, each disk must be flipped as it is moved.
+/wiki/File:BTOHIC.jpg)Initial configuration of bicolor Towers of Hanoi (n=4)
+### Bicolor Towers of Hanoi
+This variation of the famous Tower of Hanoi puzzle was offered to grade 3–6 students at 2ème Championnat de France des Jeux Mathématiques et Logiques held in July 1988.[32]
+/wiki/File:BTOHFC.jpg)Final configuration of bicolor Towers of Hanoi (n=4)
+The rules of the puzzle are essentially the same: disks are transferred between pegs one at a time. At no time may a bigger disk be placed on top of a smaller one. The difference is that now for every size there are two disks: one black and one white. Also, there are now two towers of disks of alternating colors. The goal of the puzzle is to make the towers monochrome (same color). The biggest disks at the bottom of the towers are assumed to swap positions.
+### Tower of Hanoy
+A variation of the puzzle has been adapted as a "Solitaire \(game\)") with nine playing cards under the name .[33][34] It is not known whether the altered spelling of the original name is deliberate or accidental.[35]
+## Applications
+/wiki/File:Palladiumnanosheetonsiliconwafer.jpg)3D AFM topographic image of multilayered palladium nanosheet on silicon wafer, with Tower of Hanoi-like structure[36]
+The Tower of Hanoi is frequently used in psychological research on . There also exists a variant of this task called for neuropsychological diagnosis and treatment of disorders of .[37]
+Zhang and Norman") in task design. They demonstrated an impact on user performance by changing the way that the rules of the game are represented, using variations in the physical design of the game components. This knowledge has impacted on the development of the TURF framework.
+The Tower of Hanoi is also used as a when performing computer data backups where multiple tapes/media are involved.[40]
+The Tower of Hanoi is also used as a test by neuropsychologists trying to evaluate deficits.[41]
+In 2010, researchers published the results of an experiment that found that the ant species were successfully able to solve the 3-disk version of the Tower of Hanoi problem through non-linear dynamics and pheromone signals.[42]
+In 2014, scientists synthesized multilayered nanosheets with a Tower of Hanoi-like structure.[36]
+In 2025, researchers used the Tower of Hanoi and other puzzles to test the reasoning ability of programs. The researchers found that the leading AI models, including , "Claude \(language model\)"), and , struggled with solving a Tower of Hanoi at the level of 7 rings, getting less than 80% accuracy, and failing completely to solve a Tower of Hanoi with 8 rings. Even in instances in which the researchers gave the AI models the solution algorithm, they still failed. Based on this performance, the researchers concluded that AI systems collapse when complexity rises, indicating that they're unable to handle tasks that push them beyond the distribution of their training data, which also casts doubt on the ability of those models to advance to the level of .[43][44]
+## In popular culture
+In the science fiction story "Now Inhale", by , a human is held prisoner on a planet where the local custom is to make the prisoner play a game until it is won or lost before his execution. The protagonist knows that a rescue ship might take a year or more to arrive, so he chooses to play Towers of Hanoi with 64 disks. This story makes reference to the legend about the Buddhist monks playing the game until the end of the world.[45][46][47]
+In the 1966 story , the villain forces to play a ten-piece, -move Tower of Hanoi game entitled The Trilogic Game with the pieces forming a pyramid shape when stacked.[46][48]
+In 2007, the concept of the Towers Of Hanoi problem was used in in puzzles 6, 83, and 84, but the disks had been changed to pancakes. The puzzle was based around a dilemma where the chef of a restaurant had to move a pile of pancakes from one plate to the other with the basic principles of the original puzzle (i.e. three plates that the pancakes could be moved onto, not being able to put a larger pancake onto a smaller one, etc.)
+In the 2011 film _ , this puzzle, called in the film the "Lucas Tower", is used as a test to study the ").[46]
+The puzzle is featured regularly in and games. Since it is easy to implement, and easily recognised, it is well suited to use as a puzzle in a larger graphical game (e.g. "Star Wars: Knights of the Old Republic \(video game\)") and "Mass Effect \(video game\)"))..[50]
+A 15-disk version of the puzzle appears in the game as a lock to a tomb. The player has the option to click through each move of the puzzle in order to solve it, but the game notes that it will take moves to complete. If an especially dedicated player does click through to the end of the puzzle, it is revealed that completing the puzzle does not unlock the door.
+This was first used as a challenge in Survivor Thailand in 2002 but rather than rings, the pieces were made to resemble a temple. Sook Jai threw the challenge to get rid of Jed even though Shii-Ann knew full well how to complete the puzzle. The problem is featured as part of a reward challenge in a . Both players ( and "Coach \(Survivor contestant\)")) struggled to understand how to solve the puzzle and are aided by their fellow tribe members.
+In 2025, the puzzle also appears in the beginning of the Mega Duel in the Finale.
+## See also
+/wiki/File:Jigsaw.svg "Jigsaw piece")
+"Recursion \(computer science\)")
+"", 1953 Arthur C. Clark short story with a similar premise to the game's framing story
+## Notes
+1. ^ . oeis.org. Retrieved 2021-09-03.
+2. ^ Hofstadter, Douglas R. (1985). . New York: Basic Books. "ISBN \(identifier\)") .
+3. ^ Cohn, Ernst M. (1963). . The Mathematics Teacher. 56 (2). National Council of Teachers of Mathematics: 84. "Doi \(identifier\)"):. "ISSN \(identifier\)") . Retrieved 9 March 2021.
+4. ^ Weisstein, Eric W. . mathworld.wolfram.com. Retrieved 2023-10-20.
+5. ^ a b Hinz, Andreas M.; Klavžar, Sandi; Milutinović, Uroš; Petr, Ciril (2013-01-31). . Springer. "ISBN \(identifier\)") .
+6. ^ Stockmeyer, Paul K. (PDF). Retrieved 2024-02-21.
+7. ^ de Parville, Henri (1883-12-27). . Journal des débats. Retrieved 2024-02-21.
+8. ^ (1889). (in French). Paris: Chambon et Baye. Retrieved 2024-01-27.
+9. ^ (1892). (in French). Vol. 3\. Librairie Albert Blanchard, 1979. p. 58.
+10. ^ Stockmeyer, Paul K. . Retrieved 2024-02-21.
+11. ^ (2001). 1000 playthinks: puzzles, paradoxes, illusions & games. Workman. "ISBN \(identifier\)") .
+12. ^ Petković, Miodrag (2009). Famous Puzzles of Great Mathematicians. AMS Bookstore. p. 197\. "ISBN \(identifier\)") .
+13. ^ Troshkin, M. "Doomsday Comes: A Nonrecursive Analysis of the Recursive Towers-of-Hanoi Problem". Focus (in Russian). 95 (2): 10–14.
+14. ^ T.R. Walsh, The Towers of Hanoi revisited: moving the rings by counting the moves , Information Processing Letters, 1982, Vol.15, 64-67. Netherlands.
+15. ^ Miller, Charles D. (2000). "Ch. 4: Binary Numbers and the Standard Gray Code". (9 ed.). Addison Wesley Longman. "ISBN \(identifier\)") . Archived from on 2004-08-21.
+16. ^ Gros, L. (1872). Théorie du Baguenodier. Lyon: Aimé Vingtrinier.
+17. ^ . math.toronto.edu. Retrieved 2023-07-28.
+18. ^ Hinz, Andreas M.; Klavzar, Sandi; Milutinovic, Uros; Petr, Ciril; Stewart, Ian (2013). The Tower of Hanoi – Myths and Maths (1st ed.). Basel: . pp. 241–259\. "ISBN \(identifier\)") .
+19. ^ Gedeon, T. D. (1996). "The Cyclic Towers of Hanoi: An Iterative Solution Produced by Transformation". The Computer Journal. 39 (4): 353–356\. "Doi \(identifier\)"):.
+20. ^ Bousch, T. (2014). (PDF). Bull. Belg. Math. Soc. Simon Stevin. 21 (5): 895–912\. "Doi \(identifier\)"):. "S2CID \(identifier\)") . Archived from (PDF) on 2017-09-21.
+21. ^ Stewart, B. M.; Frame, J. S. (March 1941). "Solution to advanced problem 3819". American Mathematical Monthly. 48 (3): 216–9\. "Doi \(identifier\)"):. "JSTOR \(identifier\)") .
+22. ^ Klavzar, Sandi; Milutinovi, Uro; Petrb, Ciril (2002). (Postscript). Congressus Numerantium. 102.
+23. ^ Stockmeyer, Paul (1994). (Postscript). Congressus Numerantium. 102 : 3–12.
+24. ^ Herter, Felix; Rote, Günter (2018-11-14) (PDF). "Theoretical Computer Science \(journal\)"). 748. Berlin, Germany: 40–54\. "ArXiv \(identifier\)"):. "Doi \(identifier\)"):. "ISSN \(identifier\)") . "S2CID \(identifier\)") . (PDF) from the original on 2020-12-16. Retrieved 2020-12-16. (15/18/19/24 pages)
+25. ^ . April 5, 2014. Retrieved July 22, 2015.
+26. ^ (PDF). Retrieved January 31, 2016.
+27. ^ Hinz, A. (1989). "The Tower of Hanoi". L'Enseignement Mathématique. 35 : 300–303\. "Doi \(identifier\)"):.
+28. ^ Hinz 1989, p. 307.
+29. ^ Chan, T. (1988). "A statistical analysis of the towers of Hanoi problem". Internat. J. Comput. Math. 28 (1–4): 57–65\. "Doi \(identifier\)"):.
+30. ^ Stewart, Ian (2004). Another Fine Math You've Got Me Into... Courier Dover. "ISBN \(identifier\)") .
+31. ^ Romik, D. (2006). "Shortest paths in the Tower of Hanoi graph and finite automata". . 20 (3): 610–622\. "ArXiv \(identifier\)"):. "Doi \(identifier\)"):. "S2CID \(identifier\)") .
+32. ^ Prasad Vithal Chaugule (2015). low.pdf) (PDF). Recreational Mathematics Magazine (4): 37–48\. "ISSN \(identifier\)") .
+33. ^ Arnold, Peter (2003-05-28). . Sterling Publishing Company. "ISBN \(identifier\)") .
+34. ^ Hedges, Sid G. (2018-03-06). . Read Books Ltd. "ISBN \(identifier\)") .
+35. ^ . bbcmicro.co.uk. Retrieved 2020-10-17.
+36. ^ a b Yin, Xi; Liu, Xinhong; Pan, Yung-Tin; Walsh, Kathleen A.; Yang, Hong (November 4, 2014). "Hanoi Tower-like Multilayered Ultrathin Palladium Nanosheets". Nano Letters. 14 (12): 7188–94\. "Bibcode \(identifier\)"):. "Doi \(identifier\)"):. "PMID \(identifier\)") .
+37. ^ Shallice, T. (1982-06-25). . Philosophical Transactions of the Royal Society of London. B, Biological Sciences. 298 (1089): 199–209\. "Bibcode \(identifier\)"):. "Doi \(identifier\)"):. "ISSN \(identifier\)") . "PMID \(identifier\)") .
+38. ^ Zhang, J (1994). (PDF). Cognitive Science. 18 : 87–122\. "Doi \(identifier\)"):.
+39. ^ Zhang, Jiajie; Walji, Muhammad F. (2011). . Journal of Biomedical Informatics. 44 (6): 1056–67\. "Doi \(identifier\)"):. "PMID \(identifier\)") .
+40. ^ Ruiz, Dirk; Newell, Allen (1989-06-01). (Report). Fort Belvoir, VA: Defense Technical Information Center. "Doi \(identifier\)"):.
+41. ^ Beers, S. R.; Rosenberg, D. R.; Dick, E. L.; Williams, T.; O'Hearn, K. M.; Birmaher, B.; Ryan, C. M. (1999). . The American Journal of Psychiatry. 156 (5): 777–9\. "Doi \(identifier\)"):. "PMID \(identifier\)") . "S2CID \(identifier\)") .
+42. ^ Reid, C.R.; Sumpter, D.J.; Beekman, M. (January 2011). "Optimisation in a natural system: Argentine ants solve the Towers of Hanoi". J. Exp. Biol. 214 (Pt 1): 50–8\. "Bibcode \(identifier\)"):. "CiteSeerX \(identifier\)") . "Doi \(identifier\)"):. "PMID \(identifier\)") . "S2CID \(identifier\)") .
+43. ^ Gary Marcus (10 June 2025). . The Guardian. Retrieved 9 November 2025.
+44. ^ Parshin Shojaee; Iman Mirzadeh; Keivan Alizadeh; Maxwell Horton; Samy Bengio; Mehrdad Farajtabar (10 June 2025). (PDF). Machine Learning Research. Retrieved 9 November 2025.
+45. ^ Russell, Eric Frank (April 1959). . Novelettes. Astounding Science Fiction. Vol. 63, no. 2\. pp. 31–77.
+Reprinted: Russell, Eric Frank (2000). "Now Inhale". In Katze, Rick (ed.). Major Ingredients: The Selected Short Stories of Eric Frank Russell. Framingham, Mass.: NESFA Press. pp. 399–417\. "ISBN \(identifier\)") .
+46. ^ a b c Bonanome, Marianna C.; Dean, Margaret H.; Dean, Judith Putnam (2018). "Self-Similar Groups". A Sampling of Remarkable Groups: Thompson's, Self-similar, Lamplighter, and Baumslag-Solitar. Compact Textbooks in Mathematics. Cham, Switzerland: Springer. p. 96\. "Doi \(identifier\)"):. "ISBN \(identifier\)") .
+47. ^ Birtwistle, Graham (January 1985). "The coroutines of Hanoi". ACM SIGPLAN Notices. 20 (1): 9–10\. "Doi \(identifier\)"):. "S2CID \(identifier\)") .
+48. ^ . Doctor Who. BBC One. Retrieved April 2, 2021.
+49. ^ . Giantbomb.com. Retrieved 2010-12-05.
+50. ^ . Sega Amusements. Archived from on 2012-03-01. Retrieved 2012-02-26.
+## External links
+Wikimedia Commons has media related to .
+"Category:CS1 French-language sources \(fr\)")
+"Category:CS1 Russian-language sources \(ru\)")
+code "Category:Articles with example Python \(programming language\) code")
+This page was last edited on 7 January 2026, at 10:21 (UTC).
+Text is available under the ; additional terms may apply. By using this site, you agree to the and . Wikipedia® is a registered trademark of the , a non-profit organization.
+45 languages Add topic
+[v]: View this template
+[t]: Discuss this template
+[e]: Edit this template

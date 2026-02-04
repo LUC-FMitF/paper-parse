@@ -1,0 +1,66 @@
+VERIFICATION REPORT
+================================================================================
+
+Total rows: 386
+Rows with links: 140
+Total links: 207
+PDF links: 3
+Non-PDF links: 204
+Scraped files: 6
+
+ALL LINKS FOUND
+================================================================================
+
+http://lamport.azurewebsites.net/pubs/interprocess
+http://lamport.azurewebsites.net/pubs/pubs.html#di...
+http://lamport.azurewebsites.net/pubs/teaching-con
+http://lamport.azurewebsites.net/tla/byzpaxos.html
+http://lamport.azurewebsites.net/tla/hyperbook.html
+http://lamport.azurewebsites.net/tla/proving-safety
+http://lamport.azurewebsites.net/tla/two-phase.htm...
+http://research.microsoft.com/en-us/um/people/lamport/pubs/pubs.html#paxos-commit
+https://ahelwer.ca/post/2023-03-30-pseudocode/
+https://ahelwer.ca/post/2023-04-05-checkpoint-coordination;
+https://cedric.cnam.fr/fichiers/RC474.pdf
+https://dl.acm.org/citation.cfm?id=214134
+https://dl.acm.org/citation.cfm?id=226647
+https://dl.acm.org/citation.cfm?id=302436
+https://dl.acm.org/doi/10.1145/3087801.3087802
+https://en.wikipedia.org/wiki/Klotski;
+https://en.wikipedia.org/wiki/Sliding_puzzle;
+https://en.wikipedia.org/wiki/Tower_of_Hanoi;
+https://github.com/Azure/RSL;
+https://github.com/Azure/RingMaster
+https://github.com/LMAX-Exchange;
+https://github.com/TypeDefinition;
+https://github.com/banhday/tlabenchmarks/tree/master/benchmarks/spanning
+https://github.com/byisystems/byihive.
+https://github.com/josehu07/summerset;
+https://github.com/josehu07/tla-examples/tree/master/specifications/Paxos
+https://github.com/mryndzionek/tlaplus_specs#chameneostla
+https://github.com/mryndzionek/tlaplus_specs#cigarettesmokerstla
+https://github.com/mryndzionek/tlaplus_specs#slidingpuzzlestla;
+https://github.com/nano-o/MultiPaxos/blob/master/DiskPaxos.tla
+https://github.com/nano-o/MultiPaxos;
+https://github.com/nicholassm/disruptor-rs
+https://github.com/ongardie/raft.tla;
+https://github.com/sudogandhi;
+https://github.com/tlaplus/Examples/issues/9
+https://github.com/tlaplus/tlaplus/blob/4613109641676389d97b8df209d6cf4d90d31c1c/tlatools/org.lamport.tlatools/src/tlc2/util/BufferedRandomAccessFile.java
+https://github.com/tlaplus/tlaplus/tree/4613109641676389d97b8df209d6cf4d90d31c1c/tlatools/org.lamport.tlatools/src/tlc2/util/BufferedRandomAccessFile.tla;
+https://ieeexplore.ieee.org/abstract/document/1633503/
+https://ieeexplore.ieee.org/document/1209964/
+https://lamport.azurewebsites.net/pubs/disk-paxos.pdf;
+https://lamport.azurewebsites.net/tla/toolbox.html
+https://link.springer.com/article/10.1007/BF01667080
+https://link.springer.com/chapter/10.1007/3-540-44743-1_4
+https://link.springer.com/chapter/10.1007/978-3-540-87779-0_30
+https://members.loria.fr/SMerz/talks/argentina2005/Charpentier/charpov/Teaching/CS-986/TLC/;
+https://raft.github.io/raft.pdf
+https://research.nicola-santoro.com/DADA.html
+https://www.cs.utexas.edu/users/EWD/ewd09xx/EWD998...
+https://www.josehu.com/technical/2024/02/19/practical-MultiPaxos-TLA-spec.html;
+https://www.microsoft.com/en-us/research/publication/fast-paxos/
+https://www.researchgate.net/publication/271910927_Fast_Paxos_Made_Easy_Theory_and_Implementation;
+https://www.youtube.com/watch?v=cYenTPD7740
+https://youtu.be/_GP9OpZPUYc?t=742

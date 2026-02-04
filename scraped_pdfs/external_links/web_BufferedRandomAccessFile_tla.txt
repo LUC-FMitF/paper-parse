@@ -1,0 +1,19 @@
+Source URL: https://github.com/tlaplus/tlaplus/tree/4613109641676389d97b8df209d6cf4d90d31c1c/tlatools/org.lamport.tlatools/src/tlc2/util/BufferedRandomAccessFile.tla
+Final URL: https://github.com/tlaplus/tlaplus/blob/4613109641676389d97b8df209d6cf4d90d31c1c/tlatools/org.lamport.tlatools/src/tlc2/util/BufferedRandomAccessFile.tla
+================================================================================
+
+# Search code, repositories, users, issues, pull requests...
+# Provide feedback
+We read every piece of feedback, and take your input very seriously.
+Cancel Submit feedback
+# Saved searches
+## Use saved searches to filter your results more quickly
+To see all available qualifiers, see our .
+Cancel Create saved search
+You signed in with another tab or window. to refresh your session. You signed out in another tab or window. to refresh your session. You switched accounts on another tab or window. to refresh your session. Dismiss alert
+### Uh oh!
+There was an error while loading. .
+You must be signed in to change notification settings
+(C) 2026 GitHub, Inc.
+* Do not share my personal information
+You can’t perform that action at this time.

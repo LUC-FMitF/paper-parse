@@ -1,0 +1,12 @@
+Source URL: https://www.microsoft.com/en-us/research/publication/fast-paxos/
+Final URL: https://www.microsoft.com/en-us/research/publication/fast-paxos/
+================================================================================
+
+People & news People & news
+Microsoft Research Labs Microsoft Research Labs
+Other labs Other labs
+## Global
+# Fast Paxos
+Distributed Computing | October 2006 , Vol 19: pp. 79-103
+The Paxos consensus algorithm of requires two message delays between when the leader proposes a value and when other processes learn that the value has been chosen. Since inventing Paxos, I had thought that this was the optimal message delay. However, sometime in late 2001 I realized that in most systems that use consensus, values aren't picked out of the air by the system itself; instead, they come from clients. When one counts the message from the client, Paxos requires three message delays. This led me to wonder whether consensus in two message delays, including the client's message, was in fact possible. I proved the lower-bound result announced in that an algorithm that can make progress despite f faults and can achieve consensus in two message delays despite e faults requires more than 2e+f processes. The proof of that result led me pretty quickly to the Fast Paxos algorithm described here. Fast Paxos generalizes the classic Paxos consensus algorithm. It can switch between learning in two or three message delays depending on how many processes are working. More precisely, it can achieve learning in two message delays only in the absence of concurrent conflicting proposals, which shows is the best a general algorithm can do.
+## Research Areas

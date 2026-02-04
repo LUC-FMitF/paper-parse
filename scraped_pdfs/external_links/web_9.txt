@@ -1,0 +1,50 @@
+Source URL: https://github.com/tlaplus/Examples/issues/9
+Final URL: https://github.com/tlaplus/Examples/issues/9
+================================================================================
+
+# Search code, repositories, users, issues, pull requests...
+# Provide feedback
+We read every piece of feedback, and take your input very seriously.
+Cancel Submit feedback
+# Saved searches
+## Use saved searches to filter your results more quickly
+To see all available qualifiers, see our .
+Cancel Create saved search
+You signed in with another tab or window. to refresh your session. You signed out in another tab or window. to refresh your session. You switched accounts on another tab or window. to refresh your session. Dismiss alert
+You must be signed in to change notification settings
+# Overhaul Tower of Hanoi specification #9
+Overhaul Tower of Hanoi specification#9
+## Description
+Modeling towers as Naturals in is rather low-level/close to an implementation. A high-level spec is likely simpler to grasp if it models towers as sequences...
+Current Hanoi.tla refinement for high-level spec?!
+~~Add comments to and explain what it is doing~~ Moved to CommunityModules]( )
+Existing comments limited to TLC module overwrite
+State Hanoi problem at the beginning of Hanoi.tla in case the file is passed around without
+not a type invariant because it omits that tower is a function
+states that a tower is a number in 1..2^D, while the formula says it's a number in 0..(2^D-1)
+And more explicit variant of how to specify logical and. It is broken when Len(by) # Len(bx)
+LOCAL INSTANCE Sequences
+LOCAL Max(n, m) == IF n m THEN m ELSE n
+RECURSIVE ToBase2(, )
+ToBase2(d, b) == IF d > 0
+THEN ToBase2(d \div 2, b) \o >
+ToBase10(b) == LET d[i \in DOMAIN b] == IF i = 1
+THEN b[Len(b) + 1 - i] (2^(i-1))
+ELSE b[Len(b) + 1 - i] (2^(i-1)) + d[i - 1]
+LOCAL And2(x,y) == LET bx == ToBase2(x, >>)
+and == [ i \in DOMAIN bx \cup DOMAIN by |->
+IF bx[i] = 1 /\ by[i] = 1 THEN 1 ELSE 0 ]
+## Metadata
+## Metadata
+### Assignees
+### Labels
+### Type
+### Projects
+### Milestone
+### Relationships
+### Development
+No branches or pull requests
+## Issue actions
+(C) 2026 GitHub, Inc.
+Do not share my personal information
+You can’t perform that action at this time.

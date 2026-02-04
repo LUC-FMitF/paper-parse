@@ -1,0 +1,63 @@
+Source URL: https://github.com/byisystems/byihive
+Final URL: https://github.com/byisystems/byihive
+================================================================================
+
+# Search code, repositories, users, issues, pull requests...
+# Provide feedback
+We read every piece of feedback, and take your input very seriously.
+Cancel Submit feedback
+# Saved searches
+## Use saved searches to filter your results more quickly
+To see all available qualifiers, see our .
+Cancel Create saved search
+You signed in with another tab or window. to refresh your session. You signed out in another tab or window. to refresh your session. You switched accounts on another tab or window. to refresh your session. Dismiss alert
+You must be signed in to change notification settings
+The byihive project. It is based on RFC3506 - Requirements and Design for Voucher Trading System (VTS)
+You must be signed in to change notification settings
+# byisystems/byihive
+## Folders and files
+Name| Name| Last commit message| Last commit date
+## Latest commit
+## History
+## Repository files navigation
+# byihive
+This is the byihive project by .
+It is based on RFC3506 - Requirements and Design for Voucher Trading System (VTS) You can find out more about RFC3506 here: The byihive project aims to bring peer to peer transactability to everyone.
+Our goal is to bring out a reference implementation in Erlang (see "Why Erlang" below) so that anyone can use it in their applications.
+Applications of byihive include:
+Creating your own peer to peer ledger system - similar to splitwise, but no splitwise to track you.
+Creating your own local currency system without a centralised ledger tracking everything.
+Creating your own loyalty points system.
+End of Q2 2018 - we release the first erlang draft code which is capable of managing a complete voucher life cycle.
+End of Q3 2018 - we release the first reference API which is usable for local currency communities to implement their own apps.
+### Why Erlang
+While in the modern era Erlang seems to be an odd choice of computer language to implement byihive in, we had very logical reasons for doing so.
+According to ), Erlang has the following properties:
+The Erlang runtime system is known for its designs that are well suited for systems with the following characteristics:
+- Highly available, non-stop applications
+- Hot swapping, where code can be changed without stopping a system.[4]
+These are very attractive properties for any system that is as critical as one that involves people transacting with each other. We found that Erlang had been used in critical communications infrastructure, and is seasoned and proven.
+We use formal specification methods to design byihive. The first reference spec in TLA+ is released here as a one-off. See the directory to have a look.
+Here too, Erlang proved to be attractive, as our specs naturally mapped to the code, allowing for a very robust design/implementation methodology. Wikipedia says:
+The Erlang programming language is known for the following properties:[5]
+- Functional programming
+This gives us a really tight design/implementation loop for byihive - a necessary condition for code quality!
+## License
+Note that licensing for the separate aspects of this project are separate.
+Any directory with a LICENSE file will have that license applicable to that directory and any files in further subdirectories, recursively.
+## About
+The byihive project. It is based on RFC3506 - Requirements and Design for Voucher Trading System (VTS)
+### Resources
+### Uh oh!
+There was an error while loading. .
+### Stars
+### Watchers
+### Forks
+No releases published
+No packages published
+### Uh oh!
+There was an error while loading. .
+## Languages
+(C) 2026 GitHub, Inc.
+* Do not share my personal information
+You can’t perform that action at this time.
