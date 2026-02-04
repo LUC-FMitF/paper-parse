@@ -1,1 +1,0 @@
-https://anonymous.4open.science/r/LeanComb-A-Combinatorial-Identities-Benchmark-for-Theorem-Proving-via-Automated-Theorem-Generation-E0D3/README.md
