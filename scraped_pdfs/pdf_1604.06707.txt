@@ -1,0 +1,1174 @@
+Source: 1604.06707.pdf
+================================================================================
+
+Loopless Gray Code Enumeration and the Tower
+of Bucharest
+Felix Herter1 and Günter Rote1
+1 Institut für Informatik, Freie Universität Berlin
+Takustr. 9, 14195 Berlin, Germany
+avealx@zedat.fu-berlin.de, rote@inf.fu-berlin.de
+Abstract
+We give new algorithms for generating all n-tuples over an alphabet of m letters, changing only
+one letter at a time (Gray codes). These algorithms are based on the connection with variations
+oftheTowersofHanoigame. Ouralgorithmsareloopless,inthesensethatthenextchangecan
+be determined in a constant number of steps, and they can be implemented in hardware. We
+also give another family of loopless algorithms that is based on the idea of working ahead and
+saving the work in a buffer.
+1998 ACM Subject Classification F.2.2 Nonnumerical Algorithms and Problems
+Keywords and phrases Tower of Hanoi, Gray code, enumeration, loopless generation
+Contents
+1 Introduction: the binary reflected Gray code and the Towers of Hanoi 2
+1.1 The Gray code . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+1.2 Loopless algorithms . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+1.3 The Tower of Hanoi . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+1.4 Connections between the Towers of Hanoi and Gray codes . . . . . . . . . . . 4
+1.5 Loopless Tower of Hanoi and binary Gray code . . . . . . . . . . . . . . . . . 4
+1.6 Overview . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+2 Ternary Gray codes and the Towers of Bucharest 5
+3 Gray codes with general radixes 7
+4 Generating the m-ary Gray code with odd m 7
+5 Generating the m-ary Gray code with even m 9
+6 The Towers of Bucharest++ 9
+7 Simulation 11
+8 Working ahead 11
+8.1 An alternative STEP procedure . . . . . . . . . . . . . . . . . . . . . . . . . . 13
+8.2 Correctness proofs for the work-ahead algorithms . . . . . . . . . . . . . . . . 14
+9 Concluding Remarks 16
+Thispaperistoappearwithoutthefullappendixinthe8th International Conference on Fun with Algorithms
+(FUN2016)inJune2016;Editors: ErikD.DemaineandFabrizioGrandoni,LeibnizInternationalProceedingsin
+Informatics. doi:10.4230/LIPIcs.FUN.2016.19.
+6102
+rpA
+22
+]MD.sc[
+1v70760.4061:viXra
+Felix Herter and Günter Rote 2
+A Appendix: PYTHON simulations of the algorithms 16
+A.1 Basic procedures . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+A.2 Algorithm ODD, Section 4. . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+A.3 Algorithm ODD-COMPRESSED, Section 6 . . . . . . . . . . . . . . . . . . . 18
+A.4 Algorithm EVEN, Section 5 . . . . . . . . . . . . . . . . . . . . . . . . . . . . 19
+A.5 Truly loopless implementation of Algorithm EVEN, Section 7 . . . . . . . . . 19
+A.6 Algorithm WORK-AHEAD, Section 8 . . . . . . . . . . . . . . . . . . . . . . 21
+A.7 Algorithm WORK-AHEAD for the binary Gray code, Section 8 . . . . . . . . 22
+A.8 Algorithm WORK-AHEAD with the modification of Section 8.1 . . . . . . . 23
+A.9 Generalmixed-radixGraycodegenerationaccordingtotherecursivedefinition
+of Section 3 . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 24
+1 Introduction: the binary reflected Gray code and the Towers of
+Hanoi
+1.1 The Gray code
+The Gray code, or more precisely, the reflected binary Gray code G , orders the 2n binary
+n
+strings of length n in such a way that successive strings differ in a single bit. It is defined
+inductively as follows, see Figure 1 for an example. The Gray code G = 0,1, and if
+1
+G =C ,C ,...,C is the Gray code for the bit strings of length n, then
+n 1 2 2n
+G =0C ,0C ,...,0C , 1C ,1C ,...,1C ,1C . (1)
+n+1 1 2 2n 2n 2n−1 2 1
+In other words, we prefix each word of G with 0, and this is followed by the reverse of G
+n n
+with 1 prefixed to each word.
+000000 001011 010111 110100 101110 0000 0111 0222 1112 1001 2120 2220
+000001 001001 010110 111100 101111 0001 0112 1222 1111 1000 2110 2221
+000011 001000 010010 111101 101101 0002 0102 1221 1110 2000 2111 2222
+000010 011000 010011 111111 101100 0012 0101 1220 1120 2001 2112
+000110 011001 010001 111110 100100 0011 0100 1210 1121 2002 2102
+000111 011011 010000 111010 100101 0010 0200 1211 1122 2012 2101
+000101 011010 110000 111011 100111 0020 0201 1212 1022 2011 2100
+000100 011110 110001 111001 100110 0021 0202 1202 1021 2010 2200
+001100 011111 110011 111000 100010 0022 0212 1201 1020 2020 2201
+001101 011101 110010 101000 100011 0122 0211 1200 1010 2021 2202
+001111 011100 110110 101001 100001 0121 0210 1100 1011 2022 2212
+001110 010100 110111 101011 100000 0120 0220 1101 1012 2122 2211
+001010 010101 110101 101010 0110 0221 1102 1002 2121 2210
+Figure 1 The binary Gray code G for 6-tuples and the ternary Gray code for 4-tuples.
+6
+1.2 Loopless algorithms
+The Gray code has an advantage over alternative algorithms for enumerating the binary
+strings, for example in lexicographic order: one can change a binary string a a ...a
+n n−1 1
+to the successor in the sequence by a single update of the form a := 1−a in constant
+i i
+time. However, we also have to compute the position i of the bit which has to be updated.
+A straightforward implementation of the recursive definition (1) leads to an algorithm with
+an optimal overall runtime of O(2n), i.e., constant average time per enumerated bit string.
+Loopless Gray Code Enumeration and the Tower of Bucharest 3
+A stricter requirement is to compute each successor string in constant worst-case time.
+Suchanalgorithmiscalledaloopless generationalgorithm. Looplessenumerationalgorithms
+for various combinatorial structures were pioneered by Ehrlich [3], and different loopless
+algorithms for Gray codes are known, see Bitner, Ehrlich, and Reingold [1] and Knuth [6,
+Algorithms 7.2.1.1.L and 7.2.1.1.H]. These algorithms achieve constant running time by
+maintaining additional pointers.
+1.3 The Tower of Hanoi
+TheTowerofHanoiisthestandardtextbookexampleforillustratingtheprincipleofrecursive
+algorithms. It has n disks D ,D ,...,D of increasing radii and three pegs P ,P ,P , see
+1 2 n 0 1 2
+Fig. 2. The goal is to move all disks from the peg P , where they initially rest, to another
+0
+peg, subject to the following rules:
+1. Only one disk may be moved at a time: the topmost disk from one peg can be moved on
+top of the disks of another peg
+2. A disk can never lie on top of a smaller disk.
+Figure 2 The Towers of Hanoi with n=6 (square) disks. When running the algorithm HANOI
+fromSection1.5,theconfigurationinthispictureoccurstogetherwiththebitstring110011. (There
+is no easy relation between the positions of the disks and this bit string.) The next disk to move is
+D ; it moves clockwise to peg P , and the last bit is complemented. The successor in the Gray code
+1 0
+is the string 110010. After that, D pauses for one step, while disk D moves, again clockwise, from
+1 3
+P to P , and the third bit from the right is complemented, leading to the string 110110.
+1 2
+For moving a tower of height n, one has to move disk D at some point. But before
+n
+moving disk D from peg A to B, one has to move the disks D ,...,D , which lie on top
+n 1 n−1
+of D , out of the way, onto the third peg. After moving D to B, these disks have to be
+n n
+moved from the third peg to B. This reduces the problem for a tower of height n to two
+towers of height n−1, leading to the following recursive procedure.
+move_tower(k,A,B): (Move the k smallest disks D ...D from peg A to peg B)
+1 k
+if k ≤0: return
+auxiliary:=3−A−B; (auxiliary is the third peg, different from A and B.)
+move_tower(k−1,A,auxiliary)
+move disk D from A to B
+k
+move_tower(k−1,auxiliary,B)
+Felix Herter and Günter Rote 4
+1.4 Connections between the Towers of Hanoi and Gray codes
+ThedeltasequenceoftheGraycodeisthesequence1,2,1,3,1,2,1,4,1,2,1,...ofbitpositions
+that are updated. (In contrast to the usual convention, we number the bits starting from 1.)
+This sequence has an obvious recursive structure which results from (1). It also describes
+the number of changed bits when incrementing from i to i+1 in binary counting. Moreover,
+it is easy to observe that the same sequence also describes the disks that are moved by the
+recursive algorithm move_tower above. It has thus been noted that the Gray code G can
+n
+be used to solve the Tower of Hanoi puzzle, cf. Scorer, Grundy, and Smith [8] or Gardner [4].
+In the other direction, the Tower of Hanoi puzzle can be used to generate the Gray code G ,
+n
+see Buneman and Levy [2].
+Several loopless ways to compute the next move for the Towers of Hanoi are known, and
+they lead directly to loopless algorithms for the Gray code. We describe one such algorithm.
+1.5 Loopless Tower of Hanoi and binary Gray code
+From the recursive algorithm move_tower, it is not hard to derive the following fact.
+(cid:73) Proposition 1. If the tower should be moved from P to P and n is odd, or if the tower
+0 1
+should be moved from P to P and n is even, the moves of the odd-numbered disks always
+0 2
+proceed in forward (“clockwise”) circular direction: P → P → P → P , and the even-
+0 1 2 0
+numbered disks always proceed in the opposite circular direction: P →P →P →P . (cid:74)
+0 2 1 0
+In the other case, when the assumption does not hold, the directions are simply swapped.
+Since we are interested not in moving the tower to a specific target peg, but in generating
+the Gray code, we stick with the proposition as stated.
+Algorithm HANOI. Loopless algorithm for the binary Gray code.
+Initialize: Put all disks on P .
+0
+loop:
+Move D clockwise.
+1
+Let D be the smaller of the topmost disks on the two pegs that don’t carry D .
+k 1
+If there is no such disk, terminate.
+Move D clockwise if k is odd; otherwise, move it counterclockwise.
+k
+To obtain the Gray code, we simply set a :=1−a whenever we move the disk D [2]. See
+k k k
+Fig. 2 for a snapshot of the procedure.
+We would not need the clockwise/counterclockwise rule for D : Since we must not put
+k
+D on top of D , there is anyway no choice of where to move it [2]. We have chosen the
+k 1
+above formulation since it is better suited for generalization.
+1.6 Overview
+In the remainder of this paper, we will generalize these connections to Gray codes for larger
+radixes (alphabet sizes). Section 2 is devoted to ternary Gray codes and their connections
+to the so-called Towers of Bucharest. After defining Gray codes with general radixes in
+Section 3, we extend the ternary algorithm from Section 2 to arbitrary odd radixes m in
+Section4, andeventomixed(odd)radixes(Section6). InSection5, wegeneralizethebinary
+Gray code algorithm of Section 1.5 to arbitrary even m. Finally, in Section 8, we develop
+loopless algorithms bases on an entirely different idea of “working ahead” that is related to
+converting amortized running-time bounds to worst-case bounds. In the appendix, we give
+prototype code for simulating all our algorithms in Python.
+Loopless Gray Code Enumeration and the Tower of Bucharest 5
+2 Ternary Gray codes and the Towers of Bucharest
+A ternary Gray code enumerates the 3n n-tuples (a ,...,a ) with a ∈{0,1,2}. Successive
+n 1 i
+tuples differ in one entry, and in this entry they differ by ±1.
+The following simple variation of the Towers of Hanoi will yield a ternary Gray code
+(m=3): We disallow the direct movement of a disk between pegs P and P : a disk can only
+0 2
+be moved to an adjacent peg. We call this the Towers of Bucharest.1
+P P
+1 1
+P P P P
+0 2 0 2
+(a) (b)
+Figure 3 Thestategraphsof(a)theTowerofHanoiand(b)theTowerofBucharestwith5disks
+Figure 3 shows the state space of the Towers of Bucharest in comparison with the Towers
+of Hanoi. In accordance with this figure, we can make the following easy observations:
+(cid:73) Proposition 2. 1. InthetowersofHanoi,therearethreepossiblemovesfromanyposition,
+except when the whole tower is on one peg: In these cases, there are only two possible
+moves.
+2. In the towers of Bucharest, there are two possible moves from any position, except when
+the whole tower is on peg P or P : In those cases, there is only one possible move.
+0 2
+1 The custom of naming variations of the Tower of Hanoi game after different cities, instead of using
+ordinarynamessuchas“three-in-a-row”[7],hasalongtradition. Thename“TowersofBucharest”has
+beensuggestedbyGünterM.Ziegler. Severallegendsrankthemselvesaroundthesetowers.
+AlittlecountfromTransylvaniahadconqueredthewholecountryandhadbecomeapowerfulLord. In
+ordertocelebratehisglory,hebuiltamagnificentpalaceinthecapitalcityBucharest,andhesuppressed
+hispeopleasbesthecould. HealsohadadognamedHeisenberg. Inanearbymonastery,themonks
+hadgoldendisksofdifferentsizesonthreepegs, andtheyhadplayedtheTowersofHanoigamefor
+centuries. Itwasalreadyforseeablethatthegamewasdrawingtowardsitsconclusion. Accordingtoan
+ancientprophecy,thepalaceoftherulerofthecountrywouldcrumbleandhisrulewouldcometoan
+endwhenthegamewouldbefinished. Whenthecount,whocalledhimselfkingbythistime,heardthis
+story,hedidnotlikeit. First ofall,hehadthemonksbeheadedandtoldthemtodosomeusefuljob
+instead. Secondly,heremovedthepegswiththediscsandtookthemtohispalace. Hemadesurethat
+theywereplacedveryfarawayfromeachother: ThefirstpegwasputintheSouthwing,thesecond
+pegintheNorthwing,andthethirdpegagainintheSouthwing. Onemaywonderwhyhedidnot
+placetheminsomemorelogicalarrangementlikeSouth-South-NorthorSouth-North-North,orperhaps
+North-middle-SouthorSouth-middle-North. Thereaderwillsoonunderstandthatthisplacementwasa
+cleverdecisionwhensheorhelearnswhatelsehedid. TheNorthwingcouldonlybereachedfromthe
+Southwingthroughthemiddlewing,orbygoingoutonthestreetandreenteringontheotherside,
+butIdon’tthinkitisverywisetogointothestreetcarryingaheavygoldendisk.
+Anyway, his third action was his most wicked and smartest move: It occurred to him that he was
+powerful and he was the ruler, and he therefore had the power to change the rules. Hedecreedthatthe
+discscanonlybemovedbetweenthefirstandthesecondpegorbetweenthesecondandthethirdpeg.
+Directmovesbetweenthefirstandthirdpegwerehenceforthforbidden. Thiswoulddelaythemovesof
+Felix Herter and Günter Rote 6
+Proof. 1. The disk D can be moved to any of the other pegs (two possible moves). In
+1
+addition, the smaller of the topmost disks on the other pegs (if those pegs aren’t both
+empty) can be moved to the other peg which is not occupied by D .
+1
+2. If the disk D is in the middle, it can be moved to any of the other pegs, but no other
+1
+move is possible. If the disk D is on P or P , it has only one possible move, and the
+1 0 2
+smaller of the topmost disks on the other pegs (if those pegs aren’t empty) also has one
+possible move, similarly as above. (cid:74)
+Both games have the same set of 3n states, corresponding to the possible ways of assigning
+each disk to one of the pegs P ,P ,P . The nodes in the corners marked P ,P ,P represent
+0 1 2 0 1 2
+the states where all disks are on one peg. The graph of the Towers of Hanoi in Figure 3a
+approaches the Sierpiński gasket. The optimal path of length 2n−1 is the straight path from
+P to P . (The directions of the edges in this drawing of the state graph are not directly
+0 2
+related to the pegs that are involved in the exchange, and the relation between a state and
+its position on the drawing is not straightforward.) By contrast, we see that the graph of the
+Towers of Bucharest in Figure 3b is a single path through all nodes.
+Let us see why this is true. By Proposition 2, this graph has maximum degree 2, and
+it follows that it must consist of a path between P and P (the only degree-1 nodes), plus
+0 2
+a number of disjoint cycles. However, it is known that the path has length 3n −1 and
+does therefore indeed go through all nodes. Since we will prove a more general statement
+later (Theorem 3), we only sketch the argument here: Solving the problem recursively in
+an analogous way to the procedure move_tower, we reduce the problem of moving a tower
+of n disks from P to P (or vice versa) to three problem instances with n−1 disks, plus
+0 2
+two movements of disk D , and the resulting recursion establishes that 3n−1 moves are
+n
+required.
+ThestatesoftheTowersofBucharestcorrespondinanaturalwaytotheternaryn-tuples:
+The digit a ∈{0,1,2} gives the position of disk D . It follows now easily that the solution
+i i
+of the Towers of Bucharest yields a ternary Gray code: Since we can move only one disk
+at a time, it means that we change only one digit at a time, and by the special rules of the
+Towers of Bucharest, we change it by ±1. (This connection has apparently not been made
+before.) In fact, the algorithm produces the ternary reflected Gray code, which we are about
+to define below in Section 3; see also Theorem 3.
+thedisks,sincetheyalwayshadtobecarriedallthewayfromtheSouthwingtotheNorthwingandback.
+Asshowninthisarticle,theconsequencesofthenewruleindelayingthegameareevenmorespectacular.
+Thesemeasuresweredefinitelyovercautious, inparticularsincenobodywastheretomovethediscsany
+more,andmoreover,thepegswiththegoldendiscswerecarefullyguarded. Nevertheless,hewasworried
+that his wife and children would wander around in the palace and play with the disks, thereby setting
+the prophecy into motion again, like in that movie, “Jumanji” with Robin Williams. He was not sure
+howtheguardingofficerswouldbehaveinaconflictbetweentheloyaltytotheirordersandtheauthority
+of his family members. You may draw your own conclusions, but in my opinion, this count, or king if
+youwish,wasprettyparanoid. Intheend,itservedhimnothing. Hewassweptawaybytherevolution.
+What became of the golden disks? Nobody knows. It is sometimes claimed that they were hidden in a
+subterranean cave, and hobby archaeologists are still looking for them occasionally. But probably they
+havefoundtheirwaytotheblackmarket. Today,touriststhatvisitthepalaceareledtoastumponthe
+floorintheNorthwing,whichissupposedlytheremainderofoneofthepegs. TheSouthwingisclosed
+forrestoration.
+Anotherstory,evenmoreunbelievablebutnolessbloodythanthefirstone,putstheTowersofBucharest
+inthecontextofthelegendarycaliphHarun-al-Rashid. Onenight,thecaliphwasagainwanderingthrough
+thestreetsofBaghdad,asusualdressedlikeanordinarybusinessman,inordertoassurehimselfthatthe
+people were still loving his reign, admiring his wisdom, and praising his justice. He noticed a crowd of
+lookers-onwhoweregatheredaroundamanandawomansittingonthegroundsidebyside,silentlyand
+solemnly executing the moves of the Towers of Bucharest. One of them would pick up a disk and set it
+on an adjacent peg. By the rules of the game, there was always one of them for whom the two involved
+pegswereeasytoreach,andthiswastheonewhocarriedoutthemove. Onlyontheinfrequentoccasions
+whenoneofthelargerandheavierdiskshadtobemoved,theyhelpedeachother. Themanworea
+Loopless Gray Code Enumeration and the Tower of Bucharest 7
+Moreover, since there are only two possible moves, one just has to always choose the
+move which does not undo the previous move, and this leads to a very easy loopless Gray
+code enumeration algorithm.
+It is remarkable that ternary Gray codes can be generated on the same hardware as
+binary Gray codes (Fig. 2). In the context of generating the ternary Gray code, the Gray
+code string can be directly read off the disks. For example, the configuration in Fig. 2
+represents the string 211102. It is D ’s turn to move, and the disk D will make two steps
+1 1
+to the left, generating the strings 211101 and 211100, and pauses there for one step, while
+disk D moves to the right, leading to the string 211200, etc.
+3
+3 Gray codes with general radixes
+An m-ary Gray code enumerates the n-tuples (a ,...,a ) with 0 ≤ a < m, changing a
+n 1 i
+single digit at a time by ±1. The m-ary reflected Gray code can be recursively described as
+follows: Let C ,C ,...,C be the Gray code for the strings of length n. Then the strings
+1 2 mn
+of length n+1 are generated in the order
+C 0,C 1,C 2,...,C (m−2),C (m−1), C (m−1),C (m−2),...,C 2,C 1,C 0,
+1 1 1 1 1 2 2 2 2 2
+C 0,C 1,C 2,...,C (m−2),C (m−1), C (m−1),C (m−2),...,C 2,C 1,C 0, (2)
+3 3 3 3 3 4 4 4 4 4
+C 0,C 1,C 2,...,C (m−2),C (m−1), ...
+5 5 5 5 5
+Each digit alternates between an upward sweep from 0 to m−1 and a return sweep from
+m−1 to 0.
+4 Generating the m-ary Gray code with odd m
+For odd m, the ternary algorithm can be generalized. We need m pegs P ,...,P . The
+0 m−1
+leftmost peg P and the rightmost peg P play a special role. The other pegs are called
+0 m−1
+the intermediate pegs.
+Algorithm ODD. Generation of the m-ary Gray code for odd m.
+Initialize: Put all disks on P .
+0
+loop:
+Move D for m−1 steps, from P to P or vice versa.
+1 0 m−1
+Let D be the smallest of the topmost disks on the m−1 pegs that don’t carry D .
+k 1
+If there is no such disk, terminate.
+Move D by one step:
+k
+If D is on P or P , there is only one possible direction where to go.
+k 0 m−1
+Otherwise, the disk D continues in the same direction as in its last move.
+k
+cowboyhat,andthewomanwasinherbikini. Afterall,itmighthavebeentheTowersofHanoithattheyplayed. Somewitnesses
+havelaterreportedthattheyhadseenadiscjumpingbetweenthefirstandthethirdpeg,butthishasneverbeenconclusively
+confirmed.
+May that as it be, something unexpected happened. As the khaliph was engrossed in watching the spectacle and drew a bit
+closer, asmalldoorinthewallbesidehimopened, whichhehadnotnoticedbefore. Itgaveontoasmallgarden. Themoon
+hadrisenovertherooftops,andherlightgaveasort-ofsurrealatmospheretothewholescene. Inthemiddleofthegarden,at
+thecornerofafountain,awomansang,accompanyingherselfonthelute. Shehadabeautifulvoice,abitlikeMariahCareyor
+Adele. Thecalifwouldhavelistenedlonger,buthewasquicklyescortedintoahouse,whereamaid-servanttookchargeofhim
+andhandedhimablackgown. “Hurryup,youarelate. Wewerewaitingonlyforyou!” Thegowncoveredhiswholestatureand
+hidhisface,andheenteredaroomthatwasbarelylitbyanopenfire. Sevenothermeninblackgownswerealreadysittingon
+smallstoolsinacirclearoundthefire. Onestoolwasfree,andhesatdown. Besidethefire,therewasasmallivorymodelof
+theTowersofBucharest, withthefourlargestofthen = 6disksonthefinalpeg. Disc1wasonthemiddlepeg, anddisk2
+was on the first peg. The kaliph, having watched the game just before, understood immediately what that meant. Nowbody
+said a word. The tension rose. After six minutes, a lady entered and addressed them. She was the singer from the fountain.
+“Gentlemen. YouhavesworntocometomyrescuewhenIwouldbeinneed. Nowthetimehascometofulfillyouroath. You
+seesevendiscsofdifferentsizes. HewhowilldrawthesmallestdiskwillbringmetheheadofthedetestablecaliphHarun-al-
+Rashid(ca.763–809). Shouldhefailtofulfillthistask,theothereightwillkillhim,andwewillcometogetheranddrawagain.”
+Withthesewords, shedroppedthediscsintoachalice. Insilence, eachmanpickedadisk. Thekaliphwaslasttodraw. As
+he opened his hand, sure enough, he found the smallest disc, disc number 1. He rose and said: “Fair lady, I will fulfill your
+orderasIhavepromised. Butpraytellme: bywhichdeedsorwordshasthekalifenragedyousomuchthatyouwishhimto
+Felix Herter and Günter Rote 8
+Figure 4 shows an example with m = 5. The game with 5 pegs is called the Tower of
+Klagenfurt, after the birthplace of the senior author.2
+Figure 4 The Towers of Klagenfurt. This configuration represents the string 321411 over the
+radix m=5. The next step of the Gray code moves the smallest disk D onto peg P , changing the
+1 0
+string to 321410. After that, disk D moves from P to P and the next string is 321420. In the
+2 1 2
+background, the two-headed Lindworm monster.
+In this procedure, the movement of D is “externally given”, whereas the movement of
+1
+the other disks, whenever D is at rest, is somehow “determined by the algorithm”. It is not
+1
+obvious that the algorithm does not put a larger disk on top of D .
+1
+(cid:73) Theorem 3. Algorithm ODD generates the m-ary reflected Gray code defined in (2).
+Proof. It is clear from the algorithm that the last digit, which is controlled by the movement
+of D , changes in accordance with (2). We still have to show that when we discard the last
+1
+digit and observe only the movement of the disks D ,...,D , the algorithm produces the
+2 n
+Gray code for the strings of length n−1. This is proved by induction.
+By the rules of the algorithm, whenever D rests, the disk that moves is D , unless D
+1 2 2
+is covered by D . Let us now observe the motion pattern of D and D that results from
+1 1 2
+this rule. We start with D on top of D , say, on peg P , with D about to start its sweep.
+1 2 0 1
+Whenever D pauses for one step, D will make a step towards P . After D reaches
+1 2 m−1 2
+P , it turns out that, because m is odd, D will make its next sweep from P to P ,
+m−1 1 0 m−1
+resting on top of D . Now, since D is covered, it will be one of the other disks D ,D ,...
+2 2 3 4
+that will move. Then the same routine repeats in the other direction.
+IfwenowignoreD andlookonlyatthemotionsoftheotherdisks, thefollowingpattern
+1
+emerges: D makes m−1 steps from one end to the other, and then the smallest disk that
+2
+is not covered by D makes its move, according to the rules. This is precisely the same
+2
+procedure as Algorithm ODD, with D taking the role of the “externally controlled” disk D ,
+2 1
+and we have assumed by induction that this algorithm correctly produces the Gray code for
+the strings of length n−1, and it does not put a larger disk on top of D . Since the larger
+2
+disks are moved only when D lies under D , it follows that a larger disk cannot be moved
+2 1
+on top of D either. (cid:74)
+1
+2 WhenKlagenfurtwasfounded,itwassurroundedbyaswamp. Theswampwasinhabitedbyadinosaur,
+theso-calledLindworm. TheLindwormwouldregularlycometothecityandeatcitizens. Occasionally,
+shewoulddevouroneofthetowersofthecity. ThecoatofarmsofKlagenfurtshowstheLindworm
+dragoninfrontoftheonlyremainingtower,seeFigure4. (Initially,therewerefivetowers.) Overthe
+centuries,theswamphasbeendrained,andtheLindwormispracticallyextinct.
+Loopless Gray Code Enumeration and the Tower of Bucharest 9
+One can actually apply one induction step of the proof in the opposite direction, intro-
+ducing an additional “control disk” D which does not have a digit associated with it. Its
+0
+only role is to alternately cover P and P and exclude these pegs from the selection of
+0 m−1
+the disk D that should be moved. The algorithm becomes simpler because it does not have
+k
+to treat D separately from the other disks. (See Appendix A.3, where this idea is applied
+1
+to the algorithm of Section 6 below).
+5 Generating the m-ary Gray code with even m
+For even m, we generalize Algorithm HANOI, which solves the case m=2. We use m+1
+pegs P ,...,P , which we arrange in a cyclic clockwise order. We stipulate that disks D
+0 m i
+with odd i move only clockwise, and disks with even i move only counterclockwise.
+Algorithm EVEN. Generation of the m-ary Gray code for even m.
+Initialize: Put all disks on P .
+0
+loop:
+Move D for m−1 steps, in clockwise direction.
+1
+Let D be the smallest of the topmost disks on the m pegs that don’t carry D .
+k 1
+If there is no such disk, terminate.
+Move D by one step, in the direction determined by the parity of k.
+k
+The Gray code is determined by changing the digit a whenever disk D is moved. The
+i i
+digit a runs through the sequence 0,1,2,...,m−2,m−1,m−2,...,2,1,0,1,2,.... Thus
+i
+it changes always by ±1, but we have to remember whether it is on the increasing or the
+decreasing part of the cycle. The position of disk D is no longer directly correlated with the
+i
+digit a ; thus the digits a have to be maintained separately, in addition to the disks on the
+i i
+pegs. It is far from straightforward to relate the disk configuration to the Gray code.
+For example, when carrying out the algorithm for m=4, the configuration in Figure 4
+appears when the string is 211030. Disk D has just made three steps and is going to rest
+1
+for one step. The next step moves D clockwise, since 3 is odd, and the string is changed to
+3
+211130. After that, D resumes its clockwise motion, and the string changes into 211131.
+1
+(cid:73) Theorem 4. Algorithm EVEN generates the m-ary reflected Gray code defined in (2).
+Proof. This follows along the same lines as Theorem 3. When we look at the pattern of
+motion of D and D , we observe again that D makes m−1 steps until it is covered by D ,
+1 2 2 1
+see Fig. 5: After the first move of D , the clockwise cyclic distance from D to D is 1, and
+2 1 2
+with each move of D , this distance increases by 1. Thus, after m−1 moves, the distance
+2
+becomes m−1, and D will land on top of D with its next sweep. (cid:74)
+1 2
+Algorithms ODD and EVEN do not generate a shortest sequence of moves to the target
+configuration except when m=3 or m=2. We could not come up with some set of natural
+constraints under which our algorithms give a shortest solution.
+6 The Towers of Bucharest++
+In Algorithm ODD, the intermediate pegs P ,...,P will always be available for selecting
+1 m−2
+the smallest disk D to be moved. Thus, one can coalesce these pegs into one peg, keeping
+k
+only the two extreme pegs separate. With three pegs, we can use the same hardware as the
+tower of Bucharest, but we have to record the value of the digits, since they are no longer
+expressed by the position. A simple method is to provide the disks with marks that indicate
+Felix Herter and Günter Rote 10
+P0 P0
+P0 P0
+12 2
+P4 P4
+P4
+1
+P1 P4 2 P1
+2
+P1
+2 1
+P1
+1
+2
+1 1
+P3 P2 P3 P2 P3 P2 P3 P2
+P0 P0 P0 P0
+P4 1 P1 P4 1 P1 P4 1 1 P1 P4 P1
+1
+2
+2 2 2 12
+P3 P2 P3 P2 P3 P2 P3 P2
+Figure 5 One period of movement of the two smallest disks D and D when Algorithm EVEN
+1 2
+generates all tuples over an alphabet of size m=4 using m+1=5 pegs.
+the value as well as the direction of movement, which we have to remember anyway. Each
+disk cycles through 2m−2 values, potentially augmented with direction information:
+0, 1↑, 2↑, ..., (m−2)↑, m−1, (m−2)↓, ...2↓, 1↓, 0, 1↑, ... (3)
+It makes sense to encode this information like a dial with 2m−2 equally spaced directions,
+as shown in Fig. 6a. A disk whose mark shows 0 is always on the left peg P . A disk whose
+0
+mark shows m−1 is always on the right peg P . Otherwise, it is on the middle peg P .
+2 1
+When we say we turn a disk, this means that we turn it clockwise to the next dial position,
+and if necessary, move it to the appropriate peg.
+4
+3 3
+↑ ↓
+2 2
+↑ ↓
+P P P
+0 1 2
+1 1
+↑ ↓
+0
+(a) (b)
+Figure 6 (a) The upgraded disk of the Towers of Bucharest++ and the meaning of its positions,
+for m=5. (b) The situation of Figure 4, compressed to 3 pegs.
+Algorithm ODD-COMPRESSED. Generation of the m-ary Gray code for odd m.
+Initialize: Put all disks on P , and turn them to show 0.
+0
+loop:
+Turn disk D m−1 times until it arrives at one of the extreme pegs P or P .
+1 0 2
+Let D be the smaller of the topmost disks on the two pegs not covered by D .
+k 1
+If there is no such disk, terminate.
+Turn D once.
+k
+Loopless Gray Code Enumeration and the Tower of Bucharest 11
+The digits a can be read off from the dial positions. Correctness follows by comparison with
+i
+Algorithm ODD, checking that the transition between successive states is preserved when
+merging the intermediate pegs into one peg. (cid:74)
+This algorithm can now even be generalized to mixed-radix Gray codes for the n-tuples
+(a ,...,a ) with 0≤a <m , for some sequence of radixes m ≥2, provided that all m are
+n 1 i i i i
+odd.
+7 Simulation
+All our algorithms can be easily simulated in software on a digital computer.3 A stack will
+do for each peg. If there are k pegs, the algorithm takes O(k) time to compute the next
+move and accordingly produce the next element of the Gray code sequence. If m is constant,
+then k =m or k =m+1 in Algorithms ODD and EVEN, and these algorithms can pass as
+loopless algorithms. If k is large, Algorithm ODD can be replaced by ODD-COMPRESSED,
+which has only 3 pegs, independent of m.
+To make a truly loopless algorithm out of Algorithm EVEN, at the expense of an
+increased overhead, we can use the following easy fact, which follows directly from the
+algorithm statement.
+(cid:73) Lemma 5. In the algorithms EVEN, ODD, and ODD-COMPRESSED, when a disk D is
+k
+moved, all smaller disks D ,...,D are on the same peg. (cid:74)
+1 k−1
+Togetalooplessimplementation,thesetofdisksonapeghastobemaintainedasasequence
+of maximal intervals of successive integers, instead of storing them as a stack in the usual
+way. Then, whenever D is at rest, the disk D to be moved can be determined in constant
+1 k
+time as the smallest missing disk on the peg containing D .
+1
+8 Working ahead
+While we are at the topic of Gray codes, we might as well mention another approach for
+loopless generation of Gray codes, which results from a generally applicable technique for
+converting amortized bounds into worst-case bounds. We start from the observation that
+was already mentioned in connection with the delta-sequence in Section 1.4:
+(cid:73) Proposition 6. Consider the enumeration of the n-tuples (b ,...,b ) with 0≤b <m in
+n 1 i i
+lexicographic order. If, between two successive tuples of the sequence, the j rightmost digits
+are changed, then, at the corresponding transition in the Gray code, the j-th digit from the
+right is changed. (cid:74)
+We can thus find the position j that has to be changed in the Gray code by lexicographically
+“incrementing” n-tuples (b ,...,b ) in a straightforward way:
+n 1
+3 Nowadays,mosthouseholdswillmorereadilyhaveaccesstoacomputerthantotowersofHanoi.
+Felix Herter and Günter Rote 12
+Algorithm DELTA. Generation of the delta-sequence for the Gray code.
+Initialize: (b ,...,b ,b ):=(0,0,...,0,0)
+n 2 1
+Q := an empty list
+loop:
+j :=1
+while b =m −1:
+j j
+b :=0
+j
+j :=j+1
+if j =n+1: TERMINATE
+b :=b +1
+j j
+Q.append(j)
+The delta sequence is stored in Q. It is known that the average number of loop iterations
+for producing an entry of Q is less than 2. We use this fact to coordinate the production of
+entries Q by Algorithm DELTA with their consumption in the Gray code generation, turning
+Q into a buffer of bounded capacity. This leads to the following loopless algorithm:
+Algorithm WORK-AHEAD. (a ,...,a ,a ):=(0,...,0,0)
+n 2 1
+Generation of the Gray code. (d ,...,d ,d ):=(1,...,1,1)
+n 2 1
+procedure STEP: (b ,b ,...,b ,b ):=(0,0,...,0,0); m :=2
+n+1 n 2 1 n+1
+if b =m −1: Q := queue of capacity B :=dne, initially empty
+j j 2
+b :=0 j :=1
+j
+j :=j+1 loop:
+else: visit the n-tuple (a ,...,a ,a )
+n 2 1
+if Q is not filled to capacity: STEP
+b :=b +1 STEP
+j j
+Q.append(j) remove j from Q
+j :=1 if j =n+1: TERMINATE
+a :=a +d
+j j j
+if a =0 or a =m −1: d :=−d
+j j j j j
+TheprocedureSTEPontheleftsideencompassesoneloopiterationofAlgorithmDELTA.
+By programmer’s license, we have moved the initialization j := 1 of the loop variable to
+the end of the previous loop. We have also moved the termination test j = n+1 to the
+side of the consumer. Accordingly, we had to extend the n-tuple b into an (n+1)-tuple,
+setting m arbitrarily to 2. When Q is full, nothing is done in the procedure STEP, and
+n+1
+the repeated call of STEP will try to insert the same value into Q. Thus, apart from the
+termination test, a repeated execution of STEP will faithfully carry out Algorithm DELTA.
+TheGraycodealgorithmontherightcouplestwoproductionSTEPswithoneconsumption
+step, which takes out an entry j of Q and carries out the update a :=a ±1. Every digit
+j j
+a must cycle up and down through its values in the sequence (3), and thus, we have to
+j
+remember the direction d =±1 in which it moves, as in Algorithm ODD.
+j
+To show that the algorithm is correct, we have to ensure that the queue Q is never empty
+when the algorithm retrieves an element from it. This is proved below in Lemma 7.
+The clean way to terminate the algorithm would be to stop inserting elements into Q
+as soon as j =n+1 is produced in STEP, as in Algorithm DELTA. Instead, termination is
+triggered when the value j =n+1 is removed from Q. Due to this delayed termination test,
+a few more iterations of STEP can be carried out, but they cause no harm.
+For the binary Gray code (m =2 for all i=1,...,n), the algorithm can be simplified.
+i
+With a slightly larger buffer Q of size B0 :=max{dn+1e,2}, the test whether Q is filled to
+2
+Loopless Gray Code Enumeration and the Tower of Bucharest 13
+capacity can be omitted, see Lemma 9 below. The reason is that the average number of
+productionSTEPsperitemapproaches2inthelimit,andaccordingly,thequeueautomatically
+does not grow beyond the minimum necessary size. The directions d are of course also
+i
+superfluous in the binary case.
+The idea of “working ahead” is opposite to the approach of delaying work as long
+as possible that underlies many “lazy” data structures and also lazy evaluation in some
+functional programming languages. In a similar vein, Guibas, McCreight, Plass, and Janet
+R. Roberts [5] have obtained worst-case bounds of O(logk) for updating a sorted linear list
+at distance k from the beginning.4 Their algorithm works ahead to hedge against sudden
+bursts of activity. Our setting is much simpler, because we do not depend on the update
+requests of a “user” and we can plan everything in advance.
+At a different level of complexity, the idea of working ahead occurs in an algorithm of
+Wettstein[9,Section6]. Thistrick,creditedtoEmoWelzl,isusedtoachievepolynomialdelay
+between successive solutions when enumerating non-crossing perfect matching of a planar
+point set, despite having to build up a network with exponential space in a preprocessing
+phase.
+8.1 An alternative STEP procedure
+As an alternative to the organization of Algorithm WORK-AHEAD, we can incorporate the
+termination test into the STEP procedure:
+procedure STEP0:
+if j =n+1: TERMINATE
+if b =m −1:
+j j
+b :=0
+j
+j :=j+1
+else:
+if Q is not filled to capacity:
+b :=b +1
+j j
+Q.append(j)
+j :=1
+With this modified procedure STEP0, the termination test in the main part of Algorithm
+WORK-AHEAD can of course be omitted. We also need not extend the arrays b and m to
+n+1 elements.
+The algorithm still works correctly because there are no unused entries in the queue when
+STEP0 signals termination. Let us prove this:
+The termination signal is sent instead of producing the value j = ρ¯(k) = n+1 for
+k =m m ...m . Generating this signal takes n+1 iterations of STEP. In this time, no
+0 1 n−1
+new values are added to the queue. Let us assume that the production of ρ¯(k) was started
+during iteration k , and the buffer was filled with B ≤B entries at that time. The first of
+0 0
+these entries is consumed at the end of iteration k , and all B entries of the buffer have
+0 0
+been used up at the beginning of iteration k +B . By this time, at most 2B ≤2B ≤n+1
+0 0 0
+iterations of STEP were carried out and contributed to the production of the termination
+signal. It follows that when STEP discovers that j = n+1, no unused entries are in the
+stack, and it is safe to terminate the program.
+4 WethankDonKnuthforleadingustothisreference.
+Felix Herter and Günter Rote 14
+It is important not to “speed up” the program by moving the termination test into the
+if-branch after the statement j :=j+1. Also, we must use exactly the prescribed buffer size
+for Q. Therefore, this variation is incompatible with the simplification for the binary case
+mentioned above.
+8.2 Correctness proofs for the work-ahead algorithms
+We define the ruler function ρ and the modified ruler function ρ¯with respect to a sequence
+of radixes m ,...,m as follows:
+1 n
+ρ(k):=max{i:0≤i≤n, m m ...m divides k}, ρ¯(k):=ρ(k)+1
+1 2 i
+Then the k-th value that is entered into Q is ρ¯(k), and for computing this value, Algorithm
+DELTAneedsρ¯(k)iterations,andaccordingly,AlgorithmWORK-AHEADneedsρ¯(k)STEPs.
+(cid:73) Lemma 7. In Algorithm WORK-AHEAD, the buffer Q never becomes empty.
+Proof. We number the iterations of the main loop as 1,2,...,m m ...m . In the last
+1 2 n
+iteration, the algorithm terminates.
+Let us show that the queue Q is not empty in iteration k. We distinguish two cases.
+(i) Up to and including iteration k, two repetitions of STEP were always completed.
+(ii) Some repetitions of STEP had no effect because the buffer Q was full.
+In case (i), production of all values ρ(i) for i=1,...,k requires
+k
+X
+S(k):= ρ¯(i)
+i=1
+calls to STEP. To show that these calls are completed by the time when ρ¯(k) is needed, we
+have to show
+S(k)≤2k. (4)
+In case (ii), let k be the last iteration when an execution of STEP was “skipped”. This
+0
+means that the queue Q was filled to capacity B just before removing the value j =ρ¯(k ),
+0
+and it contained the values ρ¯(k ),ρ¯(k +1),...,ρ¯(k +B−1). Since then, STEP was called
+0 0 0
+2(k−k ) times, and ρ¯(k) is ready when it is needed, provided that
+0
+k
+X
+1+ ρ¯(i)≤2(k−k )
+0
+i=k0+B+1
+whenever k ≥k +B. The left-hand side of this inequality is the number of necessary STEPs
+0
+for computing the values up to ρ¯(k). Computing ρ¯(k +B) takes just one more STEP, since
+0
+the STEP that would have stored this value in Q was abandoned in iteration k . Setting
+0
+k0 =k +B, we can express the inequality equivalently as
+0
+S(k)−S(k0)≤2(k−k0+B)−1 for k0 ≤k (5)
+We can write an explicit formula for S(k):
+(cid:22) (cid:23) (cid:22) (cid:23) (cid:22) (cid:23)
+k k k
+S(k)=k+ + +···+
+m m m m m ...m
+1 1 2 1 2 n
+Loopless Gray Code Enumeration and the Tower of Bucharest 15
+Since all m ≥2, we get S(k)≤k+k/2+k/4+k/8+···+k/2n <2k, proving (4). For the
+i
+other bound (5), we use the relation
+(cid:22) k (cid:23) (cid:22) k0(cid:23) k−k0
+− < +1
+x x x
+to get
+S(k)−S(k0)<(k−k0)+(k−k0)·(1 + 1 + 1 +···+ 1 )+n<2(k−k0)+n
+2 4 8 2n
+Since the left-hand side is an integer, we obtain S(k)−S(k0)≤2(k−k0)+n−1 and this
+implies (5) since the buffer size B :=dne satisfies 2B ≥n. (cid:74)
+2
+In Algorithm WORK-AHEAD, the STEPs should generate entries ρ¯(1),ρ¯(2),... of Q up
+to ρ¯(N), where N :=m m ...m .
+1 2 n
+The following lemma shows that production of the STEPs may overrun their target by
+at most one. Since the algorithm has already made provisions to generate ρ¯(N)=n+1 by
+extending the arrays b and m to size n+1 instead of n, this one extra entry does not cause
+any harm.
+(cid:73) Lemma 8. In Algorithm WORK-AHEAD, the last entry that is added to Q is ρ¯(N) or
+ρ¯(N +1).
+Proof. The production of ρ¯(N)=n+1 takes n+1≥2B STEPs. It follows that the buffer
+Q is empty when ρ¯(N)=n+1 is inserted, regardless of whether the production of ρ¯(N) is
+started in the first or second STEP of an iteration.
+If the production of ρ¯(N)=n+1 is completed in the second STEP of an iteration, it is
+thus immediately consumed, which leads to termination. If ρ¯(N) is completed in the first
+STEP of an iteration, the second STEP will produce the value ρ¯(N +1)=1, but then the
+algorithm will terminate as well. (cid:74)
+Finally, we prove the simplification of the algorithm for the binary case.
+(cid:73) Lemma 9. In the binary version of Algorithm WORK-AHEAD, i.e., when m = 2 for
+i
+all i = 1,...,n, the buffer Q automatically never gets more than B0 := max{dn+1e,2}
+2
+entries, even if the test in STEP whether the buffer is full is omitted.
+Proof. Let us assume for contradiction that the buffer becomes overfull in iteration k,
+1≤k ≤2n. This means that, before j =ρ¯(k) is removed from Q, the 2k STEP operations
+have produced more than k−1+B0 values. But this is impossible, since, as we will show,
+the production of the first k =k+B0 values would have taken
+1
+(cid:22) (cid:23) (cid:22) (cid:23) (cid:22) (cid:23)
+k k k
+S(k )=k + 1 + 1 +···+ 1 >2k
+1 1 2 22 2n
+STEPs. To show the last inequality, we first consider the case k < 2n. We apply the
+1
+inequality bxc>x−1 and obtain S(k )>2k −k /2n−n, and since k /2n <1 and S(k )
+1 1 1 1 1
+is an integer, we get
+S(k )≥2k −n=2k+2B0−n>2k.
+1 1
+Let us now see at what time ρ¯(k ) for k ≥ 2n is entered into Q. When k = 2n, no
+1 1 1
+round-off takes place in the formula for S(k ), and we have S(2n)=2·2n−1. This shows
+1
+that the production of ρ¯(2n) is completed in the first STEP of iteration 2n. In the second
+STEP of this iteration, ρ¯(2n +1) = 1 is added to Q. Thus, when ρ¯(2n) is about to be
+retrieved, the buffer contains 2≤B0 elements. Then the algorithm terminates, and no more
+elements are produced. (cid:74)
+Felix Herter and Günter Rote 16
+9 Concluding Remarks
+By our approach of modeling the Gray code in terms of a motion-planning game, we were
+able get a mixed-radix Gray code only when all radixes m are odd. It remains to find a
+i
+model that would work for different even radixes or even for radixes of mixed parity.
+Another motion-planning game which is related to the binary Gray code is the Chinese
+rings puzzle, see Scorer, Grundy, and Smith [8], Gardner [4], or Knuth [6, pp. 285–6]. In this
+puzzle, there are at most two possible moves in every state, like in the towers of Bucharest,
+and by simulating the Chinese rings directly, one can obtain another loopless algorithm for
+the binary Gray code. However, this algorithm does not seem to extend to other radixes.
+References
+1 James R. Bitner, Gideon Ehrlich, and Edward M. Reingold. Efficient generation of the
+binary reflected Gray code and its applications. Commun. ACM, 19(9):517–521, 1976.
+2 Peter Buneman and Leon Levy. The towers of Hanoi problem. Information Processing
+Letters, 10(4–5):243–244, 1980.
+3 GideonEhrlich. Looplessalgorithmsforgeneratingpermutations,combinations,andother
+combinatorial configurations. J. Assoc. Comput. Mach., 20(3):500–513, July 1973.
+4 Martin Gardner. The curious properties of the Gray code and how it can be used to solve
+puzzles. Sci. American, 227:106–109, 1972.
+5 Leo J. Guibas, Edward M. McCreight, Michael F. Plass, and Janet R. Roberts. A new
+representation for linear lists. In Proceedings of the Ninth Annual ACM Symposium on
+Theory of Computing, STOC ’77, pages 49–60, New York, NY, USA, 1977. ACM.
+6 Donald E. Knuth. Combinatorial Algorithms, Part 1, volume 4A of The Art of Computer
+Programming. Addison-Wesley, 2011.
+7 Amir Sapir. The towers of Hanoi with forbidden moves. The Computer Journal, 47(1):20–
+24, 2004.
+8 R. S. Scorer, P. M. Grundy, and C. A. B. Smith. Some binary games. The Mathematical
+Gazette, 28(280):96–103, 1944.
+9 Manuel Wettstein. Counting and enumerating crossing-free geometric graphs.
+arXiv:1604.05350, April 2016.
+A Appendix: PYTHON simulations of the algorithms
+HerewelistprototypeimplementationsinPython. TheyshouldrunequalywithPython2.7
+and Python 3. The pegs, the string a, and the array of directions are kept as global
+variables.
+Loopless Gray Code Enumeration and the Tower of Bucharest 17
+A.1 Basic procedures
+The procedure visit prints the string and the contents of the pegs.
+def visit():
+print ("".join(str(x) for x in reversed(a[1:])) + " "+
+" ".join("P{}:".format(k)+",".join(map(str,p))
+for k,p in enumerate(pegs)))
+def find_smallest_disk(exclude=None):
+list_d_k = [(p[-1],k) for k,p in enumerate(pegs) if k!=exclude and p]
+if list_d_k:
+_,k = min(list_d_k) # smallest disk not covered by D1
+return k
+return None
+A.2 Algorithm ODD, Section 4
+def initialize_m_ary_odd(m,n):
+# n-tuple of entries from the set {0,1,...,m-1}
+global pegs, a, direction
+pegs = tuple([] for k in range(m))
+for i in range(n,0,-1):
+pegs[0].append(i)
+a = (n+1)*[0] # a[0] and direction[0] is wasted
+direction = (n+1)*[+1]
+def Gray_code_m_ary_odd(m):
+visit()
+while True:
+for _ in range(m-1): # repeat m-1 times:
+move_disk(m,peg=a[1])
+visit()
+k = find_smallest_disk(exclude=a[1]) # smallest disk not covered by D1
+if k==None: return
+move_disk(m,peg=k)
+visit()
+def move_disk(m,peg): # move topmost disk on peg
+disk = pegs[peg].pop()
+peg += direction[disk]
+a[disk] += direction[disk]
+if peg==m-1: direction[disk] = -1
+elif peg==0: direction[disk] = +1
+pegs[peg].append(disk)
+# run the program for a test:
+m=3
+initialize_m_ary_odd(m,6)
+Gray_code_m_ary_odd(m)
+Felix Herter and Günter Rote 18
+A.3 Algorithm ODD-COMPRESSED, Section 6
+This implementation uses the idea of a “control disk” D mentioned at the end of section 4.
+0
+For uniformiy, we attach a direction also to the dial positions 0 and m−1, namely the
+direction in with the next move will proceed (in contrast to the convention (3) used in
+Section 6).
+def initialize_m_ary_odd_compressed(m,n):
+# n-tuple of entries from the set {0,1,...,m-1}
+global pegs, a
+pegs = tuple([] for k in range(3))
+for i in range(n,0,-1):
+pegs[0].append((i,0,+1))
+a = (n+1)*[0] # a[0] is wasted
+def Gray_code_m_ary_odd_compressed(m):
+visit()
+while True:
+for control_disk in (2,0):
+k = find_smallest_disk(exclude=control_disk)
+if k==None: return # All disks are on the same peg.
+move_disk_compressed(m,peg=k)
+visit()
+def move_disk_compressed(m,peg):
+# retrieve topmost disk on peg:
+disk,value,direction = pegs[peg].pop()
+if value in (0,m-1) or value+direction in (0,m-1):
+peg += direction
+value += direction
+a[disk] += direction
+if value in (0,m-1):
+direction = -direction
+pegs[peg].append((disk,value,direction))
+# run the program for a test:
+m=5
+initialize_m_ary_odd_compressed(m,5)
+Gray_code_m_ary_odd_compressed(m)
+Loopless Gray Code Enumeration and the Tower of Bucharest 19
+A.4 Algorithm EVEN, Section 5
+def initialize_m_ary_even(m,n):
+initialize_m_ary_odd(m+1,n) # use m+1 pegs
+def Gray_code_m_ary_even(m):
+peg_disk1 = 0 # position of disk D1
+visit()
+while True:
+for _ in range(m-1): # repeat m-1 times:
+turn_disk(m,peg=peg_disk1)
+peg_disk1 = (peg_disk1+1) % (m+1)
+visit()
+k = find_smallest_disk(exclude=peg_disk1)
+# smallest disk not covered by D1
+if k==None: return
+turn_disk(m,peg=k)
+visit()
+def turn_disk(m,peg): # move the topmost disk on peg
+disk = pegs[peg].pop()
+if disk%2==1:
+peg = (peg + 1) % (m+1)
+else:
+peg = (peg - 1) % (m+1)
+pegs[peg].append(disk)
+a[disk] += direction[disk]
+if a[disk]==m-1: direction[disk] = -1
+elif a[disk]==0: direction[disk] = +1
+# run the program for a test:
+m=4
+initialize_m_ary_even(m,6)
+Gray_code_m_ary_even(m)
+A.5 Truly loopless implementation of Algorithm EVEN, Section 7
+Apegisalistofpairs(a,b)witha≤b,denotingamaximalsubseta,a+1,...,bofconsecutive
+disks (an interval). The pairs are sorted, with the smallest disks at the end (at the “top”).
+def initialize_m_ary_even_intervals(m,n):
+global pegs,position
+initialize_m_ary_even(m,n)
+pegs[0][:]=[(1,n)]
+position=[0]*(n+1)
+Felix Herter and Günter Rote 20
+def Gray_code_m_ary_even_intervals(m,n):
+visit()
+while True:
+for _ in range(m-1): # repeat m-1 times:
+turn_disk_intervals(m,peg=position[1])
+visit()
+d = find_smallest_missing_disk(position[1])
+# smallest disk not covered by D1
+if d>n: return
+turn_disk_intervals(m,peg=position[d])
+visit()
+def turn_disk_intervals(m,peg): # move topmost disk on peg
+disk,d2 = pegs[peg][-1]
+# remove disk from peg:
+if disk==d2:
+pegs[peg].pop()
+else:
+pegs[peg][-1]=(disk+1,d2)
+if disk%2==1:
+peg = (peg + 1) % (m+1) # turn the disk "clockwise"
+else:
+peg = (peg - 1) % (m+1) # turn the disk "counterclockwise"
+position[disk]=peg
+# add disk to peg:
+if pegs[peg]:
+d1,d2 = pegs[peg][-1]
+if disk<d1-1:
+pegs[peg].append((disk,disk))
+else:
+pegs[peg][-1]=(disk,d2)
+else:
+pegs[peg].append((disk,disk))
+a[disk] += direction[disk]
+if a[disk]==m-1: direction[disk] = -1
+elif a[disk]==0: direction[disk] = +1
+def find_smallest_missing_disk(peg):
+(_,d2)=pegs[peg][-1]
+return d2+1
+# run the program for a test:
+m=4
+initialize_m_ary_even_intervals(m,6)
+Gray_code_m_ary_even_intervals(m,6)
+Loopless Gray Code Enumeration and the Tower of Bucharest 21
+A.6 Algorithm WORK-AHEAD, Section 8
+def STEP():
+global j, b,m,B,Q
+if b[j]==m[j]-1:
+b[j]=0
+j += 1
+else:
+if len(Q)<B:
+b[j] += 1
+Q.append(j)
+j = 1
+def initialize_work_ahead(n):
+global a,b,direction,B,Q,j
+a = (n+1)*[0] # a[0], b[0], and direction[0] is wasted
+direction = (n+1)*[+1]
+b = (n+2)*[0]
+from collections import deque
+B = (n+1)//2
+Q = deque()
+j = 1
+def Gray_code_work_ahead(n):
+while True:
+VISIT()
+STEP()
+STEP()
+j = Q.popleft()
+if j==n+1: break
+a[j] += direction[j]
+if a[j] in (0,m[j]-1): direction[j] *= -1
+def VISIT():
+print ("".join(str(x) for x in reversed(a[1:])))
+# run the program for a test:
+n=4
+m=[0]+[2,4,5,2]+[2] # initial 0 and final 2 are artificial
+initialize_work_ahead(n)
+Gray_code_work_ahead(n)
+Felix Herter and Günter Rote 22
+A.7 Algorithm WORK-AHEAD for the binary Gray code, Section 8
+def STEP_binary():
+global j, b,B,Q
+if b[j]==1:
+b[j]=0
+j += 1
+else:
+if len(Q)>=B:
+print ("error")
+exit(1)
+b[j]=1
+Q.append(j)
+j = 1
+def initialize_work_ahead_binary(n):
+global a,b,B,Q,j
+a = (n+1)*[0] # a[0], b[0], and direction[0] is wasted
+b = (n+2)*[0]
+from collections import deque
+B = max(2,(n+2)//2)
+Q = deque()
+j = 1
+def Gray_code_work_ahead_binary(n):
+while True:
+VISIT()
+STEP_binary()
+STEP_binary()
+j = Q.popleft()
+if j==n+1: break
+a[j] = 1-a[j]
+# run the program for a test:
+n=4
+initialize_work_ahead_binary(n)
+Gray_code_work_ahead_binary(n)
+Loopless Gray Code Enumeration and the Tower of Bucharest 23
+A.8 Algorithm WORK-AHEAD with the modification of Section 8.1
+def STEP_x():
+global j, b,m,B,Q,n
+if j==n+1: raise StopIteration
+if b[j]==m[j]-1:
+b[j]=0
+j += 1
+else:
+if len(Q)<B:
+b[j] += 1
+Q.append(j)
+j = 1
+def initialize_work_ahead_x():
+global n,a,b,direction,B,Q,j
+a = (n+1)*[0] # a[0], b[0], and direction[0] is wasted
+direction = (n+1)*[+1]
+b = (n+1)*[0]
+from collections import deque
+B = (n+1)//2
+Q = deque()
+j = 1
+def Gray_code_work_ahead_x():
+try:
+while True:
+VISIT()
+STEP_x()
+STEP_x()
+j = Q.popleft()
+a[j] += direction[j]
+if a[j] in (0,m[j]-1): direction[j] *= -1
+except StopIteration:
+return
+# run the program for a test:
+n=4
+m=[0]+[2,4,5,2] # initial entry 0 is redundant
+initialize_work_ahead_x()
+Gray_code_work_ahead_x()
+Felix Herter and Günter Rote 24
+A.9 General mixed-radix Gray code generation according to the
+recursive definition of Section 3
+In order to have a reference implementation for comparing the results, we give a program
+straightfromthedefinition(2)ofSection3,extendedtoarbitrarymixedradices(m ,...,m ).
+1 n
+When this program is run with the data specified below, it should produce the same Gray
+codes as all the previous example programs combined (apart from the additional state
+of the pegs that is reported by these programs). The outputs coincide precisely after
+stripping everything after the first blank on each line. The source files of this arXiv
+preprint include scripts that will extract the program code from the LATEX file of this
+appendix (extract-code-from-appendix.py) and compare the outputs to check the results
+(check-output.sh) after running the examples,
+def mixed_Gray_code(ms):
+"a generator for the mixed-radix Gray code"
+if ms:
+m = ms[0]
+G1 = mixed_Gray_code(ms[1:])
+while True:
+g = next(G1)
+for lastdigit in range(0,m):
+yield g+(lastdigit,)
+g = next(G1)
+for lastdigit in reversed(range(0,m)):
+yield g+(lastdigit,)
+else:
+yield ()
+for result in (
+mixed_Gray_code([3]*6),
+mixed_Gray_code([5]*5),
+mixed_Gray_code([4]*6),
+mixed_Gray_code([4]*6),
+mixed_Gray_code([2,4,5,2]),
+mixed_Gray_code([2]*4),
+mixed_Gray_code([2,4,5,2]),
+):
+print ("##########")
+for g in result:
+print ("".join(str(x) for x in g))

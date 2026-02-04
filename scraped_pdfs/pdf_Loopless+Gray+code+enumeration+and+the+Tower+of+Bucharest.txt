@@ -1,0 +1,839 @@
+Source: Loopless+Gray+code+enumeration+and+the+Tower+of+Bucharest.pdf
+================================================================================
+
+Loopless Gray Code Enumeration and the Tower of Bucharest
+101
+102
+FelixHertera,Gu¨nterRotea
+103 aInstitutfu¨rInformatik,FreieUniversita¨tBerlinTakustr.9,14195Berlin,Germany
+104 Abstract
+105 Wegivenewalgorithmsforgeneratingalln-tuplesoveranalphabetofmletters,changingonlyoneletteratatime(Gray
+106 codes). ThesealgorithmsarebasedontheconnectionwithvariationsoftheTowerofHanoigame. Ouralgorithms
+107 are loopless, in the sense that the next change can be determined in a constant number of steps, and they can be
+108 implementedinhardware. Wealsogiveanotherfamilyoflooplessalgorithmsthatisbasedontheideaofworking
+109
+aheadandsavingtheworkinabuffer.
+110 Keywords: TowerofHanoi,Graycode,enumeration,looplessgeneration
+111 Contents
+112 1 Introduction: ThebinaryreflectedGraycodeandtheTowerofHanoi 2
+113 1.1 TheGraycode. . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+114 1.2 Looplessalgorithms . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+115 1.3 TheTowerofHanoi . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 2
+116 1.4 ConnectionsbetweentheTowerofHanoiandGraycodes . . . . . . . . . . . . . . . . . . . . . . . . 3
+117 1.5 LooplessTowerofHanoiandbinaryGraycode . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+118 1.6 Overview . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+119 1.7 Algorithmswithoutcomputers . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 4
+120 2 Looplessgenerationalgorithms 5
+121 3 Bitwiseoperationsasafastalternative 5
+122 4 TernaryGraycodesandtheTowersofBucharest 6
+123 5 Graycodeswithgeneralradixesandwithmixedradixes 7
+124 6 Generatingthem-aryGraycodewithoddm 8
+125 7 Generatingthem-aryGraycodewithevenm 9
+126 8 TheTowersofBucharest++ 10
+127 9 Computersimulation 12
+128 10 Workingahead 12
+129 10.1 Workingahead,ordelayingtheoutput . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 14
+130 10.2 AnalternativeSTEPprocedure . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 15
+131 10.3 Analysisandcorrectnessproofsforthework-aheadalgorithms . . . . . . . . . . . . . . . . . . . . . 15
+132 Emailaddresses:avealx@zedat.fu-berlin.de(FelixHerter),rote@inf.fu-berlin.de(Gu¨nterRote)
+PreprintsubmittedtoTheoreticalComputerScience August9,2017
+201 11 Conclusion 17
+202 11.1 Openquestions . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 17
+1. Introduction: ThebinaryreflectedGraycodeandtheTowerofHanoi
+203 1.1. TheGraycode
+204 TheGraycode,ormoreprecisely,thereflectedbinaryGraycodeG n ,ordersthe2nbinarystringsoflengthninsuch
+205 awaythatsuccessivestringsdifferinasinglebit. Itisdefinedinductivelyasfollows,seeFigure1aforanexample.
+206 TheGraycodeG 1 =0,1,andifG n =C 1 ,C 2 ,...,C 2n istheGraycodeforthebitstringsoflengthn,then
+207 G n+1 =0C 1 ,0C 2 ,...,0C 2n , 1C 2n ,1C 2n−1 ,...,1C 2 ,1C 1 . (1)
+208 Inotherwords,weprefixeachwordofG n with0,andthisisfollowedbythereverseofG n with1prefixedtoeach
+209 word.
+000000 001011 010111 110100 101110 0000 0111 0222 1112 1001 2120 2220
+000001 001001 010110 111100 101111 0001 0112 1222 1111 1000 2110 2221
+000011 001000 010010 111101 101101 0002 0102 1221 1110 2000 2111 2222
+000010 011000 010011 111111 101100 0012 0101 1220 1120 2001 2112
+000110 011001 010001 111110 100100 0011 0100 1210 1121 2002 2102
+000111 011011 010000 111010 100101 0010 0200 1211 1122 2012 2101
+000101 011010 110000 111011 100111 0020 0201 1212 1022 2011 2100
+000100 011110 110001 111001 100110 0021 0202 1202 1021 2010 2200
+001100 011111 110011 111000 100010 0022 0212 1201 1020 2020 2201
+001101 011101 110010 101000 100011 0122 0211 1200 1010 2021 2202
+001111 011100 110110 101001 100001 0121 0210 1100 1011 2022 2212
+001110 010100 110111 101011 100000 0120 0220 1101 1012 2122 2211
+(a) 001010 010101 110101 101010 (b) 0110 0221 1102 1002 2121 2210
+210 Figure1:(a)ThebinaryGraycodeG6for6-tuples.(b)TheternaryGraycodefor4-tuples,asconsideredinSection4anddefinedinSection5.
+211 1.2. Looplessalgorithms
+212 TheGraycodehasanadvantageoveralternativealgorithmsforenumeratingthebinarystrings,forexamplein
+213 lexicographicorder: onecanchangeabinarystringa n a n−1 ...a 1 tothesuccessorinthesequencebyasingleupdate
+214 oftheforma i :=1−a i inconstanttime. However,wealsohavetocomputethepositioniofthebitwhichhastobe
+215 updated. Astraightforwardimplementationoftherecursivedefinition(1)leadstoanalgorithmwithanoptimaloverall
+216
+runtimeofO(2n),i.e.,constantaveragetimeperenumeratedbitstring,whichisoptimal.
+217 Astricterrequirementisthattheworst-casetimebetweentwosuccessivestringsisconstant. Suchanalgorithmis
+218 calledalooplessgenerationalgorithm. WewilldiscussthisconceptmorethoroughlyinSection2. Differentloopless
+219 algorithmsforGraycodesareknown,seeBitner,Ehrlich,andReingold[1]andKnuth[2,Algorithms7.2.1.1.Land
+220 7.2.1.1.H].Thesealgorithmsachieveconstanttimebymaintainingadditionalpointersinasmartway.
+221 1.3. TheTowerofHanoi
+222 TheTowerofHanoiisthestandardtextbookexampleforillustratingtheprincipleofrecursivealgorithms. Ithasn
+223 disksD 1 ,D 2 ,...,D n ofincreasingradiiandthreepegsP 0 ,P 1 ,P 2 ,seeFig.2. Thegoalistomovealldisksfromthe
+224 pegP 0 ,wheretheyinitiallyrest,toanotherpeg,subjecttothefollowingrules:
+225 1. Onlyonediskmaybemovedatatime: thetopmostdiskfromonepegcanbemovedontopofthedisksof
+226 anotherpeg
+227 2. Adiskcanneverlieontopofasmallerdisk.
+2
+301 Figure2:TheTowerofHanoiwithn=6(square)disks.WhenrunningthealgorithmHANOIfromSection1.5,theconfigurationinthispicture
+302 occurstogetherwiththebitstring110011.(Therelationbetweenthepositionsofthedisksandthisbitstringisnotstraightforward,cf.[3,Section3].)
+303 ThenextdisktomoveisD1;itmovesclockwisefrompegP2toP0,andthelastbitiscomplemented.ThesuccessorintheGraycodeisthestring
+304 110010.Afterthat,D1pausesforonestep,whilediskD3movesclockwisefromP1toP2,andthethirdbitfromtherightiscomplemented,leading
+305 tothestring110110.
+306 Formovingatowerofheightn,onehastomovediskD n atsomepoint. ButbeforemovingdiskD n frompegAto
+307 B,onehastomovethedisksD 1 ,...,D n−1 ,whichlieontopofD n ,outoftheway,ontothethirdpeg. AftermovingD n
+308 toB,thesediskshavetobemovedfromthethirdpegtoB. Thisreducestheproblemforatowerofheightntotwo
+309 towersofheightn−1,leadingtothefollowingrecursiveprocedure.
+310 procedureMOVE-TOWER(k,A,B). MovestheksmallestdisksD 1 ...D k frompegAtopegB
+311 if k≤0: return
+312 auxiliary:=3−A−B; Comment: auxiliaryisthethirdpeg,differentfromAandB.
+313 MOVE-TOWER(k−1,A,auxiliary)
+314 movediskD k fromAtoB
+315 MOVE-TOWER(k−1,auxiliary,B)
+316 1.4. ConnectionsbetweentheTowerofHanoiandGraycodes
+317 ThedeltasequenceoftheGraycodeisthesequence1,2,1,3,1,2,1,4,1,2,1,...ofbitpositionsthatareupdated.
+318 (Incontrasttotheusualconventionofnumberingthebitsstartingfrom0,westartat1.) Thissequencehasanobvious
+319 recursivestructurewhichresultsfrom(1). Italsodescribesthenumberofchangedbitswhenincrementinganumber
+320 from jto j+1inbinarycounting. Moreover,itiseasytoobservethatthesamesequencealsodescribesthedisksthat
+321 aremovedbytherecursivealgorithmMOVE-TOWERabove. IthasthusbeennotedthattheGraycodeG n canbe
+322 usedtosolvethewell-knownTowerofHanoipuzzle,cf.Scorer,Grundy,andSmith[3,Section5]orGardner[4]. The
+323 deltasequencedoesnotspecifythedirectionofmovement,butthiscanbeeasilyrecovered,seeProposition1below.
+324 Conversely,theTowerofHanoipuzzlecanbeusedtogeneratetheGraycodeG n ,seeBunemanandLevy[5].
+325 Several loopless ways to compute the next move for the Tower of Hanoi are known, and they lead directly to
+326 looplessalgorithmsfortheGraycode. Wedescribeonesuchalgorithm.
+1.5. LooplessTowerofHanoiandbinaryGraycode
+327 FromtherecursivealgorithmMOVE-TOWER,itisnothardtoderivethefollowingfact.
+328 Proposition 1. If the tower should be moved from P 0 to P 1 and n is odd, or if the tower should be moved from
+329 P 0 to P 2 and n is even, the moves of the odd-numbered disks always proceed in forward (“clockwise”) circular
+330 direction: P 0 → P 1 → P 2 → P 0 , andtheeven-numbereddisksalwaysproceedintheoppositecirculardirection:
+331 P 0 → P 2 → P 1 → P 0 .
+3
+401 Intheothercase,whentheassumptiondoesnothold,thedirectionsaresimplyswapped. Sinceourgoalisnotto
+402 movethetowertoaspecifictargetpeg,buttogeneratetheGraycode,westickwiththepropositionasstated.
+403 AlgorithmHANOI.LooplessalgorithmtheTowerofHanoiandforthebinaryGraycode.
+404 Initialize: PutalldisksonP 0 .
+405 loop:
+406 MoveD 1 clockwise.
+407 LetD k bethesmallerofthetopmostdisksonthetwopegsthatdon’tcarryD 1 .
+408 Ifthereisnosuchdisk,TERMINATE.
+409 MoveD k clockwiseifkisodd;otherwise,moveitcounterclockwise.
+410 ToobtaintheGraycode,wesimplyseta k :=1−a k wheneverwemovethediskD k . SeeFig.2forasnapshotofthe
+411 procedure. Wewouldnotneedtheclockwise/counterclockwiseruleforD k : SincewemustnotputD k ontopofD 1 ,
+412 thereisanywaynochoiceofwheretomoveit[5]. Wehavechosentheaboveformulationsinceitisbettersuitedfor
+413 generalization(Section7).
+414 1.6. Overview
+415 Inthispaper,wewillgeneralizetheconnectionsbetweenGraycodesandtheTowerofHanoitoGraycodesfor
+416 larger radixes (alphabet sizes). Section 4 is devoted to ternary Gray codes and their connections to the so-called
+417 TowersofBucharest. AfterdefiningGraycodeswithgeneralradixesinSection5,weextendtheternaryalgorithm
+418 fromSection4toarbitraryoddradixesminSection6,andeventomixed(odd)radixes(Section8). InSection7,we
+419 generalizethebinaryGraycodealgorithmHANOIfromabovetoarbitraryevenm. Finally,inSection10,wedevelop
+420 loopless algorithms based on an entirely different idea of “working ahead” that is related to converting amortized
+421 running-timeboundstoworst-casebounds. TheintroductorySection2discussestheconceptoflooplessalgorithms
+422 ingreaterdepth,andshoulddispelanyhopesthatthereadermighthaveoffindingsomethingthatwouldbeofgreat
+423 practicalvalue. Section3mentionsfastcomputerhardwareoperationsasanalternativeoptionforgeneratingGray
+424 codesandsetsourtopicapartfromsuchpractices. Inthebriefremainderoftheintroduction,Section1.7,weprepare
+425 thereaders’mindsfortheprimary“modelofcomputation”thatwewilluse. Intheconcludingsection,Section11,we
+426 willreflectourresultsandhowtheywereachieved,andwewillindicatesomeopenproblems.
+427 These results were presented at the 8th International Conference on Fun with Algorithms (FUN 2016) in La
+428 MaddalenaislandoffSardiniainJune2016[6]. Thepreprint[7]containsprototypesimulationsofallouralgorithmsin
+429
+theprogramminglanguagePython.
+430 1.7. Algorithmswithoutcomputers
+431 ThealgorithmHANOIdoesnotrunonaconventionalcomputerbutonadifferentpieceofhardware(Fig.2). We
+432 willshowmoresuchexamples. Ofcourse,itiseasytotranslatethesealgorithmsinto“simulations”ontheelectronic
+433 computerstowhichwearesoaccustomed. However,weencouragethereaderstojoinusinthinkingdirectlyabout
+434
+algorithmsforthisrestrictedworld,namely,lookingatstacksofdisksondifferentpegs.
+435 ThisrelatestotheCS-Unplugged1 project(ComputerSciencewithoutacomputer)inthecontextofeducating
+436 childrenaboutComputerScience, anditunderlinesthepointthatComputerScience, orInformatics, asitismore
+437 appropriatelycalledinotherlanguages,isnotthescienceofcomputers.“ComputerScienceisnomoreaboutcomputers
+438 thanastronomyisabouttelescopes”isasayingwhichoftenattributedtoE.W.Dijkstra,butwhichapparentlygoes
+439 backtoMikeFellows. Inthecaseofastronomy,itmustofcoursebeconcededthattelescopes,andmoregenerally,
+440 devicesandproceduresforphysicalmeasurements,areeminentlyrelevant. Similarly,thereisanimportantpartof
+441 ComputerSciencethatdealswiththedesign,theorganization,andtheuseofcomputers. However,acorepartof
+442 ComputerScience,inparticularintheoreticalcomputerscienceandtheanalysisofalgorithms,isconcernedwithideas
+443 thatareseparatefromthephysicalembodimentinelectroniccomputers. Onecanevenarguethatamajoreffortof
+444 ComputerScience(programminglanguages,operatingsystems)consistsinprovidinglayersofabstractionthathelpto
+445 avoiddirectcontactwithcomputers.
+446 1csunplugged.org
+4
+501 2. Looplessgenerationalgorithms
+502 The efficiency of enumeration algorithms can be judged by different criteria. Besides the overall runtime for
+503 generating all solutions of a combinatorial problem, we may be interested in a finer analysis of the runtime. The
+504 performancemeasuresforcombinatorialenumerationalgorithmsinclude[8]
+505 a) thedelaybetweensuccessivesolutions,
+506 b) thesetuptimeforgeneratingthefirstsolution,
+507 c) thefinishingtimefordeterminingthatthelastsolutionhasbeengeneratedandnofurthersolutionexists,
+508 d) andthememoryrequirement.
+509 ThebestconceivablealgorithmshaveO(1)delay,O(n)setuptime,andO(1)finishingtime,wherenisthesizeofthe
+510 generatedsolutions. Forsuchalgorithms,Ehrlich[9]coinedthetermlooplessin1973,andhepioneeredloopless
+511 enumeration algorithms for various combinatorial structures. All algorithms that we consider have the additional
+512 propertythattheyuseonlyO(n)memory.
+513 Itisnotnecessarythatalooplessalgorithmshouldcontainnoloopsintheprogrambesidesanouterloopthat
+514 iteratesoverthesolutions. Sinceitisguaranteedthatthenumberofoperationsbetweensuccessivevisitsisboundedin
+515
+advance,anyinnerloopscanbeeliminatedbyunrollingthemsufficientlyoften,hencemakingthealgorithmloopless
+516 intheliteralsenseoftheword.
+517
+Inordertogofromonesolutiontothenextinconstanttime,thedifferencebetweensuccessivesolutionsmust
+518 necessarilybesmall. Therefore,looplessalgorithmsgohandinhandwithGraycodes,wherethedifferencebetween
+519 successiveelementsisjustasingleentry.
+520 Theprimarypurposeforenumeratingcombinatorialobjectsisusuallynottoprintorstoreacompletelist,butto
+521 investigatetheobjectsonebyone,to“visit”thembysomeprocedure,whichdependsontheapplication. Inourcase,
+522 thebitstringsmightrepresentallsubsetsofann-elementset,andwewanttoevaluatesomeobjectivefunctiononeach
+523 setinordertofindthebestone. Iftheobjectivefunctioncanbeeasilyupdatedwhenasingleelementisinsertedor
+524 removed,aGraycodeisthesequenceofchoice.
+525 Sincethenumberofenumeratedsolutionsisusuallyhuge,thedominatingalgorithmicfactorforthetotalrunning
+526 timeisthedelay. However,asmallworst-casedelay,asrequiredforalooplessalgorithm,isunnecessaryforsuchan
+527 application. Aboundontheaveragedelayisgoodenough. Thereareofcourseareaswhereaworst-caseboundfor
+528 individualstepsisessential,forexamplewhenprocessingqueriesininteractivesystems,inparallelcomputing,orin
+529 real-timeapplications. Theseareareaswherepredictabilityismoreimportantthanoverallspeed. However,toputour
+530 resultsintotheproperperspective,weemphasizethatwedonotenvisionsuchscenariosforouralgorithms. Moreover,
+531
+theeffortforgeneratingallbitstringsisoftennegligiblecomparedtothetimethatittakestoprocesseachbitstring,
+532 andhencethespeedofgenerationisofminorimportance.
+533 We conclude this discussion with a quote from Don Knuth, from the documentation of a loopless generation
+534
+programSPIDERSthathewrote2,whichsummarizesthepointnicely.
+535 Theextracontortionsthatweneedtogothroughinordertoachievelooplessnessareusuallyill-advised,
+536 becausetheyactuallycausethetotalexecutiontimetobelongerthanitwouldbewithamorestraightfor-
+537 wardalgorithm. Buthey,looplessnesscarriesanacademiccachet. Sowemightaswelltreatthistaskasa
+538 challengingexercisethatmighthelpustosharpenouralgorithmicwits.
+539 Wewillcomebacktotheseremarksintheconcludingsection11.
+540 3. Bitwiseoperationsasafastalternative
+541 Thearithmeticandlogicaloperationsonfull-wordoperandsthataresupportedonconventionalcomputersprovidea
+542 fastalternativeforcomputingtheGraycode. Forexample,the j-thelementoftheGraycodecanbecomputeddirectly
+543 withthehelpofthebitwiseexclusive-oroperationas“jXOR(cid:98)j/2(cid:99)”for j=0,1,...,2n−1,cf.[2,Eq. 7.2.1.1–(9),
+544 p.284]. InthenotationofCorPython,thiscanbewrittenwiththeshiftoperator>>asj^(j>>1). Thistechniquecan
+545 2www-cs-faculty.stanford.edu/~knuth/programs.html(2001).Hemakessimilarremarkin[2,AnswertoEx.7.2.1.2-19,p.706].
+5
+601 evenbeextendedtootherradixes(Section5),althoughwearenotawarethatthishasbeendescribedanywhere. We
+602 willnotfurtherconsidersuchalgorithmshere.
+603 Looplessalgorithmsgainanadvantagewhenonewantstoidentifythebitkthatischanged. Forexample,whenthe
+604 Graycodemodelsallsubsetsofann-elementset,thek-thelementisinsertedorremoved,andonehastocomputethe
+605 effectofthisoperationontheset. Inourcombinatorialalgorithms,theindexkisdirectlyavailable. WhentheGray
+606 codeiscomputedthroughbitwiseoperations,theXORoftwosuccessivebitstringsgivesthebinaryrepresentation
+607 of2k. Fromthis,theindexkcanberecovered[2,p.141–2]. However,thenumberofoperationsgrowslogarithmically
+608 withthewordsizeunlessthehardwareprovidesspecialinstructionssuchascountingthenumberof1-bitsinaword
+609 (sidewaysaddition).
+610 4. TernaryGraycodesandtheTowersofBucharest
+611 AternaryGraycodeenumeratesthe3nn-tuples(a n ,...,a 1 )witha i ∈{0,1,2}. Successivetuplesdifferinoneentry,
+612
+andinthisentrytheydifferby±1.
+613 ThefollowingsimplevariationoftheTowersofHanoiwillyieldaternaryGraycode(m=3): Wedisallowthe
+614 directmovementofadiskbetweenpegs P 0 and P 2 : adiskcanonlybemovedtoanadjacentpeg. Wecallthisthe
+615 Towers of Bucharest.3 This version of the game was already considered in 1944 (not under this name) by Scorer,
+616 Grundy,andSmith[3,Section4(iii)]andhasbeenthoroughlyinvestigated,seeChapter8intheextensivemonograph
+617 abouttheTowerofHanoibyHinz,Klavzˇar,Milutinovic´,andPetr[11].
+P P
+1 1
+P P P P
+0 2 0 2
+(a) (b)
+618 Figure3:Thestategraphsof(a)theTowerofHanoiand(b)theTowerofBucharestwithn=5disks
+619 Figure3showsthestatespaceoftheTowersofBucharestincomparisonwiththeTowersofHanoi. Inaccordance
+620 withthisfigure,wecanmakethefollowingeasyobservations:
+621 Proposition2. 1. IntheTowersofHanoi,therearethreepossiblemovesfromanyposition,exceptwhenalldisks
+622 areononepeg: Inthesecases,thereareonlytwopossiblemoves.
+623 2. IntheTowersofBucharest,therearetwopossiblemovesfromanyposition,exceptwhenalldisksareonpegP 0
+624 orP 2 : Inthosecases,thereisonlyonepossiblemove.
+625 3ItisanestablishedcustomtonamevariationsoftheTowerofHanoigameafterdifferentcities,insteadofusingordinarynamessuchas
+626 “three-in-a-row”[10].Thename“TowersofBucharest”hasbeensuggestedbyGu¨nterM.Ziegler.Severallegendsrankthemselvesaroundthetowers
+627 ofBucharest,see[6,7].
+628 Theoriginalnameofthe“TowerofHanoi”gamehasthewordtowerinsingular. Theplural“towersofHanoi”havebecomepopularinthe
+629 ComputerScienceliterature[11,p.46],probablybecauseitistemptingtoassociatethethreedisk-carryingpegswithtowers.Theoriginalname
+630 continuestobeprevalentinthemathematicsliterature.Wehonorbothtraditionsbynotstickingtoafixedusage.
+6
+701 Proof. 1. ThediskD 1 canbemovedtoanyoftheotherpegs(twopossiblemoves). Inaddition,thesmallerofthe
+702 topmostdisksontheotherpegs(ifthosepegsaren’tbothempty)canbemovedtotheotherpegwhichisnot
+703 occupiedbyD 1 .
+704 2. IfthediskD 1 isinthemiddle,itcanbemovedtoanyoftheotherpegs,butnoothermoveispossible. Ifthedisk
+705 D 1 isonP 0 orP 2 ,ithasonlyonepossiblemove,andthesmallerofthetopmostdisksontheotherpegs(ifthose
+706 pegsaren’tempty)alsohasonepossiblemove,similarlyasabove.
+707
+Bothgameshavethesamesetof3nstates,correspondingtothepossiblewaysofassigningeachdisktooneofthe
+708 pegsP 0 ,P 1 ,P 2 . ThenodesinthecornersmarkedP 0 ,P 1 ,P 2 representthestateswherealldisksareononepeg. The
+709 graphoftheTowersofHanoiinFigure3aapproachestheSierpin´skigasket. Theoptimalpathoflength2n−1isthe
+710 straightpathfromP 0 tothetargetpoint,P 1 orP 2 . (Thedirectionsoftheedgesinthisdrawingofthestategrapharenot
+711 directlyrelatedtothepegsthatareinvolvedintheexchange,andtherelationbetweenastateanditspositiononthe
+712 drawingiscomplicated.) Bycontrast,weseethatthegraphoftheTowersofBucharestinFigure3bisasinglepath
+713 throughallnodes.
+714 Letusseewhythisistrue. ByProposition2,thisgraphhasmaximumdegree2,anditfollowsthatitmustconsist
+715 ofapathbetweenP 0 andP 2 (theonlydegree-1nodes),plusanumberofdisjointcycles. However,itisknownthat
+716 thepathhaslength3n−1anddoesthereforeindeedgothroughallnodes[3,11]. Sincewewillproveamoregeneral
+717 statementlater(Theorem3),weonlysketchtheargumenthere: Solvingtheproblemrecursivelyinananalogousway
+718 totheprocedureMOVE-TOWER,wereducetheproblemofmovingatowerofndisksfromP 0 toP 2 (orviceversa)to
+719 threeprobleminstanceswithn−1disks,plustwomovementsofdiskD n ,andtheresultingrecursionestablishesthat
+720
+3n−1movesarerequired.
+721 ThestatesoftheTowersofBucharestcorrespondinanaturalwaytotheternaryn-tuples: Thedigita i ∈{0,1,2}
+722 givesthepositionofdiskD i . ItfollowsnoweasilythatthesolutionoftheTowersofBucharestyieldsaternaryGray
+723 code: Sincewecanmoveonlyonediskatatime,itmeansthatwechangeonlyonedigitatatime,andbythespecial
+724 rulesoftheTowersofBucharest,wechangeitby±1. Thisconnectionhasalreadybeennotedearlier;itisexplicitly
+725 mentioned in Graham, Knuth, and Patashnik [12, Exercises 1.2–1.3, p. 17, with answers on p. 483], or Guan [13,
+726 Theorem4]. Infact,thealgorithmproducestheternaryreflectedGraycode,whichweareabouttodefinebelowin
+727 Section5;seealsoTheorem3. Moreover,sincethereareonlytwopossiblemoves,onejusthastoalwayschoosethe
+728 movewhichdoesnotundothepreviousmove,andthisleadstoaveryeasylooplessGraycodeenumerationalgorithm.
+729 ItisremarkablethatternaryGraycodescanbegeneratedonthesamehardwareasbinaryGraycodes(Fig.2). In
+730 thecontextofgeneratingtheternaryGraycode,theGraycodestringcanbedirectlyreadoffthedisks. Forexample,
+731 theconfigurationinFig.2representsthestring211102. Whenthealgorithmarrivesatthisconfiguration,itisD 1 ’sturn
+732 tomove,andthediskD 1 willmaketwostepstotheleft,generatingthestrings211101and211100,andpausesthere
+733 foronestep,whilediskD 3 movestotheright,leadingtothestring211200,andsoon.
+734 5. Graycodeswithgeneralradixesandwithmixedradixes
+735 Anm-aryGraycodeenumeratesthen-tuples(a n ,...,a 1 )with0≤a i <m,changingasingledigitatatimeby±1.
+736 ThereflectedGraycodecanberecursivelydescribedasfollows: LetC 1 ,C 2 ,...,C mn betheGraycodeforthestrings
+737 oflengthn. Thenthestringsoflengthn+1aregeneratedintheorder
+C 0,C 1,C 2,...,C (m−2),C (m−1), C (m−1),C (m−2),...,C 2,C 1,C 0,
+1 1 1 1 1 2 2 2 2 2
+738 C 3 0,C 3 1,C 3 2,...,C 3 (m−2),C 3 (m−1), C 4 (m−1),C 4 (m−2),...,C 4 2,C 4 1,C 4 0, (2)
+C 0,C 1,C 2,...,C (m−2),C (m−1), ...
+5 5 5 5 5
+739
+Thisrecursivedefinitiondiffersfromourfirstdefinition(1)forthespecialcaseofthebinaryGraycode,wherewehave
+740 addedthenewdigitatthefront,butthetwodefinitionsareequivalent. Thedefinition(2)withtheappendeddigitis
+741 moresuitedforderivingthealgorithmsthataretofollow. Weseethateachdigitalternatesbetweenanupwardsweep
+742 from0tom−1andareturnsweepfromm−1to0.
+743 ThemoregeneralGraycodeformixedradixes(m n ,...,m 1 ),whereeachdigithasitsownrange0 ≤ a i < m i ,is
+744 definedinananalogousway.
+7
+801 6. Generatingthem-aryGraycodewithoddm
+802 Foroddm,theternaryalgorithmfromSection4canbegeneralized. WeneedmpegsP 0 ,...,P m−1 . Theleftmost
+803 pegP 0 andtherightmostpegP m−1 playaspecialrole.
+804 AlgorithmODD.Generationofthem-aryGraycodeforoddm.
+805 Initialize: PutalldisksonP 0 .
+806 loop:
+807 MoveD 1 form−1steps,fromP 0 toP m−1 orviceversa.
+808 LetD k bethesmallestofthetopmostdisksonthem−1pegsthatdon’tcarryD 1 .
+809 Ifthereisnosuchdisk,TERMINATE.
+810 MoveD k byonestep:
+811 IfD k isonP 0 orP m−1 ,thereisonlyonepossibledirectionwheretogo.
+812 Otherwise,thediskD k continuesinthesamedirectionasinitslastmove.
+813 Inthisalgorithmandthealgorithmsthatfollow,itisunderstoodthatwevisitastringoftheGraycodeatthestartand
+814 aftereachmoveofadisk. (Writingthisexplicitlywouldclutterthedescriptionofthealgorithms.) Asforthetowersof
+815 Bucharest,wecandirectlytranslatethepositionofadiskintoadigitofthestring. Figure4showsanexamplewith
+816
+m=5. Thisgamewith5pegsiscalledtheTowersofKlagenfurt,afterthebirthplaceoftheseniorauthor.4
+817 Figure4:TheTowersofKlagenfurt.Thisconfigurationrepresentsthestring321411overtheradixm=5.Thearrowsofthedisksindicatethe
+818 currentdirectionofmovementforAlgorithmODD.ThenextstepmovesthesmallestdiskD1ontopegP0,changingthestringto321410.Afterthat,
+819 diskD2movesfromP1toP2andthenextstringis321420.Inthebackground,thetwo-headedLindwormmonster.
+820 Inthisprocedure,themovementofD 1 isexplicitlyspecified,whereasthemovementoftheotherdisks,whenever
+821 D 1 isatrest,is“figuredout”bythealgorithm. Itisnotimmediatelyobviousthatthealgorithmdoesnotviolatethe
+822 rulesbyputtingalargerdiskontopofD 1 .
+823 Theorem3. AlgorithmODDgeneratesthem-aryreflectedGraycodedefinedin(2),andallmovesthatitperforms
+824 arevalid.
+825 Proof. It is clear from the algorithm that the last digit, which is controlled by the movement of D 1 , changes in
+826 accordancewith(2). Westillhavetoshowthatwhenwediscardthelastdigitandobserveonlythemovementofthe
+827 disksD 2 ,...,D n ,thealgorithmproducestheGraycodeforthestringsoflengthn−1. Thisisprovedbyinduction.
+828 Bytherulesofthealgorithm,wheneverD 1 rests,thediskthatmovesisD 2 ,unlessD 2 iscoveredbyD 1 . Letus
+829 nowobservethemotionpatternofD 1 andD 2 thatresultsfromthisrule. WestartwithD 1 ontopofD 2 ,say,onpeg
+830 4WhenthecityofKlagenfurtwasfounded,itwassurroundedbyaswamp.Theswampwasinhabitedbyadinosaur,theso-calledLindworm.The
+831 Lindwormwouldregularlycometothecityandeatsomecitizens.Occasionally,shewoulddevouroneofthetowersofthecity.Thecoatofarmsof
+832 KlagenfurtshowstheLindwormdragoninfrontoftheonlyremainingtower,seeFigure4.(Initially,therewerefivetowers.)Overthecenturies,the
+833 swamphasbeendrained,andtheLindwormispracticallyextinct.
+8
+901 P 0 ,withD 1 abouttostartitssweep. WheneverD 1 pausesforonestep,D 2 willmakeasteptowardsP m−1 . AfterD 2
+902 reachesP m−1 ,itturnsoutthat,becausemisodd,D 1 willmakeitsnextsweepfromP 0 toP m−1 ,restingontopofD 2 .
+903 Now,sinceD 2 iscovered,itwillbeoneoftheotherdisksD 3 ,D 4 ,...thatwillmove. Thenthesameroutinerepeatsin
+904 theotherdirection.
+905 IfwenowignoreD 1 andlookonlyatthemotionsoftheotherdisks,thefollowingpatternemerges: D 2 makes
+906 m−1stepsfromoneendtotheother,andthenthesmallestdiskthatisnotcoveredbyD 2 makesitsmove,accordingto
+907 therules. ThisispreciselythesameprocedureasAlgorithmODD,withD 2 takingtheroleoftheexplicitlycontrolled
+908 disk. Byinduction,thisalgorithmcorrectlyproducestheGraycodeforthestringsoflengthn−1,anditdoesnotputa
+909 largerdiskontopofD 2 . SincethelargerdisksaremovedonlywhenD 2 liesunderD 1 ,itfollowsthatalargerdiskis
+910 nevermovedontopofD 1 either.
+911 Onecanactuallyapplyoneinductionstepoftheproofintheoppositedirection,introducinganadditional“control
+912 disk”D 0 whichdoesnothaveadigitassociatedwithit. ItsonlyroleistoalternatelycoverP 0 andP m−1 andexclude
+913 thecoveredpegfromtheselectionofthediskD k thatshouldbemoved. Thealgorithmbecomessimplerbecauseit
+914 doesnothavetotreatD 1 separatelyfromtheotherdisks. WewillapplythisideatothealgorithmofSection8below,
+915 andthiswillresultinaverysimplealgorithm.
+916 7. Generatingthem-aryGraycodewithevenm
+917 Forevenm,wegeneralizeAlgorithmHANOI,whichsolvesthecasem=2. Weusem+1pegsP 0 ,...,P m ,which
+918 wearrangeinacyclicclockwiseorder. WestipulatethatdisksD i withoddimoveonlyclockwise,anddiskswitheven
+919 imoveonlycounterclockwise.
+920 AlgorithmEVEN.Generationofthem-aryGraycodeforevenm.
+921 Initialize: PutalldisksonP 0 .
+922 loop:
+923 MoveD 1 form−1steps,inclockwisedirection.
+924 LetD k bethesmallestofthetopmostdisksonthempegsthatdon’tcarryD 1 .
+925 Ifthereisnosuchdisk,TERMINATE.
+926 MoveD k byonestep,inthedirectiondeterminedbytheparityofk.
+927 The Gray code is determined by changing the digit a k whenever disk D k is moved. The digit a k runs through the
+928 cyclicsequence0,1,2,...,m−2,m−1,m−2,...,2,1,0,1,2,.... Thusitchangesalwaysbyd k =±1,butwehave
+929 torememberwhetheritisontheincreasingorthedecreasingpartofthecycle. ThepositionofdiskD i isnolonger
+930 directlycorrelatedwiththedigita i ;thusthedigitsa i havetobemaintainedseparately,inadditiontothedisksonthe
+931 pegs.
+932 Moreprecisely,weinitializealldigitsa i to0andalldirectionsd i to+1atthebeginning. Everymovementofadisk
+933 D k intheaboveprogramisreplacedbythefollowingprocedure:
+934 procedureMOVE(k).
+935 if kiseven:
+936 MoveD k onestepincounterclockwisedirection
+937 else:
+938 MoveD k onestepinclockwisedirection
+939 a k :=a k +d k
+940 if a k =0ora k =m k −1: d k :=−d k
+941 visitthen-tuple(a n ,...,a 1 )
+942 Asinthebinarycase,itisfarfromstraightforwardtorelatethediskconfigurationtotheGraycode. Forexample,the
+943
+configurationinFigure4,interpretedinthecontextofalgorithmEVENform=4,appearswhenthestringis211030.
+944 Thearrowsshownonthedisksplaynoroleforthisalgorithm. DiskD 1 hasjustmadethreeclockwisestepsandis
+945 goingtorestforonestep. ThenextstepmovesD 3 clockwise(since3isodd)fromP 4 toP 0 ,andthestringischanged
+946 to211130. Afterthat,D 1 resumesitsclockwisemotion,andthestringchangesto211131.
+9
+P 0 P 0 P 0 P 0
+12 2
+P P
+4 4
+P P P 2 P P P
+4 1 4 1 2 1 2 1 1
+1
+1
+2
+1 1
+P P P P P P P P
+3 2 3 2 3 2 3 2
+P P P P
+0 0 0 0
+P 4 1 P 1 P 4 1 P 1 P 4 1 1 P 1 P 4 P 1
+1
+2
+2 2 2 12
+P P P P P P P P
+3 2 3 2 3 2 3 2
+1001 Figure5:OneperiodofmovementofthetwosmallestdisksD1andD2whenAlgorithmEVENgeneratesalltuplesoveranalphabetofsizem=4
+1002 usingm+1=5pegs.
+1003 Theorem4. AlgorithmEVENgeneratesthem-aryreflectedGraycodedefinedin(2).
+1004 Proof. ThisfollowsalongthesamelinesasTheorem3. Whenwelookatthepatternofmotionof D 1 and D 2 ,we
+1005 observeagainthatD 2 makesm−1stepsuntilitiscoveredbyD 1 ,seeFig.5: AfterthefirstmoveofD 2 ,theclockwise
+1006 cyclicdistancefromD 1 toD 2 is1,andwitheachmoveofD 2 ,thisdistanceincreasesby1. Thus,afterm−1moves,
+1007 thedistancebecomesm−1,andD 1 willlandontopofD 2 withitsnextsweep.
+1008 Exceptform = 3andm = 2,AlgorithmsODDandEVENdonotgenerateashortestsequenceofmovestothe
+1009 targetconfiguration,evenifmovesareallowedonlybetweenadjacentpegs(orcyclicallyadjacentpegs,inadirection
+1010 dependingonthediskparity). Forexample,form=4andn=2,Fig.5showsthecompleteprogramof15movesthat
+1011 generatethe42 = 16codewords. However,itiseasytogetfromthefirstpositiontothelastpositioninatotalof5
+1012 moves: 2clockwisemovesofD 1 interspersedwith3counterclockwisemovesofD 2 . Infact,onecangetfromany
+1013 positiontoanyotherpositioninatmost12movesthatrespectthedirections.
+1014 Wecouldnotcomeupwithsomenaturalconstraintsunderwhichouralgorithmsgiveashortestsolution. (Of
+1015 course,algorithmODDalwaysgeneratesalongestsequenceofmoveswithoutrepetitions.)
+1016 8. TheTowersofBucharest++
+1017 InAlgorithmODD,theintermediatepegsP 1 ,...,P m−2 willalwaysbeavailableforselectingthesmallestdiskD k
+1018 tobemoved. Thus,onecancoalescethesepegsintoonepeg,keepingonlythetwoextremepegsP 0 andP m−1 separate.
+1019 Withthreepegs,wecanusethesamehardwareastheTowerofBucharest,butwehavetorecordthevalueofthedigits,
+1020 sincetheyarenolongerexpressedbytheposition. Asimplemethodistoprovidethediskswithmarksthatindicatethe
+1021 valueaswellasthedirectionofmovement,whichwehavetorememberanyway. Eachdiskcyclesthrough2m−2
+1022 values,potentiallyaugmentedwithdirectioninformation:
+1023 0, 1↑, 2↑,..., (m−2)↑, m−1, (m−2)↓,...2↓, 1↓, 0, 1↑, ... (3)
+1024 Wecanencodethisinformationlikeadialwith2m−2equallyspaceddirections,asshowninFig.6a. Adiskwhose
+1025 markshows0isalwaysontheleftpegP 0 . Adiskwhosemarkshowsm−1isalwaysontherightpegP 2 . Otherwise,it
+1026 isonthemiddlepegP 1 . Whenwesayweturnadisk,thismeansthatweturnitclockwisetothenextdialposition,and
+1027 ifnecessary,moveittotheappropriatepeg.
+10
+4
+3↑ 3↓
+2↑ 2↓
+P P P
+0 1 2
+1↑ 1↓
+0
+1101 (a) (b)
+1102 Figure6:(a)TheupgradeddiskoftheTowersofBucharest++form=5,andthemeaningofitspositions.(b)ThesituationofFigure4,compressed
+1103 to3pegs.ThesmallestdiskD1isabouttoturnandmovefromP1toP0.Afterthat,wewillturnD2onP1withoutmovingit.
+1104 AlgorithmODD-COMPRESSED.Generationofthem-aryGraycodeforoddm.
+1105 Initialize: PutalldisksonP 0 ,andturnthemtoshow0.
+1106 loop:
+1107 TurndiskD 1 m−1timesuntilitarrivesatoneoftheextremepegsP 0 orP 2 .
+1108 LetD k bethesmallerofthetopmostdisksonthetwopegsnotcoveredbyD 1 .
+1109 Ifthereisnosuchdisk,TERMINATE.
+1110 TurnD k once.
+1111 Thedigitsa i canbereadofffromthedialpositions. CorrectnessfollowsbycomparisonwithAlgorithmODD:
+1112 Proposition5. AlgorithmODD-COMPRESSEDperformsthesamestepsasAlgorithmODD,exceptthatthecontents
+1113 of the intermediate pegs P 1 ,...,P m−2 of Algorithm ODD are merged into the middle peg P 1 in Algorithm ODD-
+1114 COMPRESSED.
+1115 Proof. Wecanprovethisbyinductiononthenumberofsteps. Thestatementholdsinthebeginning. Themotions
+1116 oftheexplicitlycontrolleddiskD 1 areindirectcorrespondencebetweenthetwoalgorithms. Letusnowlookatthe
+1117 choiceofthemovingdiskD k . ThischoicehappenswhenD 1 isononeoftheextremepegs. Inbothalgorithms,the
+1118 chosendiskisthesmallestdisknotcoveredbyD 1 ,andthusthetwoalgorithmschosethesamediskD k . Thedials
+1119 havebeendesignedinsuchawaythatturningadiskandmovingitaccordingtothedialpositionpreciselymodelsthe
+1120 motionofthecorrespondingdiskinAlgorithmODD.Thus,AlgorithmODD-COMPRESSED,likeAlgorithmODD,
+1121 willnotmovethedisk D k ontopof D 1 . Itwillalsonotmove D k ontopofadifferentsmallerdisk,since D k isthe
+1122 smallestdisknotcoveredbyD 1 . Thus,thedisksareintheproperorderoneachpeg,afterthemove. Itfollowsthatthe
+1123 disksonthemiddlepegmustbethemergeddisksfromtheintermediatepegsofAlgorithmODD.
+1124 WhenthisalgorithmiscombinedwiththeimaginarycontroldiskD 0 thatwasmentionedattheendofSection6,
+1125 wearriveatthefollowingsimplemainloopofthealgorithm:
+1126 whilepegsP 0 andP 1 arenotbothempty:
+1127 turnthesmallestdiskonP 0 andP 1
+1128 turnthesmallestdiskonP 1 andP 2
+1129 Thealgorithmstestsforterminationinthewhile-conditionaftereveryevennumberofsteps. Thisissufficient,because
+1130 weknowthatthetotalnumberofstringsisodd,andhencethatthetotalnumberoftransitionstepsiseven.
+1131 This is perhaps the easiest-to-describe of all our algorithms, but of course, some of the complexity is hidden
+1132 inthemechanicsoftheturningoperation. Aprogramthatimplementsthisalgorithmonacomputerisgivenin[7,
+1133 AppendixA.3].Thealgorithmcanevenbegeneralizedtomixed-radixGraycodesforsomeradixsequence(m n ,...,m 1 ),
+1134 providedthatallm i areodd.
+11
+1201 9. Computersimulation
+1202 Allouralgorithmscanbeeasilysimulatedinsoftwareonanelectroniccomputer.5 Astackwilldoforeachpeg. If
+1203 therearekpegs,thealgorithmtakesO(k)timetocomputethenextmoveandaccordinglyproducethenextelement
+1204 oftheGraycodesequence. Thus,iftheradixmisregardedasaconstant,then,sincek=minAlgorithmODDand
+1205 k=m+1inAlgorithmEVEN,thesealgorithmscanpassaslooplessalgorithms. Ifkislarge,AlgorithmODDcanbe
+1206 replacedbyODD-COMPRESSED,whichhasonly3pegs,independentofm.
+1207 TomakeatrulylooplessalgorithmoutofAlgorithmEVENevenforlargek,attheexpenseofanincreasedoverhead,
+1208 wecanusethefollowingeasyfact,whichfollowsdirectlyfromthealgorithmstatement.
+1209 Lemma1. InthealgorithmsEVEN,ODD,andODD-COMPRESSED,whenadisk D k ismoved,allsmallerdisks
+1210 D 1 ,...,D k−1 areononepeg.
+1211 To get a loopless implementation, the set of disks on a peg is maintained as a sequence of maximal inter-
+1212 vals of successive integers, instead of storing them as a stack in the usual way. For example, instead of the list
+1213 [1,2,3,6,8,9,12,16,17,18,19],westorethelistofpairs[(1,3),(6,6),(8,9),(12,12),(16,19)]. Then,wheneverD 1 is
+1214 atrest,thediskD k tobemovedcanbedeterminedinconstanttimeasthesmallestmissingdiskonthepegcontaining
+1215 D 1 . Intheexample,itwouldbediskD 4 .
+1216 10. Workingahead
+1217 While we are at the topic of Gray codes, we might as well mention another approach for loopless generation
+1218 of Gray codes, which results from a general technique for converting amortized bounds into worst-case bounds
+1219 (de-amortization). WewilldiscusstheideasbehindthistransformationinSection10.1. Incontrasttotheprevious
+1220 sections,thisapproachhasnoconnectionstotheTowersofHanoiorsimilarmotion-planninggames. Thesealgorithms
+1221 aredefinitelynotrecommendedwhenlooplessnessisnotimportant,sincetheoverallrunningtimewillbehigherdue
+1222
+totheoverheadofanadditionalbuffer.
+1223 Wewillintroducethismethodforthemostgeneraltask: mixed-radixGraycodegeneration. Westartfromthe
+1224 observationthatwasalreadymentionedinconnectionwiththedeltasequenceinSection1.4:
+1225 Proposition 6. Consider the enumeration of the n-tuples (b n ,...,b 1 ) with 0 ≤ b i < m i in lexicographic order. If,
+1226 betweentwosuccessivetuplesofthesequence,the jrightmostdigitsarechanged,then,inthecorrespondingtransition
+1227 intheGraycode,the j-thdigitfromtherightischanged.
+1228 Wecanthusfindtheposition jthathastobechangedintheGraycodebylexicographicallyincrementingn-tuples
+1229 (b n ,...,b 1 )inastraightforwardway:
+1230 AlgorithmDELTA.GenerationofthedeltasequencefortheGraycode.
+1231 Initialize: (b n ,...,b 2 ,b 1 ):=(0,...,0,0)
+1232
+Q:=anemptylist
+1233 loop:
+1234
+i:=1
+1235 whileb i =m i −1:
+1236 b i :=0
+1237
+i:=i+1
+1238 if i=n+1: TERMINATE
+1239 b i :=b i +1
+1240 Q.append(i)
+1241 5Nowadays,mosthouseholdswillmorereadilyhaveaccesstoacomputerthantoatowerofHanoi.
+12
+1301 ThedeltasequenceisstoredinthelistQ. Itisaneasyexercise,atleastinthebinarycase,toshowthatthetotal
+1302 numberofchangeddigitswhencountingfrom0to jislessthan2j,seethebound(4)intheproofofLemma2below.
+1303 Correspondingly,theaverageoramortized numberofloopiterations(“steps”)forproducinganentryof Qisless
+1304 than2. WeusethisfacttocoordinatetheproductionofentriesQbyAlgorithmDELTAwiththeirconsumptioninthe
+1305 Graycodegeneration,turningQintoabufferofboundedcapacity. Wefirstmakeasmallcosmeticmodificationand
+1306 movetheresetoperation“i:=1”totheendoftheloop. Thechangesaremarkedbyarrows:
+1307 AlgorithmDELTA(cid:48). GenerationofthedeltasequencefortheGraycode.
+1308 Initialize: (b n ,...,b 2 ,b 1 ):=(0,...,0,0)
+1309
+Q:=anemptylist
+1310 → i:=1
+1311 loop:
+1312 whileb i =m i −1:
+1313 b i :=0
+1314
+i:=i+1
+1315 if i=n+1: TERMINATE
+1316 b i :=b i +1
+1317 Q.append(i)
+1318 → i:=1
+1319
+Afterthistransformation,itiseasiertoextractoneiterationoftheloop/whileloopintoaprocedureSTEP,asshownin
+1320 thefollowinglooplessalgorithm:
+procedureSTEP. AlgorithmWORK-AHEAD.GenerationoftheGraycode.
+if b =m −1: (a ,...,a ,a ):=(0,...,0,0)
+i i n 2 1
+b :=0 (d ,...,d ,d ):=(1,...,1,1)
+i n 2 1
+i:=i+1 (b n+1 ,b n ,...,b 2 ,b 1 ):=(0,0,...,0,0);m n+1 :=2
+else: Q:=aqueueofcapacityB:=(cid:100)n(cid:101),initiallyempty
+2
+if Qisnotfilledtocapacity: i:=1
+b :=b +1 loop:
+i i
+Q.append(i) visitthen-tuple(a ,...,a ,a )
+n 2 1
+i:=1 STEP
+STEP
+removekfromQ
+if k=n+1: TERMINATE
+a :=a +d
+k k k
+if a =0ora =m −1: d :=−d
+k k k k k
+1321 Toproduceonevalueofthedeltasequence,betweenoneandtwoSTEPsareneededonaverage. Thus,theGray
+1322 codealgorithmWORK-AHEADontherightcouplestwoproductionSTEPswithoneconsumptionstep,whichtakes
+1323 outanentrykofQandcarriesouttheupdatea k :=a k ±1. Everydigita k mustcycleupanddownthroughitsvaluesin
+1324 thesequence(3),andthus,wehavetorememberthedirectiond k =±1inwhichitmoves,justlikeinAlgorithmODD.
+1325
+Asanadditionalchange,wehavetakentheterminationtesti=n+1outoftheprocedureSTEPandmovedittothe
+1326 sideoftheconsumer. Thismeansthatthevaluei=n+1willstillbeprocessedinprocedureSTEP,andaccordingly,
+1327 wehadtoextendthen-tuplebintoan(n+1)-tuple,settingm n+1 arbitrarilyto2.
+1328 ThebufferQhasboundedsizeB:=(cid:100)n(cid:101). WhenQwouldoverflow,theprocedureSTEPdoesnothing,andrepeated
+2
+1329 callsofSTEPwilltrytoinsertthesamevalueintoQ. Thus,apartfromtheterminationtest,arepeatedexecutionof
+1330 STEPwillfaithfullycarryoutAlgorithmDELTA.
+1331 Toshowthatthealgorithmiscorrect,wehavetoensuretwothings:
+1332 a) ThequeueQisneveremptywhenthealgorithmretrievesanelementfromit. ThisisprovedbelowinLemma2.
+1333 b) ThecleanwaytoterminatethealgorithmwouldbetostopinsertingelementsintoQassoonasi=n+1isproduced
+1334
+inSTEP,asinAlgorithmDELTA.Instead,terminationistriggeredwhenthevaluek=n+1isremovedfromQ.Due
+13
+1401 tothisdelayedterminationtest,itispossiblethatmoreiterationsofSTEPthanneededarecarriedout. Lemma3
+1402 willshowthatthenumberoftheseextraiterationsisatmost1,andthattheycanthereforecausenoharm.
+1403 For the binary Gray code (m i = 2 for all i = 1,...,n), the algorithm can be simplified. With a slightly larger
+1404 bufferQofsizeB(cid:48) :=max{(cid:100)n+1(cid:101),2},thetestwhetherQisfilledtocapacitycanbeomitted,seeLemma4below. The
+2
+1405 reasonisthattheaveragenumberofproductionSTEPsperitemapproaches2inthelimit,andaccordingly,thequeue
+1406 automaticallydoesnotgrowbeyondtheminimumnecessarysize. Thedirectionsd k areofcoursealsosuperfluous,in
+1407 thebinarycase: Thelasttwolinesoftheloopcanbereplacedbythestatementa k :=1−a k .
+1408 10.1. Workingahead,ordelayingtheoutput
+1409 Theschedulingofoperationsisarecurringthemeinthedesignofalgorithms: ShouldIcleanupimmediatelyafter
+1410 makingamess,orshouldIwaituntilIlookforsomething? Oneendofthespectrumarelazydatastructuresand,ona
+1411 morefundamentallevel,lazyfunctionalprogramminglanguageslikeHaskell: Incontrasttotheclassicalmethodof
+1412 strictevaluation,whichevaluatesallargumentsofafunctionbeforeexecutingthebodyofthefunction,theevaluation
+1413 ofargumentsisdelayeduntiltheyareneeded. Lazinessallowstosaveunnecessaryworkinsomecases. Laziness
+1414 indatastructuresleads,inthecaseofthecelebratedFibonacciheaps,tothebestknownamortizedperformancefor
+1415 priorityqueueoperations.
+1416 Theotherextremeisreal-time(orlooplessness),wherespecialcareistakentospreadtheworkevenlybetween
+1417 theoperations. Theapproachthatwehavetakeninthissectionistostartwithastraightforwardalgorithmwitha
+1418 goodamortizedruntimeandde-amortizeit: “Sinceamortizeddatastructuresareoftensimplerthanworst-casedata
+1419 structures,itissometimeseasiertodesignanamortizeddatastructure,andthenconvertittoaworst-casedatastructure,
+1420 thantodesignaworst-casedatastructurefromscratch”[14,Section7,p.84]. KosarajuandMihai[15]giveasurvey
+1421 ofde-amortizationtechniques. Asanearlyexample,theymentionreal-timesimulationsbetweendifferentmodelsof
+1422 Turingmachines.
+1423 Atextbookexampleofamortizeddatastructuresareresizablearrays. Theclassicaltechniqueforimplementing
+1424 arrayswhosesizemaygrowis“doubling”: Whenthearrayoverflowsitscurrentsize,weallocateastorageblockthatis
+1425 twiceaslarge. Thearraymustbecopiedtothenewlocation,andthistakeslineartime. Butthisburstofactivityoccurs
+1426 sufficientlyrarelysothattheamortizedcomplexityforextendinganarraybyoneelementisconstant. Toconvertthis
+1427 intoaworst-casebound,onehastodistributethecopyingoperationoverthesubsequentinsertionoperations. For
+1428 awhile,anoldandanewcopyofthearraymustbemaintainedsimultaneously. Inthiscase,whencomparingthe
+1429 timingwiththesimpleamortizedalgorithm,onewouldrathersaythatthereal-timealgorithmisworkingbehind. This
+1430 procedureisaninstanceofglobalrebuilding(seeOvermars[16,ChapterV]),ade-amortizationtechniquethatapplies
+1431 tomoregeneraldatastructuresunderappropriateconditions.
+1432 Inasimilarvein,Guibas,McCreight,Plass,andJanetR.Roberts[17]haveobtainedworst-caseboundsofO(logk)
+1433 forupdatingasortedlinearlistatdistancekfromthebeginning. Theiralgorithmworksaheadtohedgeagainstsudden
+1434 burstsofactivity.
+1435 Anotherexample,whichislesswellknown,arefunctionalqueues. Inapurelyfunctionallanguage,onecannot
+1436 perform assignments, and thus, it is not possible to join two linked lists together in constant time. The native list
+1437 structureinsuchlanguagesisastack. Aqueuecanbesimulatedbytwostacks, reversingthe“arrivalstack”onto
+1438 the“departurestack”wheneverthelatterbecomesempty. Thisachievesconstantamortized runtimeforthequeue
+1439 operations. Itisnotstraightforwardtodesignreal-timequeuesthatachieveconstanttimeintheworstcase,seeHood
+1440 andMelville[18]andOkasaki[14,19].
+1441 Forourtaskofcombinatorialgeneration,thesettingismuchsimpler,becauseweneednotprocessrequestsofan
+1442 unpredictable“user”inanon-linesetting. Wecanplaneverythinginadvance. Weworkaheadinthesensethatthe
+1443 algorithmperformsworkthatisnotnecessaryforproducingthecurrentoutput. However,inthiscontextitwouldbe
+1444 equallyjustifiedtosaythatwejustdelaytheoutput.
+1445 Althoughthemainideaofworkingaheadisstraightforward,ourlooplessgenerationalgorithmsthatarebasedon
+1446
+thisidearequireanontrivialanalysisofthebuffersize. Ifweletthebuffergrowwithoutrestrictions,wewouldneed
+1447 exponentialspace,exceptinthebinarycase(seeLemma4). Withaboundedbuffer,wehavetomakesurethatthe
+1448
+opportunitiesforcarryingoutSTEPsthatarewaistedduetoafullbufferdonotharmthesuccessoftheoperation
+1449 (Lemma2).
+14
+1501 Wehaverecentlyappliedthesametechniquetoderivenewlooplessenumerationalgorithmsforpermutations
+1502 [20],usingfunctionalprogrammingtechniques. Sincepermutationsofnelementscanberelatedtomixed-radixGray
+1503 codes with radices (m n−1 ,...,m 1 ) = (2,3,4,...,n−1,n), our analysis can be applied. We are aware of only two
+1504 previousinstanceswheretheideaofworkingaheadhasbeenusedintheareaofcombinatorialenumeration. The
+1505 firstisanalgorithmofWettsteinforenumeratingnon-crossingperfectmatchingsofaplanarpointset. Theideais
+1506 describedinthepreprint[21,Section6],whereitiscreditedtoEmoWelzl;intheconferenceversion[22],itisonly
+1507 mentioned. Wettsteincombinesthework-aheadideawitharearrangementoftheoutputsequence. Inthisway,he
+1508 achievespolynomialdelaybetweensuccessivesolutions,andinparticular,beforethefirstsolution,despitehavingto
+1509 buildanetworkwithexponentialspaceinapreprocessingphase. Hereweareatadifferentlevelofcomplexity,asking
+1510 aboutpolynomialtime,whereaslooplessnessisaboutconstantruntime.
+1511 Thesecondinstanceisinacontextsimilartoours: generatingaGraycodeofallbitstringsoflength2n+1that
+1512 containnorn+1ones. ArecentalgorithmofMu¨tzeandNummenpalo[23]candothiswithO(1)averageruntime
+1513 perbitstring. EventheexistenceofsuchaGraycodehadbeenalong-standingopenproblem,andthisalgorithmis
+1514 muchmoreinvolvedthanoursimpleGraycodeexamples. Thepossibilitytomakethealgorithmlooplessbybuffering
+1515 theoutputismentionedintheintroductionof[23]intheremarksafterTheorem3. Thealgorithmstrictlyalternates
+1516 betweenΘ(n)generationstepsthattakeconstanttimeandsinglestepsthattakeO(n)time. Thus,theorganizationof
+1517
+thebufferthatisrequiredforachievinglooplessnesswouldbestraightforward.
+1518 10.2. AnalternativeSTEPprocedure
+1519 AsanalternativetotheorganizationofAlgorithmWORK-AHEAD,wecanincorporatetheterminationtestinto
+1520 theSTEPprocedure:
+1521
+procedureSTEP(cid:48):
+1522 if i=n+1: TERMINATE
+1523 if b i =m i −1:
+1524 b i :=0
+1525
+i:=i+1
+1526 else:
+1527 if Qisnotfilledtocapacity:
+1528 b i :=b i +1
+1529 Q.append(i)
+1530
+i:=1
+1531
+WiththismodifiedprocedureSTEP(cid:48),theterminationtestinthemainpartofAlgorithmWORK-AHEADcanof
+1532 coursebeomitted. Wealsoneednotextendthearraysbandmton+1elements. Thealgorithmstillworkscorrectly
+1533 becausetherearenounusedentriesinthequeuewhenSTEP(cid:48)signalstermination. Letusprovethis:
+1534
+Theterminationsignalissentinsteadofproducingthevaluei=n+1. Generatingthissignaltakesn+1iterations
+1535 ofSTEP(cid:48). Inthistime,nonewvaluesareaddedtothequeue. Letusassumethattheproductionofn+1wasstarted
+1536 duringiteration j 0 ,andthebufferwasfilledwithB 0 ≤ Bentriesatthattime. Thefirstoftheseentriesisconsumed
+1537 attheendofiteration j 0 ,andallB 0 entriesofthebufferhavebeenusedupatthebeginningofiteration j 0 +B 0 . By
+1538 thistime,atmost2B 0 ≤ 2B ≤ n+1iterationsofSTEP(cid:48) werecarriedoutandcontributedtotheproductionofthe
+1539 terminationsignal. ItfollowsthatwhenSTEP(cid:48)discoversthati=n+1,nounusedentriesareinthestack,anditissafe
+1540 toterminatetheprogram.
+1541 Itisimportantnotto“speedup”theprogrambymovingtheterminationtestintotheif-branchafterthestatement
+1542 i:=i+1. Also,wemustuseexactlytheprescribedbuffersizeforQ. Therefore,thisvariationisincompatiblewiththe
+1543 simplificationforthebinarycasementionedabove(p.14).
+1544 10.3. Analysisandcorrectnessproofsforthework-aheadalgorithms
+1545 LetusfirstanalyzetherunningtimeforeachiterationofAlgorithmDELTA.Wecanexplicitlyexpresstheelements
+1546 of the delta sequence in terms of the ruler function ρ. The ruler function ρ with respect to a sequence of radixes
+1547 m 1 ,...,m n isdefinedasfollows:
+1548 ρ(j):=1+max{i:0≤i≤n, m 1 m 2 ...m i divides j}
+15
+1601 Thedeltasequenceisnothingbutthesequenceρ(1),ρ(2),...,andthe j-thvaluethatisenteredinto Qisρ(j). For
+1602 computingthisvalue,AlgorithmDELTAneedsρ(j)iterations,andaccordingly,AlgorithmWORK-AHEADneedsρ(j)
+1603 STEPs.
+1604 Lemma2. InAlgorithmWORK-AHEAD,thebufferQneverbecomesempty.
+1605 Proof. We number the iterations of the main loop as j = 1,2,...,m 1 m 2 ...m n . In the last iteration, the algorithm
+1606 terminates.
+1607 LetusshowthatthequeueQisnotemptyiniteration j. Wedistinguishtwocases.
+1608 a) Uptoandincludingiteration j,tworepetitionsofSTEPwerealwayscompleted.
+1609 b) SomerepetitionsofSTEPhadnoeffectbecausethebufferQwasfull.
+1610 Incase(a),productionofallvaluesρ(i)fori=1,..., jrequires
+(cid:88)j
+1611 S(j):= ρ(i)
+i=1
+1612 callstoSTEP.Toshowthatthesecallsarecompletedbythetimewhenρ(j)isneeded,wehavetoshow
+1613 S(j)≤2j. (4)
+1614 Incase(b),let j 0 bethelastiterationwhenanexecutionofSTEPwasskipped. ThismeansthatthequeueQwas
+1615 filledtocapacityBjustbeforeremovingthevaluek=ρ(j 0 ),anditcontainedthevaluesρ(j 0 ),ρ(j 0 +1),...,ρ(j 0 +B−1).
+1616 Sincethen,STEPwascalled2(j− j 0 )times,andρ(j)isreadywhenitisneeded,providedthat
+(cid:88)j
+1617 1+ ρ(i)≤2(j− j 0 )
+i=j0 +B+1
+1618 whenever j≥ j 0 +B. Theleft-handsideofthisinequalityisthenumberofnecessarySTEPsforcomputingthevalues
+1619 uptoρ(j). Computingρ(j 0 +B)takesjustonemoreSTEP,sincetheSTEPthatwouldhavestoredthisvalueinQwas
+1620 abandonediniteration j 0 . Setting j(cid:48) = j 0 +B,wecanexpresstheinequalityequivalentlyas
+1621 S(j)−S(j(cid:48))≤2(j− j(cid:48)+B)−1for j(cid:48) ≤ j (5)
+1622 Nowthatwehaveworkedouttheinequalities(4–5)thatweneed, letusprovethem. Wecanwriteanexplicit
+1623 formulaforS(j):
+(cid:36) (cid:37) (cid:36) (cid:37) (cid:36) (cid:37)
+j j j
+1624
+S(j)= j+ + +···+
+m m m m m ...m
+1 1 2 1 2 n
+1625 Sinceallm i ≥2,wegetS(j)≤ j+ j/2+ j/4+ j/8+···+ j/2n <2j,proving(4). Fortheotherbound(5),weapply
+1626
+therelation(cid:98)x(cid:99)−(cid:98)x(cid:48)(cid:99)< x−x(cid:48)+1tothedifferencebetweencorrespondingtermsofS(j)andS(j(cid:48)),andweget
+1627
+S(j)−S(j(cid:48))<(j− j(cid:48))+(j− j(cid:48))·(1 + 1 + 1 +···+ 1)+n<2(j− j(cid:48))+n.
+2 4 8 2n
+1628
+Sincetheleft-handsideisaninteger,weobtainS(j)−S(j(cid:48))≤2(j− j(cid:48))+n−1,andthisimplies(5)becausethebuffer
+1629
+sizeB:=(cid:100)n(cid:101)satisfies2B≥n.
+2
+1630 In Algorithm WORK-AHEAD, the STEPs should generate entries ρ(1),ρ(2),... of Q up to ρ(N), where N :=
+1631 m 1 m 2 ...m n . The production of the STEPs may overshoot their target N, but the following lemma shows that is
+1632 overshootsthetargetbyatmostone. Sincethealgorithmhasalreadymadeprovisionstogenerateρ(N) = n+1by
+1633 extendingthearraysbandmfromsizentosizen+1,thisoneextraentrydoesnotcauseanyharm. Wecouldeven
+1634 toleratethegenerationofdelta-valuesuptoρ(2N−1).
+1635 Lemma3. InAlgorithmWORK-AHEAD,thelastentrythatisaddedtoQisρ(N)orρ(N+1).
+16
+1701 Proof. Theproductionofρ(N)=n+1takesn+1≥2BSTEPs. ItfollowsthatthebufferQisemptywhenρ(N)=n+1
+1702 isinserted,regardlessofwhethertheproductionofρ(N)isstartedinthefirstorsecondSTEPofaniteration.
+1703
+Iftheproductionofρ(N)=n+1iscompletedinthesecondSTEPofaniteration,itisthusimmediatelyconsumed,
+1704 whichleadstotermination. Ifρ(N)iscompletedinthefirstSTEPofaniteration,thesecondSTEPwillproducethe
+1705
+valueρ(N+1)=1,butthenthealgorithmwillterminateaswell.
+1706 Finally,weprovethesimplificationofthealgorithmforthebinarycase.
+1707 Lemma4. InthebinaryversionofAlgorithmWORK-AHEAD,i.e.,whenm i = 2foralli = 1,...,n,thebuffer Q
+1708
+automaticallynevergetsmorethanB(cid:48) :=max{(cid:100)n+1(cid:101),2}entries,evenifthetestinSTEPwhetherthebufferisfullis
+2
+1709 omitted.
+1710 Proof. Letusassumeforcontradictionthatthebufferbecomesoverfulliniteration j,1 ≤ j ≤ 2n. Thismeansthat,
+1711 beforek =ρ(j)isremovedfromQ,the2jSTEPoperationshaveproducedmorethan j−1+B(cid:48) values. Butthisis
+1712 impossible,since,aswewillshow,theproductionofthefirst j 1 = j+B(cid:48)valuestakesstrictlymorethan2jSTEPs. In
+1713 termsofformulas,thisisthefollowinginequality:
+(cid:22)j (cid:23) (cid:22) j (cid:23) (cid:22) j (cid:23)
+1714 S(j 1 )= j 1 + 2 1 + 2 1 2 +···+ 2 1 n >2j
+1715 Toshowthisinequality,wefirstconsiderthecase j 1 <2n. Weapplytheinequality(cid:98)x(cid:99)> x−1toeachtermandobtain
+1716 S(j 1 )>2j 1 − j 1 /2n−n,andsince j 1 /2n <1andS(j 1 )isaninteger,weget
+1717 S(j 1 )≥2j 1 −n=2j+2B(cid:48)−n>2j.
+1718 Letusnowlookattheothercaseseeatwhattimethefirstentriesρ(j 1 )with j 1 ≥2nareenteredintoQ. When j 1 =2n,
+1719 noround-offtakesplaceintheformulaforS(j 1 ),andwehaveS(2n)=2·2n−1. Thisshowsthattheproductionof
+1720
+ρ(2n)iscompletedinthefirstSTEPofiteration2n. InthesecondSTEPofthisiteration,ρ(2n+1)=1isaddedtoQ.
+1721 Thus,whenρ(2n)isabouttoberetrieved,thebuffercontains2≤ B(cid:48)elements. Thenthealgorithmterminates,andno
+1722 moreelementsareproduced.
+1723 11. Conclusion
+1724 Wehaveshownthattheconsiderationofgamescangiveinspirationfornewlooplessalgorithmsforelectronic
+1725 computers.OurapproachofmodelingtheGraycodeintermsofamotion-planninggamehasleadtolooplessalgorithms
+1726 forGraycodesinaratherstraightforwardway. Wedidnothavetogothrough“contortions”(cf.thequoteintheendof
+1727 Section2,p.5).
+1728 Loopless algorithms for enumerating Gray codes were already known, cf. [2, 7.2.1.1.H], and thus we did not
+1729 achievenewresultsintermsofimprovedasymptoticrunningtime. Inparticular,wedonotclaimsuperiorityofthese
+1730 algorithmsovertheexistingalgorithms. Suchacomparisonwoulddependonthehardwareandonotherfactors. All
+1731 wecansayisthatthesealgorithmsenrichthearsenalofavailablealgorithmsforlooplessgeneration. Still,itmightbe
+1732
+aninterestingexercisetoprogramthesealgorithmsforKnuth’smodelcomputerMMIX6andanalyzetheirperformance.
+1733 TheapproachofSection10wasverydifferent. Itusedade-amortizingtechniquefordatastructures,andapplied
+1734 it to loopless generation algorithms. The amortized analysis that goes with this technique was straightforward
+1735 (inequality(4)),andtheresultingalgorithmsaresimple. Theanalysisoftherequiredbuffersizewas,however,more
+1736 intricate.
+1737 11.1. Openquestions
+1738 Withourapproach,wewereabletogetamixed-radixGraycodeonlywhenallradixesm i areodd. Itremainsto
+1739
+findamodelthatwouldworkfordifferentevenradixesorevenforradixesofmixedparity.
+1740 6www-cs-faculty.stanford.edu/~knuth/mmix.html
+17
+1801 Anothermotion-planninggamewhichisrelatedtothebinaryGraycodeistheChineseringspuzzle,seeGardner[4],
+1802 Knuth[2,pp.285–286],orScorer,Grundy,andSmith[3,Section1]. Knuth[2,SolutiontoEx.7.2.1.1–(10),p.679]
+1803 givesabriefsurveyoftheearlyliterature,mentioningreferencesthatdatebackasfarasthe16thcentury. Thegoalis
+1804 todetachaseriesofinterlockedringsfromabar. LiketheTowersofBucharest,theChineseringsallowatmosttwo
+1805 possiblemovesineverystate. Eachmoveremovesorreplacesasinglering. BysimulatingtheChineseringsdirectly,
+1806 onecanthereforeobtainanotherlooplessalgorithmforthebinaryGraycode,seeMisra[24],Knuth[2,SolutiontoEx.
+1807 7.2.1.1–(12b),p.680]. However,thisalgorithmdoesnotseemtoextendtootherradixes. Scoreretal.[3,Section5]
+1808 analyzedageneralizationoftheChineserings. WedidnotinvestigatewhetheritleadstointerestingGraycodes.
+1809 [1] J.R.Bitner,G.Ehrlich,E.M.Reingold,EfficientGenerationoftheBinaryReflectedGrayCodeandItsApplications,Commun.ACM19(9)
+1810 (1976)517–521,ISSN0001-0782,doi:\let\@tempa\bibinfo@X@doi10.1145/360336.360343.
+1811 [2] D.E.Knuth,CombinatorialAlgorithms,Part1,vol.4AofTheArtofComputerProgramming,Addison-Wesley,2011.
+1812 [3] R.S.Scorer,P.M.Grundy,C.A.B.Smith,Somebinarygames,TheMathematicalGazette28(280)(1944)96–103,ISSN00255572,URL
+1813 http://www.jstor.org/stable/3606393.
+1814 [4] M.Gardner,ThecuriouspropertiesoftheGraycodeandhowitcanbeusedtosolvepuzzles,Sci.American227(1972)106–109.
+1815 [5] P.Buneman,L.Levy,TheTowersofHanoiproblem,InformationProcessingLetters10(4–5)(1980)243–244.
+1816 [6] F.Herter,G.Rote,LooplessGraycodeenumerationandtheTowerofBucharest,in:E.D.Demaine,F.Grandoni(Eds.),Proceedingsofthe8th
+1817 InternationalConferenceonFunwithAlgorithms(FUN2016),vol.49ofLeibnizInternationalProceedingsinInformatics(LIPIcs),Schloss
+1818 Dagstuhl–Leibniz-Zentrumfu¨rInformatik,19:1–19:19,doi:\let\@tempa\bibinfo@X@doi10.4230/LIPIcs.FUN.2016.19,2016.
+1819 [7] F.Herter,G.Rote,LooplessGrayCodeEnumerationandtheTowerofBucharest,preprintarXiv:1604.06707[cs.DM],2016.
+1820 [8] D.S.Johnson,M.Yannakakis,C.H.Papadimitriou,Ongeneratingallmaximalindependentsets,InformationProcessingLetters27(3)(1988)
+1821 119–123,ISSN0020-0190,doi:\let\@tempa\bibinfo@X@doi10.1016/0020-0190(88)90065-8.
+1822 [9] G.Ehrlich,LooplessAlgorithmsforGeneratingPermutations,Combinations,andOtherCombinatorialConfigurations,J.Assoc.Comput.
+1823 Mach.20(3)(1973)500–513,ISSN0004-5411,doi:\let\@tempa\bibinfo@X@doi10.1145/321765.321781.
+1824 [10] A.Sapir,ThetowersofHanoiwithforbiddenmoves,TheComputerJournal47(1)(2004)20–24.
+1825 [11] A.M.Hinz,S.Klavzˇar,U.Milutinovic´,C.Petr,TheTowerofHanoi—MythsandMaths,Birkha¨user,2013.
+1826 [12] R.L.Graham,D.E.Knuth,O.Patashnik,ConcreteMathematics,Addison-Wesley,1989.
+1827 [13] D.-J.Guan,GeneralizedGrayCodeswithApplications,Proc.Natl.Sci.Council,RepublicofChina(A)22(6)(1998)841–848.
+1828 [14] C.Okasaki,PurelyFunctionalDataStructures,CambridgeUniversityPress,1998.
+1829 [15] S.R.Kosaraju,M.Pop,De-amortizationofalgorithms(preliminaryversion),in:W.-L.Hsu,M.-Y.Kao(Eds.),ComputingandCombinatorics:
+1830 4thAnnualInternationalConference,COCOON’98,Taipei,Taiwan,R.o.C.,August12–14,1998,Proceedings,vol.1449ofLectureNotes
+1831 inComputerScience,Springer-Verlag,Berlin,Heidelberg,ISBN978-3-540-68535-7,4–14,doi:\let\@tempa\bibinfo@X@doi10.1007/
+1832 3-540-68535-94,invitedpresentation,1998.
+1833 [16] M.H.Overmars,TheDesignofDynamicDataStructures,vol.158ofLectureNotesinComputerScience,Springer-Verlag,1983.
+1834 [17] L.J.Guibas,E.M.McCreight,M.F.Plass,J.R.Roberts,ANewRepresentationforLinearLists,in:ProceedingsoftheNinthAnnualACM
+1835 SymposiumonTheoryofComputing,STOC’77,ACM,NewYork,NY,USA,49–60,doi:\let\@tempa\bibinfo@X@doi10.1145/800105.
+1836 803395,1977.
+1837 [18] R.Hood,R.Melville,Real-timequeueoperationsinpureLISP,InformationProcessingLetters13(2)(1981)50–54,ISSN0020-0190,
+1838 doi:\let\@tempa\bibinfo@X@doi10.1016/0020-0190(81)90030-2.
+1839 [19] C.Okasaki,Simpleandefficientpurelyfunctionalqueuesanddeques,J.FunctionalProgramming5(4)(1995)583–592.
+1840 [20] G.Rote,Looplessgenerationofpermutationsbyadjacenttranspositions,inpreparation,2017.
+1841 [21] M.Wettstein,Countingandenumeratingcrossing-freegeometricgraphs,preprintarXiv:1604.05350[cs.CG],2016.
+1842 [22] M.Wettstein,Countingandenumeratingcrossing-freegeometricgraphs,in:ProceedingsoftheThirtiethAnnualSymposiumonComputational
+1843 Geometry,SOCG’14,ACM,NewYork,NY,USA,ISBN978-1-4503-2594-3,1:1–1:10,doi:\let\@tempa\bibinfo@X@doi10.1145/2582112.
+1844 2582145,2014.
+1845 [23] T.Mu¨tze,J.Nummenpalo,Aconstant-timealgorithmformiddlelevelsGraycodes,preprintarXiv:1606.06172[cs.DM],2016.
+1846 [24] J.Misra,RemarkonAlgorithm246,ACMTrans.Math.Software1(3)(1975)285.
+18

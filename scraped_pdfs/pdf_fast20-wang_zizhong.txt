@@ -1,0 +1,1218 @@
+Source: fast20-wang_zizhong.pdf
+================================================================================
+
+CRaft: An Erasure-coding-supported Version
+of Raft for Reducing Storage Cost
+and Network Cost
+Zizhong Wang, Tongliang Li, Haixia Wang, Airan Shao, Yunren Bai,
+Shangming Cai, Zihan Xu, and Dongsheng Wang, Tsinghua University
+https://www.usenix.org/conference/fast20/presentation/wang-zizhong
+This paper is included in the Proceedings of the
+18th USENIX Conference on File and
+Storage Technologies (FAST ’20)
+February 25–27, 2020 • Santa Clara, CA, USA
+978-1-939133-12-0
+Open access to the Proceedings of the
+18th USENIX Conference on File and
+Storage Technologies (FAST ’20)
+is sponsored by
+CRaft: An Erasure-coding-supported Version of Raft for Reducing Storage Cost
+and Network Cost
+ZizhongWang†‡∗ TongliangLi†‡∗ HaixiaWang‡ AiranShao†‡ YunrenBai†‡
+ShangmingCai†‡ ZihanXu†‡ DongshengWang§†‡
+†DepartmentofComputerScienceandTechnology,TsinghuaUniversity
+‡BeijingNationalResearchCenterforInformationScienceandTechnology,TsinghuaUniversity
+Abstract mayhappen.Google’sChubby[3]isoneoftheearliestsys-
+temsusingconsensusprotocols. InChubby,metadata,like
+Consensus protocols can provide highly reliable andavail-
+locks,arereplicatedthroughdifferentnodesbyPaxos.Since
+abledistributedservices.Intheseprotocols,logentriesare
+Gaios[2],consensusprotocolshavebeenusedtoreplicateall
+completelyreplicatedtoallservers.Thiscomplete-entryrepli-
+userdata(typicallymuchlargerthanmetadata)ratherthan
+cationcauseshighstorageandnetworkcosts,whichharms
+onlymetadata.Recently,RaftandPaxoshavebeenappliedin
+performance.
+reallarge-scalesystemslikeetcd[8],TiKV[1]andFSS[11],
+Erasurecodingisacommontechniquetoreducestorage
+toreplicateterabytesofuserdatawithbetteravailability.
+andnetworkcostswhilekeepingthesamefaulttoleranceabil-
+Insuchsystems,dataoperationswillbetranslatedintolog
+ity.Ifthecomplete-entryreplicationinconsensusprotocols
+commandsandthenreplicatedintoallserversbyconsensus
+canbereplacedwithanerasurecodingreplication,storage
+protocols. Thus,data willbe transferredto allservers,and
+andnetworkcostscanbegreatlyreduced. RS-Paxosisthe
+thenflushedtodisks.Inconsensusproblems,totolerateanyF
+first consensus protocol to support erasure-coded data,but
+failures,atleastN=(2F+1)serversareneeded.Otherwise,a
+ithasmuchpooreravailabilitycomparedtocommonlyused
+networkpartitionmaycausesplitgroupstoagreeondifferent
+consensusprotocols,likePaxosandRaft.WepointoutRS-
+contentswhichisagainsttheconceptofconsensus.Therefore,
+Paxos’slivenessproblemandtrytosolveit.BasedonRaft,
+usingconsensusprotocolstotoleratefailuresmaycausehigh
+we present a new protocol,CRaft. Providing two different
+networkandstoragecostswhichcanbearoundN timesof
+replication methods,CRaft can use erasure coding to save
+the originalamountofdata. Since these protocols are now
+storageandnetworkcostslikeRS-Paxos,whileitalsokeeps
+appliedinlarge-scalesystemsandthedatavolumeisgrowing
+thesamelivenessasRaft.
+larger,thesecostsbecomerealchallengesandtheycanprevent
+To demonstrate the benefits of our protocols,we built a
+systemsfromachievinglowlatencyandhighthroughput.
+key-valuestorebasedonCRaft,andevaluatedit.Inourex-
+Erasure coding [16] is an effective technique to reduce
+periments,CRaftcouldsave66%ofstorage,reacha250%
+improvementonwritethroughputandreduce60.8%ofwrite storageandnetworkcostscomparedtofull-copyreplication.
+Itdividesdataintofragments,andencodestheoriginaldata
+latencycomparedtooriginalRaft.
+fragmentstogenerateparityfragments.Theoriginaldatacan
+berecoveredfromanylarge-enoughsubsetoffragments,so
+1 Introduction
+erasurecodingcantoleratefaults.Ifeachserveronlyneeds
+tostoreafragment(canbeeitheranoriginaldatafragment
+Consensusprotocols,suchasPaxos[12]andRaft[14],can oraparityone),notthecompletecopyofthedata,storage
+tolerate temporaryfailures in distributedservices. Theyal- andnetworkcostscanbegreatlyreduced.Basedontheabove
+low a collection ofservers to workas a coherentgroup by properties,erasurecodingmaybeagoodsolutiontothechal-
+keeping the commands in eachserver’s log in a consistent lengesofstorageandnetworkcostsinconsensusprotocols.
+sequence.Theseprotocolstypicallyguaranteesafetyandlive- Erasure coding is deployed in FSS [11] for reducing stor-
+ness,whichmeanstheyalwaysreturncorrectresultsandcan agecost.However,FSSusesapipelinedPaxostoreplicate
+fullyfunctionalifnomajorityoftheserversfail.Usingthese complete user data and metadata 5-ways before encoding.
+consensusprotocols,commandscanbeproperlyreplicated Therefore,extranetworkcostofFSSisstillfourtimesofthe
+intoeachserverinthesameorder,evenifmachinefailures amountofdata,whichharmsperformance.
+RS-Paxos [13] is the first consensus protocol to support
+*Theseauthorscontributedequallytothiswork.
+§DongshengWang(wds@tsinghua.edu.cn)isthecorrespondingauthor. erasure-codeddata.CombiningPaxosanderasurecoding,RS-
+USENIX Association 18th USENIX Conference on File and Storage Technologies 297
+Paxosreducesstorageandnetworkcosts.However,RS-Paxos discovers current
+leader or new term
+haspooreravailabilitycomparedtoPaxos.RS-Paxostrades receives votes from
+majority of servers
+livenesstouseerasurecodingforbetterperformance.Inother
+Follower Candidate Leader
+words,aRS-Paxos-appliedsystemofN=(2F+1)servers starts times out and
+starts election
+cannottolerateF failuresanylonger.Thismaybeaserious times out and starts
+new election
+problemsincethesystemshouldtolerateenoughfailures.At
+thetheoreticallevel,wetendtodesignaconsensusprotocol discovers server
+with higher term
+withthesameleveloflivenessasPaxosandRaft.Weexamine
+thislivenessproblemandpointoutthatthisproblemexists
+Figure1:ThreeserverstatesinRaft[14]
+becausetherequirementofcommittingbecomesstricterin
+RS-Paxos.
+Wepresentanerasure-coding-supportedversionofRaft,
+entryacceptedinitstermhasbeenreplicatedtoamajorityof
+CRaft(CodedRaft).InCRaft,aleaderhastwomethodsto
+servers,thisentryanditspreviousonescanbesafelyapplied
+replicatelogentriestoitsfollowers.Iftheleadercancommu-
+toitsstatemachine.Theleaderwillcommitandapplythese
+nicatewithenoughfollowers,itwillreplicatelogentriesby
+entries,andtheninformfollowerstoapplythem.
+coded-fragmentsforbetterperformance. Otherwise,itwill
+Consensusprotocolsforpracticalsystemstypicallyhave
+replicate complete log entries forliveness. Like RS-Paxos,
+thefollowingproperties:
+CRaftcanhandleerasure-codeddata,soitcansavestorage
+andnetworkcosts.However,onemajordifferencebetween • Safety.Theyneverreturnincorrectresultsunderallnon-
+CRaftandRS-PaxosisthatCRafthasthesameleveloflive- Byzantineconditions.
+nessasPaxosandRaftwhileRS-Paxosdoesnot.
+• Liveness.Theyarefullyfunctionalaslongasanyma-
+ToverifythebenefitsofCRaft,wedesignedandbuiltkey-
+jorityoftheserversarealiveandcancommunicatewith
+valuestoresbasedondifferentprotocols,andevaluatedthem
+eachotherandwithclients.Wecallthisgroupofservers
+on Amazon EC2. In our experiments,CRaft could greatly
+healthy.
+savenetworktraffic,leadingtoa250%improvementonwrite
+throughputanda60.8%reductionofwritelatencycompared
+The safety property in Raft is guaranteed by the Leader
+to original Raft. In addition,we proved that CRaft has the
+CompletenessProperty[14]:ifalogentryiscommittedina
+sameavailabilityasRaft.
+giventerm,thenthatentrywillbepresentinthelogsofthe
+Intheremainder,firstwebrieflygothroughthebackground
+leadersforallhigher-numberedterms.
+knowledgeofRaft,erasurecodingandRS-PaxosinSection2.
+LivenessisguaranteedbyRaft’srules.Typically,thenum-
+Next,weexplainthedetailsofourCRaftprotocolinSection3
+berofserversinsystemsusingconsensusprotocols,N,isodd.
+andprovethesafetypropertyofCRaftinSection4.Section5
+AssumethatN=2F+1,thenRaftcantolerateanyFfailures.
+describes our implementation,experiments and evaluation.
+Wedefineaconsensusprotocol’slivenesslevelasthenumber
+Finally,wediscussrelatedworkinSection6andconcludein
+offailuresthatitcantolerate,soRafthasanF livenesslevel.
+Section7.
+Higherlivenesslevelmeansbetterliveness.Noprotocolcan
+reachan(F+1)livenesslevel.Ifthereexistsaprotocolwith
+2 Background an(F+1)livenesslevel,therecanbetwosplitgroupsofF
+healthyserversandthesetwogroupscanagreeondifferent
+WebeginbybrieflydescribingRaft,erasurecoding,RS-Paxos contentsrespectively,whichisagainstthesafetyproperty.
+andthendiscussRS-Paxos’slivenessproblem. Safetyandliveness are the mostimportantproperties of
+consensusprotocols.Raftcanguaranteethatthesafetyprop-
+erty always holds and it also reaches the highest possible
+2.1 Raft
+liveness level F. Furthermore,Raft has been proved to be
+Raft[14]isoneoftheconsensusprotocolsanditprovides agoodfoundationforsystembuilding. Accordingtothese
+agoodfoundationforbuildingpracticalsystems.Thereare properties,we choose Raft as the basis to design our new
+threeserverstatesinRaft,asshowninFigure1.Aleaderis protocolCRaft.
+electedwhenacandidatereceivesvotesfromamajorityof
+servers.Aservercanvoteforacandidateonlyifthecandi-
+2.2 ErasureCoding
+date’slogisatleastasup-to-dateastheserver’s.Eachserver
+canvoteatmostonceineachterm,soRaftguaranteesthat Erasurecodingisacommontechniquetotoleratefaultsin
+thereisatmostoneleaderinoneterm. storage systems and network transmissions. A large num-
+The leader accepts log entries from clients and tries to berofcodeshavebeenputforward,butReed-Solomon(RS)
+replicate them to other servers,forcing the others’ logs to codes[16]arethemostcommonlyusedones.Therearetwo
+agree withits own. When the leaderfinds outthatone log configurablepositiveintegerparametersinRScodes,kandm.
+298 18th USENIX Conference on File and Storage Technologies USENIX Association
+Inthistechnique,dataaredividedintokfragmentswithequal Proof. RS-Paxosworksonlyifatleastmax{Q ,Q }servers
+R W
+sizes.Then,usingthesekoriginaldatafragments,mparity arealive,soL ≤N−max{Q ,Q }.
+RSP R W
+fragments can be computedby an encoding procedure. So Accordingto(2),wehave
+therewillbe(k+m)fragmentsgeneratedfromtheoriginal
+max{Q ,Q }≥(Q +Q )/2≥(N+k)/2.
+data.Themagicofa(k,m)-RScodeisthatanykoutoftotal R W R W
+(k+m)fragmentsareenoughtorecovertheoriginaldata,and
+Therefore, L ≤N−(N+k)/2=F−(k−1)/2<F.
+RSP
+thatishowRScodestoleratefaults.
+Whenaconsensusprotocolisapplied,thenumberofthe
+servers, N, is usually fixed. If each server only stores one RS-Paxosroughlysolvestheconsensusproblemwithera-
+fragmentproducedbya(k,m)-RScodewhoseparametersk surecoding,butitcannotreachanF livenesslevelanylonger
+andmaresubjecttok+m=N,storageandnetworkcostscan asTheorem1shows.RS-Paxosrequiresmorehealthyservers
+bereducedto1/kcomparedtofull-copyreplication.However, than Paxos orRaft to function. It is important to present a
+how to guarantee the safety property and keep liveness as consensusprotocolthatnotonlysupportserasurecodingbut
+goodaspossiblecannotbeignored. alsopossessesthesamelivenesslevelasPaxosandRaft.
+2.3 RS-Paxos 3 CRaft, a Reform Version of Raft that Sup-
+portsErasureCoding
+CombiningerasurecodingandPaxos,RS-Paxosisareform
+versionofPaxoswhichcansavestorageandnetworkcosts.
+Livenessisoneofthemostimportantpropertiesofconsensus
+In Paxos,commands are transferred completely. However,
+protocols.However,thepreviouserasure-coding-supporting
+commandsaretransferredbycoded-fragmentsinRS-Paxos.
+protocol,RS-Paxos,failstoreachanF livenesslevel.Thus,
+Accordingtothischange,serverscanstoreandtransferonly
+ourgoalistodesignanewerasure-coding-supportingproto-
+fragmentsinRS-Paxos,sostorageandnetworkcostscanbe
+col(soitcansavestorageandnetworkcosts)thatpossesses
+reduced.ThecompletedescriptionofRS-Paxoscanbefound
+anF livenesslevel.ThisnewprotocolisbasedonRaft,soit
+intheRS-Paxospaper[13].
+inheritsthebasicconceptsinRaft.
+Toguaranteesafetyandliveness,PaxosandRaftarebased
+Toreducenetworkcost,leadersinthenewprotocolshould
+ontheinclusion-exclusionprincipleasfollows.
+be able to replicate their log entries to followers by us-
+|A∪B|=|A|+|B|−|A∩B| (1) ing coded-fragments, like RS-Paxos. However, as Theo-
+rem1shows,aprotocolwithonlycoded-fragmentreplication
+Theinclusion-exclusionprincipleguaranteesthatthereisat
+methodcannotreachanF livenesslevel.Infact,Theorem2
+leastoneserverintwodifferentmajoritiesofservers,1 and
+showsthatthecomplete-entryreplicationmethodinRaftis
+thenthesafetypropertycanbeguaranteed.
+necessaryforanF livenesslevelprotocol.
+TheinsightofRS-Paxosistoincreasethesizeoftheinter-
+sectionset.Specifically,afterchoosinga(k,m)-RScode,the Theorem2. Whenthereareonly(F+1)healthyserversin
+readquorumQ ,thewritequorumQ ,andthenumberof anF livenesslevelprotocol,anentryecanbecommittedonly
+R W
+theserversN,shouldfitthefollowingformula. afterthecompleteentryhasbeenstoredinall(F+1)healthy
+servers’logs.
+Q +Q −N≥k (2)
+R W
+Proof. If a healthy serverS did not store complete entry e
+Thenifacommandischosen(likecommittedinRaft),atleast whenewascommitted,theprotocolcouldnotguaranteethat
+Q W servershaveacceptedit.Ifaserverwantstoproposeits itcouldworkfullyfunctionallyinany(F+1)healthyservers.
+owncommand,itwillcontactatleastQ R serversinPrepare Suppose only S and the previous unhealthy servers were
+phase.Becauseof(2)and(1),atleastkamongthisQ R servers healthyatthenextmoment,these(F+1)currentlyhealthy
+haveafragmentofthechosencommand.Sotheproposercan serverscouldnotrecovercompletee,thentheprotocolhadto
+recovertheoriginalcommandbyusingthekfragmentsand waitforotherservers.Sowhenewascommitted,all(F+1)
+thenitproposesthechosenvalueratherthanitsown. healthyservershadthiscompleteentry.
+Withthebenefitsoferasurecoding,usingRS-Paxoscan
+greatlyreducestorageandnetworkcostswhenk>1.How- Bothcoded-fragmentreplicationandcomplete-entryrepli-
+ever,RS-Paxosdecreasesthefaulttolerancenumberoffailed cation are required in our new protocol. Using coded-
+servers.AsTheorem1shows,RS-Paxos’slivenesscannotbe fragmentreplicationcansavestorageandnetworkcosts,while
+asgoodasPaxosorRaft. complete-entryreplicationcankeepliveness.
+Nextwewilldiscussthedetailsofthesetworeplication
+Theorem1. LivenesslevelofRS-Paxos,L ,isalwaysless
+RSP methods,andthenwetrytointegratethemintoacomplete
+thanF whenk>1.
+protocol,CRaft.ToexplainthedetailsofCRaft,wefirstde-
+1If|A|>|A∪B|/2and|B|>|A∪B|/2,|A∩B|=|A|+|B|−|A∪B|>0. finesomeparameters.WeassumethatthereareN=(2F+1)
+USENIX Association 18th USENIX Conference on File and Storage Technologies 299
+In
+In
+d
+d
+e
+e
+x
+x
+c o n te n t
+T
+T
+e
+e
+r
+r
+m
+m
+c o n te n t
+c
+c
+c
+o
+o
+o
+n
+n
+n
+te
+te
+te
+n
+n
+n
+t fra
+t fra
+t fra
+g
+g
+g
+m
+m
+m
+e
+e
+e
+c o n te
+c o n te
+c o n te
+n t 1
+n t 2
+n t 3
+n
+n
+n
+t fra
+t fra
+t fra
+g m
+g m
+g m
+c o
+c o
+e
+e
+e
+n
+n
+n t 1
+n t 2
+n t 3
+te n t fra
+te n t fra
+g
+g
+m
+m
+e
+e
+n
+n
+t
+t
+4
+5
+(p
+(p
+a
+a
+rity
+rity
+)
+)
+split
+encode
+combine
+Index Term Index Term Index Term Index Term Index Term
+content fragment1 content fragment2 content fragment3 content fragment4 (parity) content fragment5 (parity)
+Figure2:TheencodingprocedureinCRaft.
+leader confirms that at least (F+k) servers store a coded-
+Table1:ComparisonsamongDifferentProtocols
+fragment,theentryanditspreviousonescanbesafelyapplied.
+The leader will commit and apply these entries, and then
+Performance DifferentProtocols
+informfollowerstoapplythem.Thecommitmentcondition
+Indicators CRaft Raft RS-Paxos
+of coded-fragment replication is stricter than Raft’s. This
+storagecost 222FFF///kkk+++111 2F+1 222FFF///kkk+++111
+commitmentconditionalsoimpliesthataleadercannotuse
+networkcost 222FFF///kkk 2F 222FFF///kkk
+coded-fragment replication to replicate an entry and then
+diskI/O 222FFF///kkk+++111 2F+1 222FFF///kkk+++111
+commititwhentherearenot(F+k)healthyservers.
+livenesslevel FFF FFF F−(k−1)/2
+Whenaleaderisdown,anewleaderwillbeelected.Ifan
+entryisalreadycommitted,theelectionruleofRaftguaran-
+teesthatthenewleaderatleasthasafragmentoftheentry,
+servers in the protocol. Since CRaft should have the same whichmeansthesafetypropertycanbeguaranteed.Sinceat
+availability as Raft, its liveness level should be F, which least(F+k)serversstoreafragmentofacommittedentry,
+meansthatCRaftcanstillworkwhenatleast(F+1)servers there should be at least k coded-fragments in any (F+1)
+are healthy. We choose a (k,m)-RS code for CRaft. k and
+servers.2Sothenewleadercancollectkcoded-fragmentsand
+m shouldsatisfy k+m=N,so eachserverin the protocol thenrecoverthecompleteentrywhenthereareatleast(F+1)
+cancorrespondtoonecoded-fragmentforeachlogentry.As healthyservers,whichmeanslivenesscanbeguaranteed.
+Table1shows,CRaftsupportserasurecodingsoitcansave Figure3showsanexampleofcoded-fragmentreplication
+storageandnetworkcosts,whileitpossessesanF liveness andexplainswhythecommitmentconditionbecomesstricter
+levelatthesametime. inthisreplication method. Ifaleadercancommitanentry
+whenitonlyconfirmsthatF+1=4serversstoretheentry,
+newleadersmaybeunabletorecovercommittedentries.Like
+3.1 Coded-fragmentReplication
+the Index 3 entry in Figure 3, it should not be committed
+becauseonlyfiveserversstoredit.3Ifitwascommitted,con-
+WhenaleaderinCRafttriestoreplicateanentrybycoded-
+siderthesituationthatfirstthreeserverscouldnotconnectto
+fragmentreplicationmethod,itfirstencodestheentry.InRaft,
+otherserverswhileotherfourserverswereallhealthy.CRaft
+eachlogentryshouldcontainitsoriginalcontentfromclients
+shouldstillbeabletoworkbecauseitslivenesslevelisF=3.
+andalso its term andindex in the protocol. When a CRaft
+However,there were atmosttwo fragments ofthe Index3
+leadertriestoencodeanentry,thecontentcanbeencoded
+entryinthehealthyservers,sonewleaderswerenotabletore-
+into N =(k+m) fragments by the (k,m)-RS code thatthe
+coverthecompleteentry.Theprotocolhadtowaitforthefirst
+protocol chooses. Term and index should not be encoded,
+threeservers,whichmeanslivenesscannotbeguaranteed.
+sincetheyplayimportantrolesintheprotocol.Figure2shows
+Incoded-fragmentreplication,followerscanreceiveand
+theencodingprocedure.
+Afterencoding,theleaderwillhaveN coded-fragmentsof
+2Accordingto(1),thenumberoftheserversstoringafragmentofa
+theentry.Thenitwillsendthecorrespondingcoded-fragment
+committedentryisatleast(F+k)+(F+1)−N=2F+1−N+k=k.
+to each follower. After receiving its corresponding coded- 3Theentrycanbecommittedonlyifatleast(F+k)serversstoreit.Since
+fragment,each followerwill reply to the leader. When the F+k=3+3>5,theIndex3entryshouldnotbecommitted.
+300 18th USENIX Conference on File and Storage Technologies USENIX Association
+T=0 T=1 T=2
+communicationsmayberequiredbeforecommitment).When
+1 2 3 1 2 3 1 2 3 log index p=F,thestrategybecomesthesameasRaft’sreplication
+leader method.Figure4showsdifferentstrategieswhen p=0,1,F.
+Inourimplementationforexperiments,wechoose p=0.
+follower 1
+follower 2 3.3 Prediction
+( , )=( , )
+follower 3
+, Usingcoded-fragmentreplicationratherthancomplete-entry
+data amount: follower 4 replicationcanachievebetterperformance,ifbothmethods
+□ △ canreplicatesuccessfully.Agreedystrategyisthattheleader
+follower 5 alwaystriestoreplicateentriesbycoded-fragmentreplication.
+Ifitfindsoutthattherearenot(F+k)healthyservers,itturns
+follower 6
+toreplicatetheentrybycomplete-entryreplication.However,
+# of fragments
+iftheleaderalreadyknowsthatthenumberofhealthyservers
+committed entries in healthy servers
+is less than (F+k),the firstreplication attemptvia coded-
+fragmentsismeaningless.
+Figure3:Anexampleofcoded-fragmentreplication.Asquare
+Choosingthereplicationmethodaccuratelycanreachthe
+representsacompleteentry,whileatrianglerepresentsafrag-
+bestperformance.However,theleadercannotbesureabout
+mentofanentry.Yellowshadowmeansthatthecorresponding
+thestatusofotherservers.Soitcanonlypredicthowmany
+serversoftheentrieswerenothealthy.AtT =0,theleadergot
+healthy servers itcouldcommunicate withwhen ittries to
+threeentriesandittriedtoreplicatethem.AtT =1,followers
+replicateanentry.Theleadercanusethemostrecentheart-
+receivedentryfragmentswithvaryingdegreesofsuccess.At
+beatanswerstoestimatethenumberofhealthyservers.This
+T =2,threeservers,includingtheleader,failed.
+predictionshouldbeaccurateenough.
+When a leader tries to replicate an entry, it should use
+storecoded-fragmentsofentries.However,inRaft,followers thispredictionmethodtodeterminehowtoreplicate.Ifthe
+must receive and store complete entries. According to the numberof most recent heartbeat answers are not less than
+encodingprocedure,thesizeofcoded-fragmentsareabout (F+k),theleadershouldusecoded-fragmentreplicationfirst,
+1/kofthesizeofcompleteentries.Sostorageandnetwork andthenittriescomplete-entryreplicationifcoded-fragment
+costs can be greatly reduced when using coded-fragment replicationdoesnotwork.Otherwise,theleaderdirectlyuses
+replication. complete-entryreplication.Figure5concludesthisprocess.
+It is worth noting that this prediction is independent of
+the method that the leader chose to replicate last entry. It
+3.2 Complete-entryReplication
+only relies on the most recent heartbeat answers. So it is
+quitepossiblethataleaderusedcomplete-entryreplication
+Toreducestorageandnetworkcosts,leadersareencouraged
+to replicate the last entry and then it automatically chose
+tousecoded-fragmentreplication.However,coded-fragment
+replicationwillnotworkwhentherearenot(F+k)healthy coded-fragmentreplicationtoreplicateanewentry.
+servers.Whenthenumberofhealthyserversisgreaterthan
+F andlessthan(F+k),theleadershouldusecomplete-entry 3.4 Newly-electedLeader
+replicationmethodtoreplicateentries.
+Bothreplicationmethodscanguaranteesafetyandliveness
+Incomplete-entryreplication,theleaderhastoreplicatethe
+when leaders have all complete entries. However, when a
+completeentrytoatleast(F+1)serversbeforecommitting
+leader is newly elected, it is likely that the newly-elected
+theentry,justlikeRaft.Sincethecommittingruleisthesame
+leader’slogdoesnothavecompletecopiesbutonlycoded-
+asRaft,safetyandlivenessarenotproblems.However,since
+fragmentsofsomeentries.Theseincompleteentriesarenot
+CRaftsupportscoded-fragments,theleadercanreplicatean
+guaranteedrecoverablewhenthereareonly(F+1)healthy
+entrybycoded-fragmentsratherthanthecompleteentryto
+servers.Ifsomeoftheseunrecoverableentrieshavenotbeen
+remainingfollowersaftercommittingtheentry.
+appliedbythenewly-electedleader,theleaderhasnowayto
+Inpracticalimplementations,therearemanystrategiesto
+dealwiththeseentries.TheleadercannotsendAppendEntries
+replicateanentryviacomplete-entryreplication.Definean
+RPCscontaininganyoneoftheseentriestothefollowerswho
+integerparameter0≤p≤F.Theleadercanfirstsendcom-
+needthem,4sotheseunrecoverableentrieswillretainunap-
+pletecopiesofanentryto(F+p)followersandthensend
+plied.AccordingtotherulesofRaft,theleader’snewentries
+coded-fragmentstoremaining(F−p)followers.Asmaller
+receivedfromclientscannotbereplicatedtothefollowersas
+p means less storage and network costs,but it also means
+a higher probability to have longer committing latency (if 4CRaftinheritsRaft’sRPCs[14],theonlydifferencebetweentheirRPCs
+noF outof(F+p)answersreturnintime,moreroundsof isthatentriescanbeencodedinCRaft’sAppendEntriesRPC.
+USENIX Association 18th USENIX Conference on File and Storage Technologies 301
+follower
+follower
+follower
+leader commit
+follower
+follower
+follower
+(a )
+fo llo w
+fo llo w
+fo llo w
+le a d e
+fo llo w
+fo llo w
+fo llo w
+e
+e
+e
+r
+e
+e
+e
+r
+r
+r
+r
+r
+r
+(b )
+c o m m it
+fo llo w
+fo llo w
+fo llo w
+le a d e
+fo llo w
+fo llo w
+fo llo w
+e
+e
+e
+r
+e
+e
+e
+r
+r
+r
+r
+r
+r
+(c )
+c o m m it
+Figure4:Examplesofcomplete-entryreplicationwithparameter p=0,1,F whenN=7.Asquarerepresentsacompleteentry,
+whileatrianglerepresentsafragmentofanentry.
+Leader starts to thereareatleastkcoded-fragmentsoronecompletecopyin
+replicate an entry
+(F+1)answers,itcanberecovered,butnotallowedtobe
+No committedorappliedimmediately.Otherwise,thenewleader
+Number shoulddelete this entry andallthe following ones (includ-
+of most recent
+Complete-entry ingcompleteentries)initslog.Afterrecoveringordeleting
+heartbeat answers Yes replication Success?
+less than alltheunappliedentries,thewholeLeaderPreoperationcan
+( + )?
+bedone.DuringLeaderPre,thenewly-electedleadershould
+No Yes keep sending heartbeats to other servers, preventing them
+No fromtimingoutandstartingnewelections.
+Figure6showsexamplesofLeaderPre.InFigure6,N=5
+Coded-fragment Leader commits
+replication Success? Yes the entry andk=3.S1committedthefirsttwoentriesandthencrashed,
+and other servers had only applied the first entry. S2 was
+electedasanewleader,anditwoulddoLeaderPre.Itfirst
+Figure5:Flowchartoflogentryreplication.
+askedfollowersabouttheentriesinIndex2andIndex3.In
+Figure6(a),afterreceivinganswersfromitself,S3andS4,it
+well.Sotheprotocolfailstofunctionfullyandtheprotocol’s triedtorecoverthetwoentries.Therewerethreefragments
+livenesspropertycannotbeguaranteed.Therefore,someextra oftheIndex2entryandtwofragmentsoftheIndex3entry.
+operationsarerequiredtoguaranteeliveness. SoS2shouldrecovertheIndex2entryanddeletetheIndex3
+Thecoded-fragmentsinthenewly-electedleader’slogcan entry.WhileinFigure6(b),S3,S5andS2itselfallhadthe
+beappliedorunappliedbytheleader.Ifacoded-fragmentis Index 2 entry and the Index 3 entry. So S2 could recover
+applied,theentrymusthavebeencommittedbyaprevious bothofthem.ThoughtheuncommittedIndex3entrywould
+leader.Accordingtothecommitmentconditionoftworepli- behandleddifferentlyifS2collectedanswersfromdifferent
+cationmethods,atleastkcoded-fragmentsoronecomplete groups of servers, the committed Index 2 entry would be
+copy ofthe entry are storedin any (F+1) servers. So the guaranteedtoberecoveredbyLeaderPre.
+leadercanalwaysrecoverthisentrywhenthereare(F+1) AfteraddingLeaderPre,theLeaderAppend-OnlyProperty
+healthyservers.However,ifacoded-fragmentisunapplied, inRafthasanexception:deletioninLeaderPre.Inoriginal
+norulescanguaranteethatthisentrycanberecoveredwhen Raft,theoriginalLeaderAppend-OnlyPropertyisthekeyto
+thereare(F+1)healthyservers. provesafety,soitisnecessarytoprovethatLeaderPrewill
+To deal with unapplied coded-fragments, newly-elected notharmsafety.TheproofcanbefoundinSection4.
+leadersinCRaftshoulddotheLeaderPreoperation,before TherearetwomajorreasonsthatleadersinoriginalRaft
+theycanbecomefully-functionedleaders. donotdeleteentries.First,leadershavenowaytofindout
+Whenaleaderisnewly-elected,itfirstchecksitsownlog, whetheranunappliedentrywascommittedbyoldleadersor
+findsoutitsunappliedcoded-fragments.Thenitasksfollow- not.Second,eventhoughanentryisunapplied,leaderscan
+ersfortheirownlogs,focusingontheindexesoftheunap- stillreplicateittofollowerssinceithastheentry’scomplete
+pliedcoded-fragments.Atleast(F+1)answers(including copy,so there is no needto deleteit. In CRaft,ifthere are
+thenewleaderitself)shouldbecollectedorthenewleader enoughfragmentsofanunappliedentry,thenewleadercan
+shouldkeep waiting. The new leadershouldtry to recover recoveritandbeabletoreplicateit.Otherwise,thenewleader
+itsunappliedcoded-fragmentsinsequence.Foreachentry,if canconcludethatthisentryisuncommitted.Unrecoverable
+302 18th USENIX Conference on File and Storage Technologies USENIX Association
+p r e v io u
+le a d e r
+n e w
+le a d e r
+( a ) S 2
+s
+c
+r
+S 1
+S 2
+S 3
+S 4
+S 5
+o m
+e c e
+m
+iv
+1 2
+itte d e
+e s a n s
+n
+w
+3
+tr ie
+e r s
+s
+fr o m
+1
+S 1
+S 2
+S 3
+S 4
+S 5
+c o m m itte d
+its e lf, S 3 a
+2
+n
+e
+d
+3
+n tr ie
+S 4
+s
+(
+d
+,
+a ta
+□
+) = ( ,
+,
+a m o u n
+△
+)
+t:
+p r e v io
+le a d e
+n e w
+le a d e
+( b ) S
+ur
+r
+2
+s
+c
+r
+S 1
+S 2
+S 3
+S 4
+S 5
+o m
+e c e
+m
+iv
+1
+itte
+e s
+d
+a
+2
+n
+e
+s
+n
+w
+3
+tr
+e
+ie s
+r s fr o m
+1
+S 1
+S 2
+S 3
+S 4
+S 5
+c o m m itte d
+its e lf, S 3 a
+2 3
+e n tr
+n d S
+ie
+5
+s
+Figure6:ExamplesofLeaderPre.Asquarerepresentsacompleteentry,whileatrianglerepresentsafragmentofanentry.
+entries may harm CRaft’s liveness,but unrecoverable also shortsothatLeaderPrelatencywillnotharmtheprotocol’s
+meansuncommitted,soitisreasonabletodeletethem. availabilityseriously.
+Based on Raft,CRaft provides two different replication Itis optional thata newly-electedleaderfirst collectthe
+methods forsupporting erasure coding while keeping live- wholestatemachinebycommunicatingwithitshealthyfol-
+ness.Apredictionbasedonthemostrecentheartbeatanswers lowers. This operation is helpful to reduce read latency in
+helpstheleadertochoosereplicationmethod.Inaddition,to thefuture,whileitmaysignificantlyincreaseelectiontime
+guaranteeliveness,LeaderPrecanhelpnewly-electedleaders sothatitmayharmtheprotocol’savailability.Sothereisa
+dealwithunappliedcoded-fragments. trade-offbetweenusingitornot.
+Iftherearefarbehindfollowers,werecommendthatthe
+followersshouldcatchupwiththeleaderentrybyentrywhen
+3.5 Performance
+theybecomehealthyagain.Snapshotscanbeusedtocompact
+logsinCRaft.However,thedeploymentofsnapshotscanbe
+The advantages of CRaft are shown in Table 1. Using a
+muchmorecomplexthanoriginalRaft,sincedifferentservers
+(k,m)-RS code, CRaft has advantages in reducing storage
+storedifferentfragmentsinCRaft.
+andnetworkcosts.InCRaft,ideally,onlycoded-fragments
+Encodingtimecanbeaproblemtoo.However,manystud-
+areneededtobetransferredbetweentheleaderandfollowers,
+iesshowedthatencodingtimeisshortenoughcomparedto
+which indicates that the network cost can be saved to 1/k.
+transfer time in practical systems [6]. It is worth having a
+Withthishugesaving,CRaftcanreachamuchshorterlatency
+slightlylongerencodingtimetoreducenetworkcost.
+andahigherthroughputcomparedtooriginalRaft.
+ThemajordifferencebetweenCRaftandRS-Paxosislive-
+ness. To tolerate F failures, CRaft only needs to deploy 4 SafetyArgument
+(2F+1)servers.However,RS-Paxosneedstodeployatleast
+(2F+3)servers.Withthesameparameterkinerasurecod- ThekeyofsafetyinRaftistheLeaderCompletenessProperty.
+ing,less servers required means that CRaft can save more SinceweaddanewoperationLeaderPreinCRaft,wehaveto
+storageandnetworkcostscomparedtoRS-Paxos. provethatthepropertystillholds.Firstwegivetheproofsof
+Oneofthemajorconcernsistheextraconsumptionwhen theLogMatchingPropertyanditstworelatedlemmas,then
+aleaderisnewly-elected.Thenewleaderhastocollecten- weusethemtoprovetheLeaderCompletenessProperty.
+tryfragmentsiftherearesomebehindfollowers.However,
+Lemma1. AserverShasalogentrye,andewasfirstadded
+storageandnetworkcostsofCRaftintheworstsituationsare
+intotheprotocolinTermT,theneanditspreviousentriesin
+basically the same as Raft in any situations. Also,in most
+S’slognowarethesameastheentriesinleader ’slogwhen
+cases,thefirstnewleadercanreplicatetheoldentriestoall T
+ewasfirstaddedintotheprotocol.
+behind followers,so each entry only needs to be collected
+onceextra.Thisharmstheperformancealittle,butnetwork
+Proof. GuaranteedbycontentsinAppendEntriesRPC[14].
+costisstillgreatlyreducedgenerally,comparedtoRaft.
+NoticingdeletionsinLeaderPrealwaysdeletethenewestpart
+LeaderPrelatencymayaffectelectiontime,soitmayaf- in a log,this Lemma can be provedbythe same induction
+fecttheprotocol’savailability.Thiskindoflatencyispossibly techniqueintheRaftpaper[14].
+affectedbythenumberofthenewleader’sunappliedentries.
+However,a new leader can get brief information of its un- Theorem3. LogMatchingProperty:iftwologscontainan
+applied entries first and then collect them later. The time entrywiththesameindexandterm,thenthelogsarethesame
+consumption of communicating brief information is quite inallentriesupthroughthegivenindex.
+USENIX Association 18th USENIX Conference on File and Storage Technologies 303
+Proof. AsLemma1holds,thesetwologsarethesameasthe Other
+Leader
+leader’slogwhentheentrywasfirstaddedintotheprotocol. Server
+RPC
+Lemma2. AserverShasalogentrye,thenentrieswiththe Follower Candidate
+sametermandsmallerindexareinS’slog.
+Client Consensus Protocol
+Proof. AleadercannotaddentriestoitsloguntilLeaderPre
+is done. When e was accepted,entries with the same term
+Erasure Persister
+andsmallerindexmustbeintheleader’slog.Accordingto StateMachine
+Coding (to disk)
+Lemma1,Lemma2holds.
+Figure7:Thestructureofeachserverinourkey-valuestore.
+Theorem4. LeaderCompletenessProperty:ifalogentrye
+iscommittedinagiventerm(TermT),thenewillbepresent
+inthelogsoftheleadersforallhigher-numberedterms,ande
+indexthane,thisisacontradiction.Soewasdeletedbecause
+willnotbedeletedinanyhigher-numberedterm’sLeaderPre. itwasunrecoverable.InTermT,Leader replicatedetoat
+T
+least(F+1)serversbycompletecopies,oratleast(F+k)
+Proof. We assume that the Leader Completeness Property
+serversbycoded-fragments.Sinceewasneverdeletedfrom
+doesnothold,thenweproveacontradiction.Sinceindexes
+anyone’slogsinceTermT,Accordingto(1),therewereat
+are positive integers,there is a log entry e with a smallest
+leastonecompletecopyorkcoded-fragmentsinany(F+1)
+indexthatbreakstheproperty.
+answers.Thenewasrecoverableandthisisacontradiction.
+Considertwokindsofevents:one,Leader (U >T)does
+U Then the contradiction is completely proved. The Log
+nothaveeatthetimeofitselection;andtwo,eisdeletedin
+Matching Property guarantees that future leaders will also
+LeaderPrebyLeader (U >T).
+U containentriesthatarecommittedindirectly(notbyitsterm’s
+Assume that event one first appears. According to as-
+leader).So,theLeaderCompletenessPropertyholds.
+sumption, leaders between Term T and Term U had e at
+the time oftheirown elections,ande was neverdeletedin
+AfterprovingtheLeaderCompletenessProperty,wecan
+LeaderPre.Soewasneverdeletedfromanyone’slogsince
+concludetheStateMachineSafetyPropertyeffortlessly.
+Term T. Leader replicated e on at least (F+1) servers
+T
+(no matter which replication method Leader T used), and Theorem5. StateMachineSafetyProperty:ifaserverhas
+Leader U receivedvotesfromatleast(F+1)servers.Since appliedalogentryatagivenindextoitsstatemachine,no
+(F+1)+(F+1)=N+1>N,atleastoneserverbothac-
+otherserverwilleverapplyadifferentlogentryforthesame
+ceptede from Leader T andvotedforLeader U . This server index.
+musthaveacceptedefromLeader beforevotingforLeader ,
+T U
+otherwiseitwouldrejectLeader ’sAppendEntriesrequest.
+T Proof. Suppose T is the lowest term in which any server
+SinceewasneverdeletedsinceTermT,thisvoterhadeand
+applies an entryatthe given indexi. Ifa serverappliedan
+votedforLeader atthesametime.SoLeader ’slogmust
+U U entryatIndexiinTermU,theentry’stermmustbethesame
+havebeenasup-to-dateasthevoter’s.IfthevoterandLeader
+U asthetermoftheIndexientryinLeader ’slog.According
+U
+sharedthesamelastlogterm,thenLeader ’slogmusthave
+U totheLeaderCompletenessProperty,thetermoftheIndexi
+beenatleastaslongasthevoter’s.AccordingtoLemma2,
+entryinLeader ’slogshouldbeidenticaltothetermofthe
+U
+Leader ’slogmusthaveeandthisisacontradiction.Other-
+U IndexientryinLeader ’slog.SinceT isconstantwheniis
+T
+wise,Leader ’slastlogtermmusthavebeenlargerthanthe
+U given,theStateMachineSafetyPropertyholds.
+voter’s.Sinceewasinthevoter’slog,Leader ’slastlogterm,
+U
+P,waslargerthanT. Accordingtoassumption,inTermP,
+Leader ’sloghade.AccordingtoLemma1,Leader ’slog 5 ExperimentsandEvaluation
+P U
+musthaveeandthisisacontradiction.
+Soeventtwomustappearearlierthaneventone.According Toevaluateourprotocol,wefirstdesignedakey-valuestore
+toassumption,leadersafterTermT hadeatthetimeoftheir basedonRaft.ThenwemodifiedittoadaptCRaft.SinceRS-
+ownelections,andewasneverdeletedinLeaderPrebefore. PaxosisbasedonPaxosbutnotRaft,itisdifficulttocompare
+Soewasneverdeletedfromanyone’slogsinceTermT.Since RS-Paxos withCRaftorRaftdirectly. We tookthe insight
+ewasdeletedinLeaderPre,therewasanunrecoverableentry ofRS-Paxosandimplementedanequivalentprotocolnamed
+e .Ife wasnote,sinceewasdeleted,theindexofe mustbe RS-Raftontoourkey-valuestore.TheparametersinRS-Raft
+1 1 1
+smallerthane’s.BecauseewascommittedbyLeader ,and havethesamemeaningsastheonesinRS-Paxos,whichare
+T
+e hadasmallerindexthane,soe hadbeencommitted.Then describedinSection2.3.Weranexperimentsonthekey-value
+1 1
+e broketheLeaderCompletenessPropertyandhadasmaller storewithdifferentprotocolstopresentanevaluation.
+1
+304 18th USENIX Conference on File and Storage Technologies USENIX Association
+90
+80
+70
+60
+50
+40
+30
+20
+10
+0
+1 4 16 64 128 256 512 10242048
+Value Size (kB)
+)sm(
+ycnetaL
+etirW
+90
+Raft 80
+RS-Raft
+70
+CRaft
+60
+50
+40
+30
+20
+10
+0
+1 4 16 64 128 256 512 10242048
+Value Size (kB)
+Figure8:LatencyindifferentvaluesizeswhenN=5.
+5.1 Key-valueStoreImplementation
+The key-value store we design supports three kinds of op-
+erations: Set,Append and Get. Set and Append operations
+mustbelogged,whileGetoperationsarenot.Thekeyswere
+accesseduniformlyinourexperimentalworkloads.Follow-
+erscanjuststorefragmentsoftheirentriestoreducestorage
+cost. However, the leader should keep complete copies of
+entriestoensureperformanceofGet.Afteranewleaderis
+elected,ifthereisaGet operationandthenewleaderonly
+hasafragmentofthedata,itshouldfirstforceatleast(k−1)
+followers’logtocatchupwithitsown,thencollectenough
+datafragmentsfromthemanddecodethedata.Iftheleader
+candirectlyrespondtoclient’sGet,wecallthisoperationa
+fastread.Otherwise,iftheleadershouldcollectfragments
+fromfollowersfirst,wecallthisoperationarecoveryread.
+WeusedC++toimplementourkey-valuestore.Thestruc-
+tureofeachserverinourkey-valuestoreisshowninFigure7.
+TheconsensusprotocolcanbeRaft,CRaftandRS-Raft.We
+usedRCF3.0[18]toimplementRPC,andwechoseTCPas
+transmissionprotocol.Jerasure2.0[15]isthelibrarythatwe
+usedforerasurecoding.
+5.2 Setup
+WeranexperimentsontheconfigurationsofN=5andN=7,
+whicharereasonablechoiceswhenusingconsensusprotocols
+supportingerasurecoding.kwassetto3,sotheerasurecode
+weusedisa(3,2)-RScode(whenN=5)ora(3,4)-RScode
+(whenN=7).
+InN=5configuration,F =2,soRaftandCRaftcantol-
+erateanytwofailures.WechoseQ =Q =4forRS-Raft, R W
+soitcantolerateonefailure.InN=7configuration,F =3,
+soRaftandCRaftcantolerateanythreefailures.Wechose
+Q =Q =5forRS-Raft,soitcantoleratetwofailures.
+R W
+OurexperimentswererunonAmazonEC2platform.We
+usedsix(whenN=5)oreight(whenN=7)instances,one
+ofthemplayedtheroleofclientsandtheotherinstanceswere
+servers.EachinstancehastwovirtualCPUcoresand8GiB
+)sm(
+ycnetaL
+etirW
+Raft
+RS-Raft
+CRaft
+Figure9:LatencyindifferentvaluesizeswhenN=7.
+memory.Thenetworkbandwidthofeachinstanceisabout
+550 Mbps. The storage devices we usedare Amazon EBS
+GeneralPurposeSSDs,eachwith80000IOPSand1750MB/s
+throughput.
+5.3 Evaluation
+Weevaluatedtheprotocolsbymeasuringwritelatency,write
+throughput,network cost,liveness level and recovery read
+latency.Eachexperimentisrepeatedatleast100times.
+5.3.1 Latency
+Figure8andFigure9showcommitmentlatencyofvarious
+value-sizedwriterequestswitherrorbars. Operationswith
+avaluesizethatlargerthan2MBcanbesolvedbysplitting
+itintomultipleAppendoperations.Eachlatencyconsistsof
+two parts. The partatthe bottom withshadow in Figure 8
+andFigure9iscommunicationtimefromclientstotheleader.
+Thispartoftimeisonlyinfluencedbyvaluesize.Theother
+partislatencyfromthemomentthattheleaderstartstheentry
+to the momentthatthe leadercommits it,anditis the part
+thatwefocus.
+Whenvaluesizeislowerthan128kB,threeprotocolsper-
+formevenly.Inthesesituations,latencyismainlydominated
+by disk I/O. Since data amount is too small, even though
+CRaftandRS-Raftcan save the amountofdata flushedto
+disks,theI/Otimeusageremainsalmostthesame,sothereis
+notmuchdifferencebetweentheseprotocolsonlatency.
+Whenvaluesizebecomeslarger,theadvantageofCRaft
+andRS-Raftcan be revealed. Networktraffic anddiskI/O
+bothaffectlatency.SinceCRaftandRS-Raftsavenetwork
+costanddiskI/Ogreatly,theyreduce20%–45%oflatency
+comparedtoRaftwhenN=5,and20%–60.8%whenN=7.
+5.3.2 Throughput
+SinceCRaftandRS-Raftcansavetheamountofdatatrans-
+ferred and flushed to disks, they are expected to have bet-
+USENIX Association 18th USENIX Conference on File and Storage Technologies 305
+400
+350
+300
+250
+200
+150
+100
+50
+0
+1 4 16 64 128 256 51210242048
+Value Size (kB)
+)spbM(
+tuphguorhT
+400
+Raft
+350
+RS-Raft
+300
+CRaft
+250
+200
+150
+100
+50
+0
+1 4 16 64 128 256 51210242048
+Value Size (kB)
+Figure10:ThroughputindifferentvaluesizeswhenN=5.
+terthroughputthanRaft.Wesimulatethesituationthat100
+clients raise write request, and evaluate throughput of the
+leader.Figure10andFigure11showtheexperimentresults.
+The results show that CRaft and RS-Raft can improve
+throughputcomparedtoRaft.Theycanreachabout150%–
+200%improvementswhenvaluesizeisrelativelylarge.
+With value size grows larger, throughput first increases
+and reaches a peak, then it will fall. Throughput will fall
+becauseofnetworkcongestion.Howtopreventthisnetwork
+congestionproblemisinteresting,butitisnotourconcern
+inthispaper.Wecomparethepeakthroughputofthesethree
+protocols.CRaftandRS-Raftcanhavea180%improvement
+on write throughput when N =5 and 250% when N =7.
+Also,thethroughputpeaksofCRaftandRS-Raftbothappear
+muchlaterthanRaft’s. ThisisanotheradvantageofCRaft
+andRS-Raftbecauseoftheirreductionsonnetworkcost.
+RS-Raft’sthroughputcanbeslightlybetterthanCRaft’s
+when the numbers of servers are equal,because more Ap-
+pendEntriesrepliesareneededbeforecommitmentinCRaft.
+However,itisunfairtocomparethesetwoprotocols’through-
+put in such way, since RS-Raft’s liveness is worse than
+CRaft’s.Totoleratetwofailures,sevenserversarerequired
+whenusingRS-Raft,whileonlyfiveserversarerequiredwhen
+usingCRaft.SoitisfairertocompareRS-Raft’sthroughput
+whenN=7withCRaft’sthroughputwhenN=5.According
+toFigure10andFigure11,inthiscomparison,CRafthasan
+advantage.
+5.3.3 NetworkCost
+Wemonitoredtheamountofdatatransferredfromtheleader
+todirectlyprovethatourprotocolcansavenetworkcost.In
+this experiment,clients raiseda write requestevery 70 ms.
+Figure 12 shows the monitoring results when N =7. The
+leaderinRafttransfersabout250%ofdataamountcompared
+totheleaderinCRaft.ThisresultdirectlyprovesthatCRaft
+cangreatlyreducenetworkcost.However,ideally,whenk=3,
+theratiobetweentheamountofdatatransferredfromaRaft
+)spbM(
+tuphguorhT
+Raft
+RS-Raft
+CRaft
+Figure11:ThroughputindifferentvaluesizeswhenN=7.
+leaderandaCRaftleadershouldbecloseto300%.Thegap
+between250%and300%maybecausedbycoststhatarenot
+generatedbytheconsensusprotocols.
+5.3.4 Liveness
+ThemajordifferencebetweenCRaftandRS-Raftisliveness.
+CRaftcantolerateanytwofailureswhenN=5,anditcan
+tolerateanythreefailureswhenN=7.Thoughwechoosethe
+parametersforRS-Rafttoreachitshighestpossibleliveness
+level,RS-RaftcanonlytolerateonefailurewhenN=5,and
+itcanonlytoleratetwofailureswhenN=7.
+Figure13showsthethroughputofdifferentprotocolswhen
+thenumberofhealthyserverschangesinN=7experiments
+witherrorbars.RS-Raftperformsverywellwhenthenumber
+ofhealthyserversisnolessthan5,butitcannotworkwhen
+thenumberis4.CRaftperformsjustlikeRS-Raftwhenthe
+numberofhealthyserversis6or7,whileitperformsworse
+thanRS-Raftwhenthenumberis5.ThisisbecauseCRaft
+canonlyusecomplete-entryreplicationwhenthenumberof
+healthyserversis5,soitsthroughputisdegraded.However,
+CRaftcanstillworkwhenthenumberofhealthyserversis4,
+justlikeRaft.AndthisprovesCRaft’slivenessadvantageto
+RS-Raft.
+5.3.5 RecoveryRead
+Oneofourconcernsisthatrecoveryreadwilltaketoomuch
+timecomparedtofastread.TheleaderinRaftalwaysdoes
+fastread,butsometimesnewleadersinCRaftmayhaveto
+dorecoveryread.Noticingthatanewleaderonlyneedsto
+do at most one recovery read to a specific key. If a leader
+needstohandleseveralGetoperationsofonekeyinitsterm,
+onlythefirsttimeithastodorecoveryread.Sotheexistence
+ofrecoveryreadmaynotharmperformancetoomuchwhen
+serversdonotcrashtoooften.Wemadeanewleaderhandle
+aGetoperationindifferentprotocols,andthenwerepeated
+this Get operation nine more times andcalculatedaverage
+latency.TheresultsareshowninFigure14.CRafttakesat
+306 18th USENIX Conference on File and Storage Technologies USENIX Association
+700
+600
+500
+400
+300
+200
+100
+0
+0 20 40 60 80
+Time (s)
+)spbM(
+htdiwdnaB
+400
+Raft
+350 CRaft
+300
+250
+200
+150
+100
+50
+0
+7 6 5 4
+Number of Healthy Servers
+Figure 12: The leader’s network con-
+sumption in Raft and CRaft when
+N = 7.
+)spbM(
+tuphguorhT
+600
+Raft
+RS-Raft 500 CRaft
+400
+300
+200
+100
+0
+512 1024 2048 4096 8192 16384
+Value Size (kB)
+Figure 13: Throughput when the num-
+berofhealthyserverschangesinN=7
+experiments.
+)sm(
+ycnetaL
+daeR
+egarevA
+Raft (1 time/10 times)
+CRaft (10 times)
+CRaft (1 time)
+Figure 14: Average latency of Get op-
+erationswhenk=3. OnlythefirstGet
+operationharmsperformanceinCRaft.
+most140%moretimecomparedtoRafthandlingthefirstGet codingobjects.However,itsmethodmainlyfocusesonsafety
+operation.However,timeusagesoftenoperationsbetween andignores liveness when transferring userdata. Liveness
+differentprotocolsbecomecloseenough.Sowecanconclude canbeoptimizedbyusingCRaft.
+thatextratimeusageofrecoveryreadisacceptable.
+6 RelatedWork 7 Conclusions
+Many systems use consensus protocols to provide highly
+WepresentedCRaft,anerasure-codedversionofRaft.CRaft
+reliableandavailabledistributedservices.Inearlyyears,most
+isbasedonRaftwhileitextentsRafttosupporterasurecoding.
+ofthem use Paxos to achieve consistency,like Chubby [3]
+Withthehelpoferasurecoding,storageandnetworkcosts
+andSpanner[5].AfterthepresenceofRaft,manysystemsare
+canbegreatlyreduced.
+usingitforunderstandability,suchasetcd[8]andTiKV[1].
+The previous erasure-coding-supporting protocol, RS-
+Recent years, consensus protocols are not only used to
+Paxos,failstoretainanF livenesslevellikePaxosorRaft.
+replicatesmallsizedatabaserecords,butalsofilesanddata
+CRaftsolvesthisproblem.Inotherwords,totolerateF faults,
+objects. UsingPaxos,Gaios[2]buildsahighperformance
+CRaft only needs (2F+1) servers while RS-Paxos needs
+datastore.Topreventtheservicefromcompromisingavail-
+more.SoCRaftcansavemorestorageandnetworkcosts.
+ability,FSS[11]usesapipelinedPaxostoreplicatebothuser
+dataandmetadata.Also,etcdandTiKVuseRafttoconsis- We analyzedthe performance ofdifferentprotocols and
+tentlydistributeuserdatatodifferentservers. Thiskindof we concluded that CRaft can reduce storage and network
+systemsaretargetsystemsofCRaft. costsmostwhileithasthebestliveness.Wedesignedakey-
+Erasurecodingisfirstdevelopedinnetworktransmission valuestoreandranexperimentsonit.Theresultsshowthat
+areaandnowitisappliedinmanydistributedstoragesystems, CRaftcanreduce60.8%oflatencyandimprovethroughput
+suchasCeph[19],HDFS[17]andMicrosoftAzure[10].The by250%comparedtoRaft.Inthefuture,wewillattemptto
+mostfocusproblemabouterasurecodingnowisthatitsrecov- implementCRaftontopracticalsystems.
+erycostistoohighcomparedtosimplereplication,andthere
+aremanyworkstryingtosolvethisproblem[7,10].Ourwork
+doesnotfocusonthisarea,butwehaveanothercontribution
+Acknowledgments
+onerasurecoding.Themethodsthatmostsystemsreplicate
+erasure-codedfragmentsaresimilartousingthetwo-phase
+commitprotocol[9].Thiskindofmethodshaveahighprob- Wethankallreviewersfortheirinsightfulcomments,andes-
+abilitytofailinanasynchronousnetwork,whileCRaftcan pecially ourshepherd Darrell D. E. Long forhis guidance
+stillworkwellinthissituation. during ourcamera-ready preparation. We also thank Yinx-
+RS-Paxos[13]isthefirstconsensusprotocolsupporting ingHou,HongminLouandRuiMaoforhelpfuldiscussions.
+erasure coding. However,it cannot reach the best liveness ThisworkissupportedbytheNationalKeyResearchandDe-
+levelanditmissesimportantdetailstobuildapracticalsystem. velopmentProgramofChina(GrantNo.2016YFB1000303)
+OurnewprotocolCRaftsolvestheaboveproblems.Giza[4] andtheGuangdongProvinceKeyResearchandDevelopment
+usesmetadataversioningtoprovideconsistencyforerasure ProgramofChina(GrantNo.2018B010115002).
+USENIX Association 18th USENIX Conference on File and Storage Technologies 307
+References Yekhanin. ErasurecodinginWindowsAzureStorage.
+InProceedingsofthe2012USENIXAnnualTechnical
+[1] TiKVAuthors. TiKV:Adistributedtransactionalkey- Conference(USENIXATC’12),pages15–26,2012.
+valuedatabase.2019. https://tikv.org/. [11] Bradley C. Kuszmaul, Matteo Frigo, Justin Mazzola
+Paluska,andAlexander(Sasha)Sandler.Everyoneloves
+[2] WilliamJ.Bolosky,DexterBradshaw,RandolphB.Haa-
+file:FileStorageService(FSS)inOracleCloudInfras-
+gens, Norbert P. Kusters, and Peng Li. Paxos repli-
+tructure. InProceedingsofthe2019USENIXAnnual
+catedstatemachinesasthebasisofahigh-performance
+TechnicalConference(USENIXATC’19),pages15–32,
+datastore. InProceedingsofthe8thUSENIXSympo-
+2019.
+siumonNetworkedSystemsDesignandImplementation
+(NSDI’11),pages141–154,2011.
+[12] LeslieLamport. Thepart-timeparliament. ACMTrans-
+[3] MichaelBurrows. TheChubbylockserviceforloosely- actionsonComputerSystems(TOCS),16(2):133–169,
+coupleddistributedsystems. InProceedingsofthe7th 1998.
+Symposium on Operating Systems Design and Imple-
+mentation(OSDI’06),pages335–350,2006.
+[13] ShuaiMu,KangChen,YongweiWu,andWeiminZheng.
+WhenPaxosmeetserasurecode:Reducenetworkand
+[4] YuLinChen,ShuaiMu,JinyangLi,ChengHuang,Jin
+storagecostinstatemachinereplication. InProceed-
+Li,AaronOgus,andDouglasPhillips. Giza: Erasure
+ings of the 23rd International ACM Symposium on
+codingobjectsacrossglobaldatacenters. InProceed-
+High-PerformanceParallelandDistributedComputing
+ingsofthe2017USENIXAnnualTechnicalConference
+(HPDC’14),pages61–72,2014.
+(USENIXATC’17),pages539–551,2017.
+[5] JamesC.Corbett,JeffreyDean,MichaelEpstein,An- [14] Diego Ongaro and John K. Ousterhout. In search of
+drew Fikes, Christopher Frost, J. J. Furman, Sanjay an understandable consensus algorithm. In Proceed-
+Ghemawat,AndreyGubarev,ChristopherHeiser,Peter ingsofthe2014USENIXAnnualTechnicalConference,
+Hochschild,WilsonC.Hsieh,SebastianKanthak,Eu- (USENIXATC’14),pages305–319,2014.
+geneKogan,HongyiLi,AlexanderLloyd,SergeyMel-
+nik,DavidMwaura,DavidNagle,SeanQuinlan,Rajesh
+[15] James S. Plank and Kevin M. Greenan. Jerasure: A
+Rao,LindsayRolig,YasushiSaito,MichalSzymaniak,
+libraryinCfacilitatingerasurecodingforstorageap-
+Christopher Taylor, Ruth Wang, and Dale Woodford.
+plicationsversion2.0. Technicalreport,Departmentof
+Spanner:Google’sgloballydistributeddatabase. ACM
+ElectricalEngineeringandComputerScience,Univer-
+TransactionsonComputerSystems(TOCS),31(3):8:1–
+sityofTennessee,2014. http://jerasure.org/jerasure-2.0/.
+8:22,2013.
+[6] LoicDachary. CephJerasureandISApluginsbench- [16] I. S. Reed and G. Solomon. Polynomial codes over
+marks.2015. https://blog.dachary.org/2015/05/12/ceph- certainfinitefields.JournalofTheSocietyforIndustrial
+jerasure-and-isa-plugins-benchmarks/. andAppliedMathematics,8(2):300–304,1960.
+[7] AlexandrosG.Dimakis,BrightenGodfrey,YunnanWu,
+[17] Konstantin Shvachko, Hairong Kuang, Sanjay Radia,
+MartinJ.Wainwright,andKannanRamchandran. Net-
+andRobertChansler. TheHadoopdistributedfilesys-
+work coding for distributed storage systems. IEEE
+tem. InProceedingsofthe26thIEEESymposiumon
+TransactionsonInformationTheory,56(9):4539–4551,
+MassiveStorageSystemsandTechnologies(MSST2010),
+2010.
+pages1–10,2010.
+[8] Theetcdauthors. etcd:Adistributed,reliablekey-value
+storeforthemostcriticaldataofadistributedsystem. [18] Delta V Software. Remote call framework. 2019.
+2019. https://etcd.io/. http://www.deltavsoft.com/index.html/.
+[9] JimGray. Notesondatabaseoperatingsystems:oper-
+[19] SageA.Weil,ScottA.Brandt,EthanL.Miller,Darrell
+ating systems: an advanced course. Lecture Notes in
+D. E. Long,and Carlos Maltzahn. Ceph: A scalable,
+ComputerScience,1979.
+high-performancedistributedfilesystem. InProceed-
+[10] Cheng Huang, Huseyin Simitci, Yikang Xu, Aaron ingsofthe7thSymposiumonOperatingSystemsDesign
+Ogus,BradCalder,ParikshitGopalan,JinLi,andSergey andImplementation(OSDI’06),pages307–320,2006.
+308 18th USENIX Conference on File and Storage Technologies USENIX Association

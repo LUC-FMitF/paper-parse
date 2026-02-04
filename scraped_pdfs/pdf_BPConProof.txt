@@ -1,0 +1,1837 @@
+Source: BPConProof.pdf
+================================================================================
+
+module BPConProof
+ThismodulespecifiesaByzantine Paxos algorithm–aversionofPaxos inwhichfailedacceptors
+andleaderscanbemalicious. ItisanabstractionandgeneralizationoftheCastro-Liskovalgorithm
+in
+author = “MiguelCastro andBarbara Liskov”,title = “Practicalbyzantinefaulttolerance
+andproactive
+recovery”,
+journal =ACM TransactionsonComputerSystems,
+volume =20,
+number =4,year =2002,pages = “398–461”
+extends Integers, FiniteSets, FiniteSetTheorems, TLAPS
+ThesetsValue andBallot arethesameasintheVotingandPConProof specs.
+constant Value
+Ballot =∆ Nat
+As in module PConProof, we define None to be an unspecified value that is not an element of
+Value.
+None =∆ choose v :v ∈/ Value
+We pretend that which acceptors are good and which are malicious is specified in advance. Of
+course,thealgorithmexecutedbythegoodacceptorsmakesnouseofwhichacceptorsarewhich.
+Hence,wecanthinkofthesetsofgoodandmaliciousacceptorsas“prophecyconstants”thatare
+usedonlyforshowingthatthealgorithmimplementsthePCon algorithm.
+We can assume that a maximal set of acceptors are bad, since a bad acceptor is allowed to do
+anything–includingactinglikeagoodone.
+ThebasicideaisthatthegoodacceptorstrytoexecutethePaxos consensusalgorithm,whilethe
+badacceptorsmaytrytopreventthem.
+We do not distinguish between faulty and non-faulty leaders. Safety must be preserved even if
+allleadersaremalicious,soweallowanyleadertosendanysyntacticallycorrectmessageatany
+time. (In an implementation, syntactically incorrect messages are simply ignored by non-faulty
+acceptorsandhavenoeffect.) Assumptionsaboutleaderbehaviorarerequiredonlyforliveness.
+constants Acceptor, Thesetofgood(non-faulty)acceptors.
+FakeAcceptor, Thesetofpossiblymalicious(faulty)acceptors.
+ByzQuorum,
+AByzantine quorumissetofacceptorsthatincludesaquorumofgoodones. In
+thecasethatthereare2f+1goodacceptorsandfbadones,aByzantinequorum
+isanysetof2f+1acceptors.
+WeakQuorum
+Aweakquorumisasetofacceptorsthatincludesatleastonegoodone. Ifthere
+arefbadacceptors,thenaweakquorumisanysetoff+1acceptors.
+WedefineByzAcceptor tobethesetofallrealorfakeacceptors.
+ByzAcceptor =∆ Acceptor ∪FakeAcceptor
+1
+AsinthePaxos consensusalgorithm,weassumethatthesetofballotnumbersand −1isdisjoint
+fromthesetofall(realandfake)acceptors.
+assume BallotAssump =∆ (Ballot ∪{−1})∩ByzAcceptor ={}
+Thefollowingaretheassumptionsaboutacceptorsandquorumsthatareneededtoensuresafety
+ofouralgorithm.
+assume BQA =∆
+∧Acceptor ∩FakeAcceptor ={}
+∧∀Q ∈ ByzQuorum :Q ⊆ByzAcceptor
+∧∀Q1, Q2 ∈ ByzQuorum :Q1∩Q2∩Acceptor (cid:54)={}
+∧∀Q ∈ WeakQuorum : ∧Q ⊆ByzAcceptor
+∧Q ∩Acceptor (cid:54)={}
+Thefollowingassumptionisnotneededforsafety,butitwillbeneededtoensureliveness.
+assume BQLA =∆
+∧∃Q ∈ ByzQuorum :Q ⊆Acceptor
+∧∃Q ∈ WeakQuorum :Q ⊆Acceptor
+WenowdefinethesetBMessage ofallpossiblemessages.
+1aMessage =∆ [type :{“1a”}, bal :Ballot]
+Type1a messagesarethesameasinmodulePConProof.
+1bMessage =∆
+A 1b message serves the same function as a 1b message in ordinary Paxos, where the mbal
+and mval components correspond to the mbal and mval components in the 1b messages of
+PConProof. The m2av component is set containing all records with val and bal components
+equaltothecorrespondingofcomponentsofa2av messagethattheacceptorhassent,except
+containingforeachval onlytherecordcorrespondingtothe2av messagewiththehighestbal
+component.
+[type :{“1b”}, bal :Ballot,
+mbal :Ballot ∪{−1}, mval :Value∪{None},
+m2av :subset [val :Value, bal :Ballot],
+acc :ByzAcceptor]
+1cMessage =∆
+Type1c messagesarethesameasinPConProof.
+[type :{“1c”}, bal :Ballot, val :Value]
+2avMessage =∆
+Whenanacceptorreceivesa1cmessage,itrelaysthatmessage’scontentstotheotheracceptors
+in a 2av message. It does this only for the first 1c message it receives for that ballot; it can
+receiveasecond1c messageonlyiftheleaderismalicious,inwhichcaseitignoresthatsecond
+1c message.
+[type :{“2av”}, bal :Ballot, val :Value, acc :ByzAcceptor]
+2bMessage =∆ [type :{“2b”}, acc :ByzAcceptor, bal :Ballot, val :Value]
+2b messagesarethesameasinordinaryPaxos.
+2
+BMessage =∆
+1aMessage∪1bMessage∪1cMessage∪2avMessage∪2bMessage
+Wewillneedthefollowingsimplefactaboutthesesetsofmessages.
+lemma BMessageLemma =∆
+∀m ∈ BMessage :
+∧(m ∈ 1aMessage)≡ (m.type =“1a”)
+∧(m ∈ 1bMessage) ≡ (m.type =“1b”)
+∧(m ∈ 1cMessage) ≡ (m.type =“1c”)
+∧(m ∈ 2avMessage)≡ (m.type =“2av”)
+∧(m ∈ 2bMessage)≡ (m.type =“2b”)
+(cid:104)1(cid:105)1.∧∀m ∈ 1aMessage :m.type =“1a”
+∧∀m ∈ 1bMessage :m.type =“1b”
+∧∀m ∈ 1cMessage :m.type =“1c”
+∧∀m ∈ 2avMessage :m.type =“2av”
+∧∀m ∈ 2bMessage :m.type =“2b”
+by def 1aMessage, 1bMessage, 1cMessage, 2avMessage, 2bMessage
+(cid:104)1(cid:105)2. qed
+by (cid:104)1(cid:105)1 def BMessage
+***************************************************************************
+Wenowgivethealgorithm. ThebasicideaisthatthesetAcceptor ofrealacceptorsemulatean
+execution ofthe PCon algorithm withAcceptor as itsset of acceptors. Of course, they must do
+that without knowing which of the other processes in ByzAcceptor are real acceptors and which
+are fake acceptors. In addition, they don’t know whether a leader is behaving according to the
+PCon algorithmorifitismalicious.
+The main idea of the algorithm is that, before performing an action of the PCon algorithm, a
+goodacceptordeterminesthatthisactionisactuallyenabledinthatalgorithm. Sinceanactionis
+enabledbythereceiptofoneormoremessages,theacceptorhastodeterminethattheenabling
+messages are legal PCon messages. Because algorithm PCon allows a 1a message to be sent
+at any time, the only acceptor action whose enabling messages must be checked is the Phase2b
+action. It is enabled iff the appropriate 1c message and 2a message are legal. The 1c message
+islegalifftheleaderhasreceivedthenecessary1b messages. Theacceptorthereforemaintainsa
+set of 1b messages that it knows have been sent, and checks that those 1b messages enable the
+sendingofthe1c message.
+A2a messageislegalinthePCon algorithmiff(i)thecorresponding1c messageislegaland(ii)
+itistheonly2a messagethattheleadersends. IntheBPCon algorithm,therearenoexplicit2a
+messages. Theyareimplicitlysentbytheacceptorswhentheysendenough2av messages.
+Weleaveunspecifiedhowanacceptordiscoverswhat1b messageshavebeensent. IntheCastro-
+Liskov algorithm, this is done by having acceptors relay messages sent by other acceptors. An
+acceptor knows that a 1b message has been sent if it receives it directly or else receives a copy
+from a weak Byzantine quorum of acceptors. A (non-malicious) leader must determine what 1b
+messagesacceptorsknowaboutsoitchoosesavaluesothataquorumofacceptorswillactonits
+Phase1c messageandcausethatvaluetobechosen. However,thisisnecessaryonlyforliveness,
+soweignorethisfornow.
+3
+In other implementations of our algorithm, the leader sends along with the 1c message a proof
+that the necessary 1b messages have been sent. The easiest way to do this is to have acceptors
+digitally sign their 1b messages, so a copy of the message proves that it has been sent (by the
+acceptorindicatedinthemessage’saccfield). Thenecessaryproofscanalsobeconstructedusing
+onlymessageauthenticators(liketheonesusedintheCastro-Liskovalgorithm);howthisisdone
+isdescribedelsewhere.
+Intheabstractalgorithmpresentedhere,whichwecallBPCon,wedonotspecifyhowacceptors
+learn what 1b messages have been sent. We simply introduce a variable knowsSent such that
+knowsSent[a]representsthesetof1b messagesthat(good)acceptoraknowshavebeensent,and
+haveanactionthatnondeterministicallyaddssent1b messagestothisset.
+--algorithm BPCon{
+*************************************************************************
+Thevariables:
+maxBal[a]= Highestballotinwhichacceptorahasparticipated.
+maxVBal[a]= Highestballotinwhichacceptorahascastavote(senta2b message);or −1
+ifithasn’tcastavote.
+maxVVal[a]=Value acceptorahasvotedforinballotmaxVBal[a],orNone ifmaxVBal[a]=
+−1.
+2avSent[a]= Asetofrecordsin[val : Value,bal : Ballot]describingthe2av messagesthata
+hassent. Arecordisaddedtothisset,andanyelementwiththesameval field
+(andlowerbal field)removedwhenasendsa2av message.
+knownSent[a]= Thesetof1b messagesthatacceptoraknowshavebeensent.
+bmsgs= Thesetofallmessagesthathavebeensent. Seethediscussionofthemsgs variable
+inmodulePConProof tounderstandourmodelingofmessagepassing.
+*************************************************************************
+variables maxBal =[a ∈ Acceptor (cid:55)→ −1],
+maxVBal =[a ∈ Acceptor (cid:55)→ −1],
+maxVVal =[a ∈ Acceptor (cid:55)→None],
+2avSent =[a ∈ Acceptor (cid:55)→{}],
+knowsSent =[a ∈ Acceptor (cid:55)→{}],
+bmsgs ={}
+define {
+sentMsgs(type, bal) =∆ {m ∈ bmsgs :m.type =type∧m.bal =bal}
+KnowsSafeAt(ac, b, v) =∆
+True for an acceptor ac, ballot b, and value v iff the set of 1b messages in knowsSent[ac]
+implies that value v is safe at ballot b in the PaxosConsensus algorithm being emulated
+bythegoodacceptors. Tounderstandthedefinition,seethedefinitionofShowsSafeAt in
+module PConProof and recall (a) the meaning of the mCBal and mCVal fields of a 1b
+message and (b) that the set of real acceptors in a ByzQuorum forms a quorum of the
+PaxosConsensus algorithm.
+let S =∆ {m ∈ knowsSent[ac]:m.bal =b}
+in ∨∃BQ ∈ ByzQuorum :
+∀a ∈ BQ :∃m ∈ S : ∧m.acc =a
+∧m.mbal = −1
+4
+∨∃c ∈ 0..(b−1):
+∧∃BQ ∈ ByzQuorum :
+∀a ∈ BQ :∃m ∈ S : ∧m.acc =a
+∧m.mbal ≤c
+∧(m.mbal =c)⇒(m.mval =v)
+∧∃WQ ∈ WeakQuorum :
+∀a ∈ WQ :
+∃m ∈ S : ∧m.acc =a
+∧∃r ∈ m.m2av : ∧r.bal ≥c
+∧r.val =v
+}
+Wenowdescribetheprocesses’actionsasmacros.
+Thefollowingtwomacrossendamessageandasetofmessages,respectively. Thesemacrosare
+sosimplethatthey’rehardlyworthintroducing,buttheydomaketheprocessesalittleeasier
+toread.
+macro SendMessage(m){bmsgs :=bmsgs ∪{m}}
+macro SendSetOfMessages(S){bmsgs :=bmsgs ∪S}
+As in the Paxos consensus algorithm, a ballot self leader (good or malicious) can execute a
+Phase1a ationatanytime.
+macro Phase1a(){SendMessage([type (cid:55)→“1a”, bal (cid:55)→self])}
+Theacceptor’sPhase1b ationissimilartothatofthePaxosConsensus algorithm.
+macro Phase1b(b){
+when (b >maxBal[self])∧(sentMsgs(“1a”, b)(cid:54)={});
+maxBal[self]:=b;
+SendMessage([type (cid:55)→“1b”, bal (cid:55)→b, acc (cid:55)→self, m2av (cid:55)→2avSent[self],
+mbal (cid:55)→maxVBal[self], mval (cid:55)→maxVVal[self]])
+}
+Agoodballotself leadercansendaphase1cmessageforvaluev ifitknowsthatthemessages
+inknowsSent[a]foraQuorum of(good)acceptorsimplythattheyknowthatv issafeatballot
+self , and that they can convince any other acceptor that the appropriate 1b messages have
+beensenttothatitwillalsoknowthatv issafeatballotself .
+A malicious ballot self leader can send any phase 1c messages it wants (including one that
+a good leader could send). We prove safety with a Phase1c ation that allows a leader to be
+malicious. To prove liveness, we will have to assume a good leader that sends only correct 1c
+messages.
+As in the PaxosConsensus algorithm, we allow a Phase1c action to send a set of Phase1c
+messages. (This is not done in the Castro-Liskov algorithm, but seems natural in light of the
+PaxosConsensus algorithm.)
+macro Phase1c(){
+with (S ∈ subset [type :{“1c”}, bal :{self}, val :Value]){
+SendSetOfMessages(S)}
+}
+5
+If acceptor self receives a ballot b phase 1c message with value v, it relays v in a phase 2av
+messageif
+-ithasnotalreadysenta2av messageinthisoralaterballotand
+-the messages in knowsSent[self] show it that v is safe at b in the non-Byzantine Paxos
+consensusalgorithmbeingemulated.
+macro Phase2av(b){
+when ∧maxBal[self]≤b
+∧∀r ∈ 2avSent[self]:r.bal <b;
+Wecouldjustaswellhaveusedr.bal (cid:54)=b inthiscondition.
+with (m ∈ {ms ∈ sentMsgs(“1c”, b):KnowsSafeAt(self, b, ms.val)}){
+SendMessage([type (cid:55)→“2av”, bal (cid:55)→b, val (cid:55)→m.val, acc (cid:55)→self]);
+2avSent[self]:= {r ∈ 2avSent[self]:r.val (cid:54)=m.val}
+∪{[val (cid:55)→m.val, bal (cid:55)→b]}
+};
+maxBal[self] :=b;
+}
+Acceptorself cansendaphase2b messagewithvaluev ifithasreceivedphase2av messages
+from a Byzantine quorum, which implies that a quorum of good acceptors assert that this is
+the first 1c message sent by the leader and that the leader was allowed to send that message.
+ItsetsmaxBal[self],maxVBal[self],andmaxVVal[self]asinthenon-Byzantinealgorithm.
+macro Phase2b(b){
+when maxBal[self]≤b;
+with (v ∈ {vv ∈ Value :
+∃Q ∈ ByzQuorum :
+∀aa ∈ Q :
+∃m ∈ sentMsgs(“2av”, b): ∧m.val =vv
+∧m.acc =aa}){
+SendMessage([type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→v]);
+maxVVal[self]:=v;
+};
+maxBal[self]:=b;
+maxVBal[self]:=b
+}
+At any time, an acceptor can learn that some set of 1b messages were sent (but only if they
+atuallyweresent).
+macro LearnsSent(b){
+with (S ∈ subset sentMsgs(“1b”, b)){
+knowsSent[self]:=knowsSent[self]∪S
+}
+}
+Amaliciousacceptorself cansendanyacceptormessageindicatingthatitisfromitself. Since
+a malicious acceptor could allow other malicious processes to forge its messages, this action
+couldrepresentthesendingofthemessagebyanymaliciousprocess.
+6
+macro FakingAcceptor(){
+with (m ∈ {mm ∈ 1bMessage∪2avMessage∪2bMessage :
+mm.acc =self}){
+SendMessage(m)
+}
+}
+Wecombinetheseindividualactionsintoacompletealgorithmintheusualway,withseparate
+processdeclarationsfortheacceptor,leader,andfakeacceptorprocesses.
+process (acceptor ∈ Acceptor){
+acc:while (true){
+with (b ∈ Ballot){either Phase1b(b)or Phase2av(b)
+or Phase2b(b)or LearnsSent(b)}
+}
+}
+process (leader ∈ Ballot){
+ldr:while (true){
+either Phase1a()or Phase1c()
+}
+}
+process (facceptor ∈ FakeAcceptor){
+facc : while (true){FakingAcceptor()}
+}
+}
+Below is the TLA+ translation, as produced by the translator. (Some blank lines have been
+removed.)
+*************************************************************************
+BEGINTRANSLATION
+variables maxBal, maxVBal, maxVVal, 2avSent, knowsSent, bmsgs
+definestatement
+sentMsgs(type, bal) =∆ {m ∈ bmsgs :m.type =type∧m.bal =bal}
+KnowsSafeAt(ac, b, v) =∆
+let S =∆ {m ∈ knowsSent[ac]:m.bal =b}
+in ∨∃BQ ∈ ByzQuorum :
+∀a ∈ BQ :∃m ∈ S : ∧m.acc =a
+∧m.mbal = −1
+∨∃c ∈ 0..(b−1):
+∧∃BQ ∈ ByzQuorum :
+∀a ∈ BQ :∃m ∈ S : ∧m.acc =a
+∧m.mbal ≤c
+∧(m.mbal =c)⇒(m.mval =v)
+∧∃WQ ∈ WeakQuorum :
+7
+∀a ∈ WQ :
+∃m ∈ S : ∧m.acc =a
+∧∃r ∈ m.m2av : ∧r.bal ≥c
+∧r.val =v
+vars =∆ (cid:104)maxBal, maxVBal, maxVVal, 2avSent, knowsSent, bmsgs(cid:105)
+ProcSet =∆ (Acceptor)∪(Ballot)∪(FakeAcceptor)
+Init =∆ Globalvariables
+∧maxBal =[a ∈ Acceptor (cid:55)→ −1]
+∧maxVBal =[a ∈ Acceptor (cid:55)→ −1]
+∧maxVVal =[a ∈ Acceptor (cid:55)→None]
+∧2avSent =[a ∈ Acceptor (cid:55)→{}]
+∧knowsSent =[a ∈ Acceptor (cid:55)→{}]
+∧bmsgs ={}
+acceptor(self) =∆ ∃b ∈ Ballot :
+∨ ∧(b >maxBal[self])∧(sentMsgs(“1a”, b)(cid:54)={})
+∧maxBal(cid:48) =[maxBal except ![self]=b]
+∧bmsgs(cid:48) =(bmsgs ∪{([type (cid:55)→“1b”, bal (cid:55)→b, acc (cid:55)→self, m2av (cid:55)→2avSent[self],
+mbal (cid:55)→maxVBal[self], mval (cid:55)→maxVVal[self]])})
+∧unchanged (cid:104)maxVBal, maxVVal, 2avSent, knowsSent(cid:105)
+∨ ∧ ∧maxBal[self]≤b
+∧∀r ∈ 2avSent[self]:r.bal <b
+∧∃m ∈ {ms ∈ sentMsgs(“1c”, b):KnowsSafeAt(self, b, ms.val)}:
+∧bmsgs(cid:48) =(bmsgs ∪{([type (cid:55)→“2av”, bal (cid:55)→b, val (cid:55)→m.val, acc (cid:55)→self])})
+∧2avSent(cid:48) =[2avSent except ![self]={r ∈ 2avSent[self]:r.val (cid:54)=m.val}
+∪{[val (cid:55)→m.val, bal (cid:55)→b]}]
+∧maxBal(cid:48) =[maxBal except ![self]=b]
+∧unchanged (cid:104)maxVBal, maxVVal, knowsSent(cid:105)
+∨ ∧maxBal[self]≤b
+∧∃v ∈ {vv ∈ Value :
+∃Q ∈ ByzQuorum :
+∀aa ∈ Q :
+∃m ∈ sentMsgs(“2av”, b): ∧m.val =vv
+∧m.acc =aa}:
+∧bmsgs(cid:48) =(bmsgs ∪{([type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→v])})
+∧maxVVal(cid:48) =[maxVVal except ![self]=v]
+∧maxBal(cid:48) =[maxBal except ![self]=b]
+∧maxVBal(cid:48) =[maxVBal except ![self]=b]
+∧unchanged (cid:104)2avSent, knowsSent(cid:105)
+∨ ∧∃S ∈ subset sentMsgs(“1b”, b):
+knowsSent(cid:48) =[knowsSent except ![self]=knowsSent[self]∪S]
+∧unchanged (cid:104)maxBal, maxVBal, maxVVal, 2avSent, bmsgs(cid:105)
+8
+leader(self) =∆ ∧ ∨ ∧bmsgs(cid:48) =(bmsgs ∪{([type (cid:55)→“1a”, bal (cid:55)→self])})
+∨ ∧∃S ∈ subset [type :{“1c”}, bal :{self}, val :Value]:
+bmsgs(cid:48) =(bmsgs ∪S)
+∧unchanged (cid:104)maxBal, maxVBal, maxVVal, 2avSent, knowsSent(cid:105)
+facceptor(self) =∆ ∧∃m ∈ {mm ∈ 1bMessage∪2avMessage∪2bMessage :
+mm.acc =self}:
+bmsgs(cid:48) =(bmsgs ∪{m})
+∧unchanged (cid:104)maxBal, maxVBal, maxVVal, 2avSent,
+knowsSent(cid:105)
+Next =∆ (∃self ∈ Acceptor :acceptor(self))
+∨(∃self ∈ Ballot :leader(self))
+∨(∃self ∈ FakeAcceptor :facceptor(self))
+Spec =∆ Init ∧(cid:50)[Next]
+vars
+ENDTRANSLATION
+As in module PConProof, we now rewrite the next-state relation in a form more convenient for
+writingproofs.
+Phase1b(self, b) =∆
+∧(b >maxBal[self])∧(sentMsgs(“1a”, b)(cid:54)={})
+∧maxBal(cid:48) =[maxBal except ![self]=b]
+∧bmsgs(cid:48) =bmsgs ∪{[type (cid:55)→“1b”, bal (cid:55)→b, acc (cid:55)→self,
+m2av (cid:55)→2avSent[self],
+mbal (cid:55)→maxVBal[self], mval (cid:55)→maxVVal[self]]}
+∧unchanged (cid:104)maxVBal, maxVVal, 2avSent, knowsSent(cid:105)
+Phase2av(self, b) =∆
+∧maxBal[self]≤b
+∧∀r ∈ 2avSent[self]:r.bal <b
+∧∃m ∈ {ms ∈ sentMsgs(“1c”, b):KnowsSafeAt(self, b, ms.val)}:
+∧bmsgs(cid:48) =bmsgs ∪
+{[type (cid:55)→“2av”, bal (cid:55)→b, val (cid:55)→m.val, acc (cid:55)→self]}
+∧2avSent(cid:48) =[2avSent except
+![self]={r ∈ 2avSent[self]:r.val (cid:54)=m.val}
+∪{[val (cid:55)→m.val, bal (cid:55)→b]}]
+∧maxBal(cid:48) =[maxBal except ![self]=b]
+∧unchanged (cid:104)maxVBal, maxVVal, knowsSent(cid:105)
+Phase2b(self, b) =∆
+∧maxBal[self]≤b
+∧∃v ∈ {vv ∈ Value :
+∃Q ∈ ByzQuorum :
+9
+∀a ∈ Q :
+∃m ∈ sentMsgs(“2av”, b): ∧m.val =vv
+∧m.acc =a}:
+∧bmsgs(cid:48) =(bmsgs ∪
+{[type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→v]})
+∧maxVVal(cid:48) =[maxVVal except ![self]=v]
+∧maxBal(cid:48) =[maxBal except ![self]=b]
+∧maxVBal(cid:48) =[maxVBal except ![self]=b]
+∧unchanged (cid:104)2avSent, knowsSent(cid:105)
+LearnsSent(self, b) =∆
+∧∃S ∈ subset sentMsgs(“1b”, b):
+knowsSent(cid:48) =[knowsSent except ![self]=knowsSent[self]∪S]
+∧unchanged (cid:104)maxBal, maxVBal, maxVVal, 2avSent, bmsgs(cid:105)
+Phase1a(self) =∆
+∧bmsgs(cid:48) =(bmsgs ∪{[type (cid:55)→“1a”, bal (cid:55)→self]})
+∧unchanged (cid:104)maxBal, maxVBal, maxVVal, 2avSent, knowsSent(cid:105)
+Phase1c(self) =∆
+∧∃S ∈ subset [type :{“1c”}, bal :{self}, val :Value]:
+bmsgs(cid:48) =(bmsgs ∪S)
+∧unchanged (cid:104)maxBal, maxVBal, maxVVal, 2avSent, knowsSent(cid:105)
+FakingAcceptor(self) =∆
+∧∃m ∈ {mm ∈ 1bMessage∪2avMessage∪2bMessage :mm.acc =self}:
+bmsgs(cid:48) =(bmsgs ∪{m})
+∧unchanged (cid:104)maxBal, maxVBal, maxVVal, 2avSent, knowsSent(cid:105)
+The following lemma describes how the next-state relation Next can be written in terms of the
+actionsdefinedabove.
+lemma NextDef =∆
+Next ≡ ∨∃self ∈ Acceptor :
+∃b ∈ Ballot : ∨Phase1b(self, b)
+∨Phase2av(self, b)
+∨Phase2b(self, b)
+∨LearnsSent(self, b)
+∨∃self ∈ Ballot : ∨Phase1a(self)
+∨Phase1c(self)
+∨∃self ∈ FakeAcceptor :FakingAcceptor(self)
+(cid:104)1(cid:105)1. ∀self :acceptor(self)≡NextDef !2!1!(self)
+by def acceptor, Phase1b, Phase2av, Phase2b, LearnsSent
+(cid:104)1(cid:105)2. ∀self :leader(self)≡NextDef !2!2!(self)
+by def leader, Phase1a, Phase1c
+(cid:104)1(cid:105)3. ∀self :facceptor(self)≡NextDef !2!3!(self)
+by def facceptor, FakingAcceptor
+10
+(cid:104)1(cid:105)4. qed
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, (cid:104)1(cid:105)3, Zenon
+def Next, acceptor, leader, facceptor
+THEREFINEMENTMAPPING
+WedefineaquorumtobethesetofacceptorsinaByzantine quorum. Thequorumassumption
+QAofmodulePConProof,whichweherecallQuorumTheorem,followseasilyfromthedefinition
+andassumptionBQA.
+Quorum =∆ {S ∩Acceptor :S ∈ ByzQuorum}
+theorem QuorumTheorem =∆
+∧∀Q1, Q2 ∈ Quorum :Q1∩Q2(cid:54)={}
+∧∀Q ∈ Quorum :Q ⊆Acceptor
+by BQA def Quorum
+Wenowdefinerefinementmappingunderwhichouralgorithmimplementsthealgorithmofmodule
+PConProof. First, we define the set msgs that implements the variable of the same name in
+PConProof. Therearetwonon-obviouspartsofthedefinition.
+1. The1c messagesinmsgs shouldjustbetheonesthatarelegal–thatis,messageswhosevalue
+issafeattheindicatedballot. Theobviouswaytodefinelegalityisintermsof1b messagesthat
+have been sent. However, this has the effect that sending a 1b message can add both that 1b
+message and one or more 1c messages to msgs. Proving implementation under this refinement
+mappingwouldrequireaddingastutteringvariable. Instead,wedefinethe1cmessagetobelegal
+ifthesetof1b messagesthatsomeacceptorknowsweresentconfirmsitslegality. Thus,those1c
+messagesareaddedtomsgs bytheLearnsSent ation,whichhasnoothereffectontherefinement
+mapping.
+2. A 2a message is added to msgs when a quorum of acceptors have reacted to it by sending a
+2av message.
+msgsOfType(t) =∆ {m ∈ bmsgs :m.type =t}
+acceptorMsgsOfType(t) =∆ {m ∈ msgsOfType(t):m.acc ∈ Acceptor}
+1bRestrict(m) =∆ [type (cid:55)→“1b”, acc (cid:55)→m.acc, bal (cid:55)→m.bal,
+mbal (cid:55)→m.mbal, mval (cid:55)→m.mval]
+1bmsgs =∆ {1bRestrict(m):m ∈ acceptorMsgsOfType(“1b”)}
+1cmsgs =∆ {m ∈ msgsOfType(“1c”):
+∃a ∈ Acceptor :KnowsSafeAt(a, m.bal, m.val)}
+2amsgs =∆ {m ∈ [type :{“2a”}, bal :Ballot, val :Value]:
+∃Q ∈ Quorum :
+∀a ∈ Q :
+∃m2av ∈ acceptorMsgsOfType(“2av”):
+∧m2av.acc =a
+∧m2av.bal =m.bal
+∧m2av.val =m.val}
+11
+msgs =∆ msgsOfType(“1a”)∪1bmsgs ∪1cmsgs ∪2amsgs
+∪acceptorMsgsOfType(“2b”)
+We now define PmaxBal, the state function with which we instantiate the variable maxBal of
+PConProof. Thereasonwedon’tjustinstantiateitwiththevariablemaxBal isthatmaxBal[a]
+canchangewhenacceptoraperformsaPhase2avation,whichdoesnotcorrespondtoanyacceptor
+actionofthePCon algorithm. WewantPmaxBal[a]tochangeonlywhena performsaPhase1b
+or Phase2b ation–that is, when it sends a 1b or 2b message. Thus, we define PmaxBal[a] to be
+thelargestbal fieldofall1b and2b messagessentbya .
+TodefinePmaxBal,weneedtodefineanoperatorMaxBallot sothatMaxBallot(S)isthelargest
+elementofS ifS isnon-emptyafinitesetconsistingofballotnumbersandpossiblythevalue −1.
+MaxBallot(S) =∆
+if S ={} then −1
+else choose mb ∈ S :∀x ∈ S :mb ≥x
+To prove that the choose in this definition actually does choose a maximum of S when S is
+nonempty,weneedthefollowingfact.
+lemma FiniteSetHasMax =∆
+∀S ∈ subset Int :
+IsFiniteSet(S)∧(S (cid:54)={})⇒∃max ∈ S :∀x ∈ S :max ≥x
+(cid:104)1(cid:105).define P(S) =∆ S ⊆Int ∧S (cid:54)={}⇒
+∃max ∈ S :∀x ∈ S :max ≥x
+(cid:104)1(cid:105)1. P({})
+obvious
+(cid:104)1(cid:105)2. assume new T, new x, P(T)
+prove P(T ∪{x})
+by (cid:104)1(cid:105)2
+(cid:104)1(cid:105)3. ∀S :IsFiniteSet(S)⇒P(S)
+(cid:104)2(cid:105).hide def P
+(cid:104)2(cid:105).qed by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, FS Induction, IsaM(“blast”)
+(cid:104)1(cid:105).qed by (cid:104)1(cid:105)3, Zenon
+OurproofsusethispropertyofMaxBallot.
+theorem MaxBallotProp =∆
+assume new S ∈ subset (Ballot ∪{−1}),
+IsFiniteSet(S)
+prove if S ={} then MaxBallot(S)= −1
+else ∧MaxBallot(S) ∈ S
+∧∀x ∈ S :MaxBallot(S)≥x
+(cid:104)1(cid:105)1.case S ={}
+by (cid:104)1(cid:105)1 def MaxBallot
+(cid:104)1(cid:105)2.case S (cid:54)={}
+(cid:104)2(cid:105).pick mb ∈ S :∀x ∈ S :mb ≥x
+by (cid:104)1(cid:105)2, FiniteSetHasMax def Ballot
+(cid:104)2(cid:105).qed by (cid:104)1(cid:105)2 def MaxBallot
+(cid:104)1(cid:105).qed by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2
+12
+WenowproveacoupleoflemmasaboutMaxBallot.
+lemma MaxBallotLemma1 =∆
+assume new S ∈ subset (Ballot ∪{−1}),
+IsFiniteSet(S),
+new y ∈ S, ∀x ∈ S :y ≥x
+prove y =MaxBallot(S)
+(cid:104)1(cid:105)1.∧MaxBallot(S) ∈ S
+∧MaxBallot(S)≥y
+by MaxBallotProp
+(cid:104)1(cid:105)2∧y ∈ Ballot ∪{−1}
+∧y ≥MaxBallot(S)
+by MaxBallotProp
+(cid:104)1(cid:105)3. MaxBallot(S) ∈ Int ∧y ∈ Int
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, Isa def Ballot
+(cid:104)1(cid:105).qed by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, (cid:104)1(cid:105)3
+lemma MaxBallotLemma2 =∆
+assume new S ∈ subset (Ballot ∪{−1}),
+new T ∈ subset (Ballot ∪{−1}),
+IsFiniteSet(S), IsFiniteSet(T)
+prove MaxBallot(S ∪T)=if MaxBallot(S)≥MaxBallot(T)
+then MaxBallot(S) else MaxBallot(T)
+(cid:104)1(cid:105)1.∧MaxBallot(S) ∈ Ballot ∪{−1}
+∧MaxBallot(T) ∈ Ballot ∪{−1}
+by MaxBallotProp
+(cid:104)1(cid:105).S ∪T ⊆Int
+by def Ballot
+(cid:104)1(cid:105)2.case MaxBallot(S)≥MaxBallot(T)
+(cid:104)2(cid:105).suffices assume T (cid:54)={}
+prove MaxBallot(S ∪T)=MaxBallot(S)
+by (cid:104)1(cid:105)2, Zenon
+(cid:104)2(cid:105)1.∧MaxBallot(T) ∈ T
+∧∀x ∈ T :MaxBallot(T)≥x
+by MaxBallotProp
+(cid:104)2(cid:105)2.case S ={}
+(cid:104)3(cid:105)1. MaxBallot(S)= −1
+by (cid:104)2(cid:105)2 def MaxBallot
+(cid:104)3(cid:105)2. MaxBallot(T)= −1
+by (cid:104)3(cid:105)1, (cid:104)1(cid:105)2, (cid:104)1(cid:105)1 def Ballot
+(cid:104)3(cid:105).qed by (cid:104)2(cid:105)2, (cid:104)3(cid:105)1, (cid:104)3(cid:105)2, (cid:104)2(cid:105)1, MaxBallotLemma1, FS Union
+(cid:104)2(cid:105)3.case S (cid:54)={}
+(cid:104)3(cid:105)1.∧MaxBallot(S) ∈ S
+∧∀x ∈ S :MaxBallot(S)≥x
+by (cid:104)2(cid:105)3, MaxBallotProp
+(cid:104)3(cid:105)2.∧MaxBallot(S) ∈ S ∪T
+13
+∧∀x ∈ S ∪T :MaxBallot(S)≥x
+by (cid:104)3(cid:105)1, (cid:104)2(cid:105)1, (cid:104)1(cid:105)2
+(cid:104)3(cid:105).qed by (cid:104)3(cid:105)2, MaxBallotLemma1, FS Union, Zenon
+(cid:104)2(cid:105).qed by (cid:104)2(cid:105)2, (cid:104)2(cid:105)3
+(cid:104)1(cid:105)3.case ¬(MaxBallot(S)≥MaxBallot(T))
+(cid:104)2(cid:105).suffices assume S (cid:54)={}
+prove MaxBallot(S ∪T)=MaxBallot(T)
+by (cid:104)1(cid:105)3
+(cid:104)2(cid:105)1.∧MaxBallot(S) ∈ S
+∧∀x ∈ S :MaxBallot(S)≥x
+by MaxBallotProp
+(cid:104)2(cid:105)2.∧MaxBallot(S) <MaxBallot(T)
+∧MaxBallot(T)(cid:54)= −1
+by (cid:104)1(cid:105)3, (cid:104)1(cid:105)1 def Ballot
+(cid:104)2(cid:105)3.∧MaxBallot(T) ∈ T
+∧∀x ∈ T :MaxBallot(T)≥x
+by (cid:104)2(cid:105)2, MaxBallotProp
+(cid:104)2(cid:105)4.∧MaxBallot(T) ∈ S ∪T
+∧∀x ∈ S ∪T :MaxBallot(T)≥x
+by (cid:104)2(cid:105)3, (cid:104)2(cid:105)2, (cid:104)2(cid:105)1
+(cid:104)2(cid:105).qed by (cid:104)2(cid:105)4, MaxBallotLemma1, FS Union, Zenon
+(cid:104)1(cid:105).qed by (cid:104)1(cid:105)2, (cid:104)1(cid:105)3
+WefinallycometoourdefinitionofPmaxBal,thestatefunctionsubstitutedforvariablemaxBal
+of module PConProof by our refinement mapping. We also prove a couple of lemmas about
+PmaxBal.
+1bOr2bMsgs =∆ {m ∈ bmsgs :m.type ∈ {“1b”, “2b”}}
+PmaxBal =∆ [a ∈ Acceptor (cid:55)→
+MaxBallot({m.bal :m ∈ {ma ∈ 1bOr2bMsgs :
+ma.acc =a}})]
+lemma PmaxBalLemma1 =∆
+assume new m,
+bmsgs(cid:48) =bmsgs ∪{m},
+m.type (cid:54)=“1b”∧m.type (cid:54)=“2b”
+prove PmaxBal(cid:48) =PmaxBal
+by Zenon def PmaxBal, 1bOr2bMsgs
+lemma PmaxBalLemma2 =∆
+assume new m,
+bmsgs(cid:48) =bmsgs ∪{m},
+new a ∈ Acceptor,
+m.acc (cid:54)=a
+prove PmaxBal(cid:48)[a]=PmaxBal[a]
+14
+by def PmaxBal, 1bOr2bMsgs
+Finally, we define the refinement mapping. As before, for any operator op defined in module
+PConProof,thefollowinginstance statementdefinesP!optobetheoperatorobtainedfromop
+bytheindicatedsubstitutions,alongwiththeimplicitsubstitutions
+Acceptor ←Acceptor,
+Quorum ←Quorum
+Value←Value
+maxVBal ←maxVBal
+maxVVal ←maxVVal
+msgs ←msgs
+P =∆ instance PConProof with maxBal ←PmaxBal
+WenowdefinetheinductiveinvariantInv usedinourproof. Itisdefinedtobetheconjunctionof
+anumberofseparateinvariantsthatwedefinefirst,startingwiththeever-presenttype-correctness
+invariant.
+TypeOK =∆ ∧maxBal ∈ [Acceptor →Ballot ∪{−1}]
+∧2avSent ∈ [Acceptor →subset [val :Value, bal :Ballot]]
+∧maxVBal ∈ [Acceptor →Ballot ∪{−1}]
+∧maxVVal ∈ [Acceptor →Value∪{None}]
+∧knowsSent ∈ [Acceptor →subset 1bMessage]
+∧bmsgs ⊆BMessage
+TousethedefinitionofPmaxBal,weneedtoknowthatthesetof1b and2b messagesinbmsgs
+is finite. This is asserted by the following invariant. Note that the set bmsgs is not necessarily
+finitebecauseweallowaPhase1c actiontosendaninfinitenumberof1c messages.
+bmsgsFinite =∆ IsFiniteSet(1bOr2bMsgs)
+ThefollowinglemmaisusedtoprovetheinvarianceofbmsgsFinite.
+lemma FiniteMsgsLemma =∆
+assume new m, bmsgsFinite, bmsgs(cid:48) =bmsgs ∪{m}
+prove bmsgsFinite(cid:48)
+by FS AddElement def bmsgsFinite, 1bOr2bMsgs
+Invariant1bInv1assertsthatif(good)acceptora hasmCBal[a](cid:54)= −1,thenthereisa1cmessage
+forballotmCBal[a]andvaluemCVal[a]intheemulatedexecutionofalgorithmPCon.
+1bInv1 =∆ ∀m ∈ bmsgs :
+∧m.type =“1b”
+∧m.acc ∈ Acceptor
+⇒∀r ∈ m.m2av :
+[type (cid:55)→“1c”, bal (cid:55)→r.bal, val (cid:55)→r.val] ∈ msgs
+Invariant1bInv2assertsthatanacceptorsendsatmostone1b messageforanyballot.
+1bInv2 =∆ ∀m1, m2 ∈ bmsgs :
+∧m1.type =“1b”
+∧m2.type =“1b”
+∧m1.acc ∈ Acceptor
+15
+∧m1.acc =m2.acc
+∧m1.bal =m2.bal
+⇒m1=m2
+Invariant2avInv1assertsthatanacceptorsendsatmostone2av messageinanyballot.
+2avInv1 =∆ ∀m1, m2 ∈ bmsgs :
+∧m1.type =“2av”
+∧m2.type =“2av”
+∧m1.acc ∈ Acceptor
+∧m1.acc =m2.acc
+∧m1.bal =m2.bal
+⇒m1=m2
+Invariant2avInv2followseasilyfromthemeaning(andsetting)of2avSent.
+2avInv2 =∆ ∀m ∈ bmsgs :
+∧m.type =“2av”
+∧m.acc ∈ Acceptor
+⇒∃r ∈ 2avSent[m.acc]: ∧r.val =m.val
+∧r.bal ≥m.bal
+Invariant 2avInv3 asserts that an acceptor sends a 2av message only if the required 1c message
+existsintheemulatedexecutionofalgorithmPConf.
+2avInv3 =∆ ∀m ∈ bmsgs :
+∧m.type =“2av”
+∧m.acc ∈ Acceptor
+⇒[type (cid:55)→“1c”, bal (cid:55)→m.bal, val (cid:55)→m.val] ∈ msgs
+Invariant maxBalInv is a simple consequence of the fact that an acceptor a sets maxBal[a] to b
+wheneveritsendsa1b,2av,or2b messageinballotb.
+maxBalInv =∆ ∀m ∈ bmsgs :
+∧m.type ∈ {“1b”, “2av”, “2b”}
+∧m.acc ∈ Acceptor
+⇒m.bal ≤maxBal[m.acc]
+InvariantaccInv assertssomesimplerelationsbetweenthevariableslocaltoanacceptor,aswell
+asthefactthatacceptora setsmaxCBal[a]tob andmaxCVal[a]tov onlyifthereisaballot-b
+1c messageforvaluec inthesimulatedexecutionofthePCon algorithm.
+accInv =∆ ∀a ∈ Acceptor :
+∀r ∈ 2avSent[a]:
+∧r.bal ≤maxBal[a]
+∧[type (cid:55)→“1c”, bal (cid:55)→r.bal, val (cid:55)→r.val] ∈ msgs
+Invariant knowsSentInv simply asserts that for any acceptor a , knowsSent[a] is a set of 1b
+messagesthathaveactuallybeensent.
+knowsSentInv =∆ ∀a ∈ Acceptor :knowsSent[a]⊆msgsOfType(“1b”)
+Inv =∆
+16
+TypeOK ∧bmsgsFinite∧1bInv1∧1bInv2∧maxBalInv ∧2avInv1∧2avInv2
+∧2avInv3∧accInv ∧knowsSentInv
+WenowprovesomesimplelemmasthatareusefulforreasoningaboutPmaxBal.
+lemma PMaxBalLemma3 =∆
+assume TypeOK,
+bmsgsFinite,
+new a ∈ Acceptor
+prove let S =∆ {m.bal :m ∈ {ma ∈ bmsgs :
+∧ma.type ∈ {“1b”, “2b”}
+∧ma.acc =a}}
+in ∧IsFiniteSet(S)
+∧S ∈ subset Ballot
+(cid:104)1(cid:105) define T =∆ {ma ∈ bmsgs : ∧ma.type ∈ {“1b”, “2b”}
+∧ma.acc =a}
+S =∆ {m.bal :m ∈ T}
+(cid:104)1(cid:105)1. IsFiniteSet(S)
+(cid:104)2(cid:105)1. IsFiniteSet(T)
+by FS Subset def bmsgsFinite, 1bOr2bMsgs
+(cid:104)2(cid:105).qed
+by (cid:104)2(cid:105)1, FS Image, Isa
+(cid:104)1(cid:105).qed by (cid:104)1(cid:105)1, BMessageLemma def 1bMessage, 2bMessage, TypeOK
+lemma PmaxBalLemma4 =∆
+assume TypeOK,
+maxBalInv,
+bmsgsFinite,
+new a ∈ Acceptor
+prove PmaxBal[a]≤maxBal[a]
+(cid:104)1(cid:105) define SM =∆ {ma ∈ bmsgs : ∧ma.type ∈ {“1b”, “2b”}
+∧ma.acc =a}
+S =∆ {ma.bal :ma ∈ SM}
+(cid:104)1(cid:105)1. PmaxBal[a]=MaxBallot(S)
+by def PmaxBal, 1bOr2bMsgs
+(cid:104)1(cid:105)2.∧IsFiniteSet(S)
+∧S ∈ subset Ballot
+by PMaxBalLemma3
+(cid:104)1(cid:105)3. ∀b ∈ S :b ≤maxBal[a]
+by def maxBalInv
+(cid:104)1(cid:105)4.case S ={}
+(cid:104)2(cid:105)1. PmaxBal[a]= −1
+by (cid:104)1(cid:105)2, (cid:104)1(cid:105)1, (cid:104)1(cid:105)4, MaxBallotProp
+(cid:104)2(cid:105).qed
+by (cid:104)2(cid:105)1 def Ballot, TypeOK
+(cid:104)1(cid:105)5.case S (cid:54)={}
+17
+(cid:104)2(cid:105)1. MaxBallot(S) ∈ S
+by (cid:104)1(cid:105)2, (cid:104)1(cid:105)5, MaxBallotProp, Zenon
+(cid:104)2(cid:105)2. qed
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)3, (cid:104)2(cid:105)1
+(cid:104)1(cid:105)6. qed
+by (cid:104)1(cid:105)4, (cid:104)1(cid:105)5
+lemma PmaxBalLemma5 =∆
+assume TypeOK, bmsgsFinite, new a ∈ Acceptor
+prove PmaxBal[a] ∈ Ballot ∪{−1}
+by PMaxBalLemma3, MaxBallotProp def PmaxBal, 1bOr2bMsgs
+Nowcomesabunchofusefullemmas.
+WefirstprovethatP!NextDef isavalidtheoremandgiveitthenamePNextDef. Thisrequires
+provingthattheassumptionsofmodulePConProof aresatisfiedbytherefinementmapping. Note
+thatP!NextDef! : isanabbreviationforthestatementoftheoremP!NextDef –thatis,forthe
+statement of theorem NextDef of module PConProof under the substitutions of the refinement
+mapping.
+lemma PNextDef =∆ P!NextDef ! :
+(cid:104)1(cid:105)1. P!QA
+by QuorumTheorem
+(cid:104)1(cid:105)2. P!BallotAssump
+by BallotAssump def Ballot, P!Ballot, ByzAcceptor
+(cid:104)1(cid:105)3. qed
+by P!NextDef, (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, NoSetContainsEverything
+Forconvenience,wedefineoperatorscorrespondingtosubexpressionsthatappearinthedefinition
+ofKnowsSafeAt.
+KSet(a, b) =∆ {m ∈ knowsSent[a]:m.bal =b}
+KS1(S) =∆ ∃BQ ∈ ByzQuorum :∀a ∈ BQ :
+∃m ∈ S :m.acc =a∧m.mbal = −1
+KS2(v, b, S) =∆ ∃c ∈ 0..(b−1):
+∧∃BQ ∈ ByzQuorum :∀a ∈ BQ :
+∃m ∈ S : ∧m.acc =a
+∧m.mbal ≤c
+∧(m.mbal =c)⇒(m.mval =v)
+∧∃WQ ∈ WeakQuorum :∀a ∈ WQ :
+∃m ∈ S : ∧m.acc =a
+∧∃r ∈ m.m2av : ∧r.bal ≥c
+∧r.val =v
+ThefollowinglemmaassertstheobviousrelationbetweenKnowsSafeAt andthetop-leveldefini-
+tions KS1, KS2, and KSet. The second conjunct is, of course, the primed version of the first.
+lemma KnowsSafeAtDef =∆
+18
+∀a, b, v :
+∧KnowsSafeAt(a, b, v)≡KS1(KSet(a, b))∨KS2(v, b, KSet(a, b))
+∧KnowsSafeAt(a, b, v)(cid:48) ≡KS1(KSet(a, b)(cid:48))∨KS2(v, b, KSet(a, b)(cid:48))
+by def KnowsSafeAt, KSet, KS1, KS2
+lemma MsgsTypeLemma =∆
+∀m ∈ msgs : ∧(m.type =“1a”) ≡(m ∈ msgsOfType(“1a”))
+∧(m.type =“1b”)≡(m ∈ 1bmsgs)
+∧(m.type =“1c”) ≡(m ∈ 1cmsgs)
+∧(m.type =“2a”) ≡(m ∈ 2amsgs)
+∧(m.type =“2b”)≡(m ∈ acceptorMsgsOfType(“2b”))
+by def msgsOfType, 1bmsgs, 1bRestrict, 1cmsgs, 2amsgs, acceptorMsgsOfType, msgs
+ThefollowinglemmaistheprimedversionofMsgsTypeLemma. Thatis,itsstatementisjustthe
+statement of MsgsTypeLemma primed. It follows from MsgsTypeLemma by the meta-theorem
+thatifwecanproveastate-predicateF asa(top-level)theorem,thenwecandeduceF(cid:48). Thisis
+an instance of propositional temporal-logic reasoning. Alternatively the lemma could be proved
+usingthesamereasoningusedfortheunprimedversionofthetheorem.
+lemma MsgsTypeLemmaPrime =∆
+∀m ∈ msgs(cid:48) : ∧(m.type =“1a”) ≡(m ∈ msgsOfType(“1a”)(cid:48))
+∧(m.type =“1b”)≡(m ∈ 1bmsgs(cid:48))
+∧(m.type =“1c”) ≡(m ∈ 1cmsgs(cid:48))
+∧(m.type =“2a”) ≡(m ∈ 2amsgs(cid:48))
+∧(m.type =“2b”)≡(m ∈ acceptorMsgsOfType(“2b”)(cid:48))
+(cid:104)1(cid:105)1. MsgsTypeLemma(cid:48)
+by MsgsTypeLemma, PTL
+(cid:104)1(cid:105).qed
+by (cid:104)1(cid:105)1
+Thefollowinglemmadescribeshowmsgs ischangedbytheactionsofthealgorithm.
+lemma MsgsLemma =∆
+TypeOK ⇒
+∧ ∀self ∈ Acceptor, b ∈ Ballot :
+Phase1b(self, b)⇒
+msgs(cid:48) =msgs ∪
+{[type (cid:55)→“1b”, acc (cid:55)→self, bal (cid:55)→b,
+mbal (cid:55)→maxVBal[self], mval (cid:55)→maxVVal[self]]}
+∧ ∀self ∈ Acceptor, b ∈ Ballot :
+Phase2av(self, b)⇒
+∨msgs(cid:48) =msgs
+∨∃v ∈ Value :
+∧[type (cid:55)→“1c”, bal (cid:55)→b, val (cid:55)→v] ∈ msgs
+∧msgs(cid:48) =msgs ∪{[type (cid:55)→“2a”, bal (cid:55)→b, val (cid:55)→v]}
+∧ ∀self ∈ Acceptor, b ∈ Ballot :
+Phase2b(self, b)⇒
+∃v ∈ Value :
+19
+∧∃Q ∈ ByzQuorum :
+∀a ∈ Q :
+∃m ∈ sentMsgs(“2av”, b): ∧m.val =v
+∧m.acc =a
+∧msgs(cid:48) =msgs ∪
+{[type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→v]}
+∧bmsgs(cid:48) =bmsgs ∪
+{[type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→v]}
+∧maxVVal(cid:48) =[maxVVal except ![self]=v]
+∧ ∀self ∈ Acceptor, b ∈ Ballot :
+LearnsSent(self, b)⇒
+∃S ∈ subset {m ∈ msgsOfType(“1c”):m.bal =b}:
+msgs(cid:48) =msgs ∪S
+∧ ∀self ∈ Ballot :
+Phase1a(self)⇒
+msgs(cid:48) =msgs ∪{[type (cid:55)→“1a”, bal (cid:55)→self]}
+∧ ∀self ∈ Ballot :
+Phase1c(self)⇒
+∃S ∈ subset [type :{“1c”}, bal :{self}, val :Value]:
+∧∀m ∈ S :
+∃a ∈ Acceptor :KnowsSafeAt(a, m.bal, m.val)
+∧msgs(cid:48) =msgs ∪S
+∧ ∀self ∈ FakeAcceptor :FakingAcceptor(self)⇒msgs(cid:48) =msgs
+(cid:104)1(cid:105) have TypeOK
+(cid:104)1(cid:105)1. assume new self ∈ Acceptor, new b ∈ Ballot, Phase1b(self, b)
+prove msgs(cid:48) =msgs ∪
+{[type (cid:55)→“1b”, acc (cid:55)→self, bal (cid:55)→b,
+mbal (cid:55)→maxVBal[self], mval (cid:55)→maxVVal[self]]}
+(cid:104)2(cid:105) define m =∆ [type (cid:55)→“1b”, acc (cid:55)→self, bal (cid:55)→b,
+m2av (cid:55)→2avSent[self],
+mbal (cid:55)→maxVBal[self], mval (cid:55)→maxVVal[self]]
+(cid:104)2(cid:105)1. bmsgs(cid:48) =bmsgs ∪{m}∧knowsSent(cid:48) =knowsSent
+by (cid:104)1(cid:105)1 def Phase1b
+(cid:104)2(cid:105)a.∧msgsOfType(“1a”)(cid:48) = msgsOfType(“1a”)
+∧1bmsgs(cid:48) =1bmsgs ∪{1bRestrict(m)}
+∧1cmsgs(cid:48) =1cmsgs
+∧2amsgs(cid:48) =2amsgs
+∧acceptorMsgsOfType(“2b”)(cid:48) =acceptorMsgsOfType(“2b”)
+by (cid:104)2(cid:105)1 def msgsOfType, 1bmsgs, acceptorMsgsOfType, KnowsSafeAt, 1cmsgs, 2amsgs
+(cid:104)2(cid:105).qed
+by (cid:104)2(cid:105)a def msgs, 1bRestrict
+(cid:104)1(cid:105)2. assume new self ∈ Acceptor, new b ∈ Ballot, Phase2av(self, b)
+prove ∨msgs(cid:48) =msgs
+20
+∨∃v ∈ Value :
+∧[type (cid:55)→“1c”, bal (cid:55)→b, val (cid:55)→v] ∈ msgs
+∧msgs(cid:48) =msgs ∪{[type (cid:55)→“2a”, bal (cid:55)→b, val (cid:55)→v]}
+(cid:104)2(cid:105)1. pick m ∈ sentMsgs(“1c”, b):
+∧KnowsSafeAt(self, b, m.val)
+∧bmsgs(cid:48) =bmsgs ∪
+{[type (cid:55)→“2av”, bal (cid:55)→b, val (cid:55)→m.val, acc (cid:55)→self]}
+by (cid:104)1(cid:105)2 def Phase2av
+(cid:104)2(cid:105)2. m =[type (cid:55)→“1c”, bal (cid:55)→b, val (cid:55)→m.val]
+by BMessageLemma def sentMsgs, TypeOK, 1cMessage
+(cid:104)2(cid:105) define ma =∆ [type (cid:55)→“2a”, bal (cid:55)→b, val (cid:55)→m.val]
+mb =∆ [type (cid:55)→“2av”, bal (cid:55)→b, val (cid:55)→m.val, acc (cid:55)→self]
+(cid:104)2(cid:105)3. suffices assume msgs(cid:48) (cid:54)=msgs
+prove ∧m ∈ msgs
+∧msgs(cid:48) =msgs ∪{ma}
+by (cid:104)2(cid:105)2, BMessageLemma def sentMsgs, TypeOK, 1cMessage
+(cid:104)2(cid:105)4. m ∈ msgs
+by (cid:104)2(cid:105)1, (cid:104)2(cid:105)2 def sentMsgs, 1cmsgs, msgsOfType, msgs
+(cid:104)2(cid:105)5. msgs(cid:48) =msgs ∪{ma}
+(cid:104)3(cid:105)1. knowsSent(cid:48) =knowsSent
+by (cid:104)1(cid:105)2 def Phase2av
+(cid:104)3(cid:105)2.∧msgsOfType(“1a”)(cid:48) =msgsOfType(“1a”)
+∧1bmsgs(cid:48) =1bmsgs
+∧1cmsgs(cid:48) =1cmsgs
+∧acceptorMsgsOfType(“2b”)(cid:48) =acceptorMsgsOfType(“2b”)
+by (cid:104)2(cid:105)1, (cid:104)3(cid:105)1 def msgsOfType, 1bmsgs, 1bRestrict, acceptorMsgsOfType, KnowsSafeAt, 1cmsgs
+(cid:104)3(cid:105).qed
+by (cid:104)3(cid:105)1, (cid:104)3(cid:105)2, (cid:104)2(cid:105)1, (cid:104)2(cid:105)3 def msgs, 2amsgs, msgsOfType, acceptorMsgsOfType
+(cid:104)2(cid:105)6. qed
+by (cid:104)2(cid:105)4, (cid:104)2(cid:105)5
+(cid:104)1(cid:105)3. assume new self ∈ Acceptor, new b ∈ Ballot, Phase2b(self, b)
+prove ∃v ∈ Value :
+∧∃Q ∈ ByzQuorum :
+∀a ∈ Q :
+∃m ∈ sentMsgs(“2av”, b): ∧m.val =v
+∧m.acc =a
+∧msgs(cid:48) =msgs ∪
+{[type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→v]}
+∧bmsgs(cid:48) =bmsgs ∪
+{[type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→v]}
+∧maxVVal(cid:48) =[maxVVal except ![self]=v]
+(cid:104)2(cid:105)1. pick v ∈ Value :
+∧∃Q ∈ ByzQuorum :
+∀a ∈ Q :
+21
+∃m ∈ sentMsgs(“2av”, b): ∧m.val =v
+∧m.acc =a
+∧bmsgs(cid:48) =bmsgs ∪
+{[type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→v]}
+∧maxVVal(cid:48) =[maxVVal except ![self]=v]
+∧knowsSent(cid:48) =knowsSent
+by (cid:104)1(cid:105)3, Zenon def Phase2b
+(cid:104)2(cid:105) define bm =∆ [type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→v]
+(cid:104)2(cid:105)2.∧msgsOfType(“1a”)(cid:48) =msgsOfType(“1a”)
+∧1bmsgs(cid:48) =1bmsgs
+∧1cmsgs(cid:48) =1cmsgs
+∧2amsgs(cid:48) =2amsgs
+∧acceptorMsgsOfType(“2b”)(cid:48) =acceptorMsgsOfType(“2b”)∪{bm}
+by (cid:104)2(cid:105)1 def msgsOfType, 1bmsgs, 1bRestrict, 1cmsgs, KnowsSafeAt, 2amsgs, acceptorMsgsOfType
+(cid:104)2(cid:105)4. msgs(cid:48) =msgs ∪{bm}
+by (cid:104)2(cid:105)2 def msgs
+(cid:104)2(cid:105).qed
+by (cid:104)2(cid:105)1, (cid:104)2(cid:105)4, Zenon
+(cid:104)1(cid:105)4. assume new self ∈ Acceptor, new b ∈ Ballot, LearnsSent(self, b)
+prove ∃S ∈ subset {m ∈ msgsOfType(“1c”):m.bal =b}:msgs(cid:48) =msgs ∪S
+(cid:104)2(cid:105)1.∧msgsOfType(“1a”)(cid:48) =msgsOfType(“1a”)
+∧1bmsgs(cid:48) =1bmsgs
+∧2amsgs(cid:48) =2amsgs
+∧acceptorMsgsOfType(“2b”)(cid:48) =acceptorMsgsOfType(“2b”)
+by (cid:104)1(cid:105)4 def LearnsSent, msgsOfType, 1bmsgs, 1bRestrict, 2amsgs, acceptorMsgsOfType
+(cid:104)2(cid:105).∧1cmsgs ⊆1cmsgs(cid:48)
+∧1cmsgs(cid:48)\1cmsgs ∈ subset {m ∈ msgsOfType(“1c”):m.bal =b}
+(cid:104)3(cid:105)1. bmsgs(cid:48) =bmsgs
+by (cid:104)1(cid:105)4 def LearnsSent
+(cid:104)3(cid:105)2. pick S ∈ subset sentMsgs(“1b”, b):
+knowsSent(cid:48) =[knowsSent except ![self]=knowsSent[self]∪S]
+by (cid:104)1(cid:105)4, Zenon def LearnsSent
+(cid:104)3(cid:105)3. assume new m ∈ 1cmsgs
+prove m ∈ 1cmsgs(cid:48)
+by (cid:104)3(cid:105)1, (cid:104)3(cid:105)2 def TypeOK, KnowsSafeAt, 1cmsgs, msgsOfType
+(cid:104)3(cid:105)4. assume new m ∈ 1cmsgs(cid:48), m ∈/ 1cmsgs
+prove m ∈ msgsOfType(“1c”)∧m.bal =b
+(cid:104)4(cid:105)1. m ∈ msgsOfType(“1c”)
+by (cid:104)3(cid:105)1 def 1cmsgs, msgsOfType
+(cid:104)4(cid:105)2. pick a ∈ Acceptor :KnowsSafeAt(a, m.bal, m.val)(cid:48)
+by def 1cmsgs
+(cid:104)4(cid:105)3. ¬KnowsSafeAt(a, m.bal, m.val)
+by (cid:104)3(cid:105)4, (cid:104)4(cid:105)1 def 1cmsgs
+(cid:104)4(cid:105)4. ∀aa ∈ Acceptor, bb ∈ Ballot :
+22
+∀mm ∈ KSet(aa, bb)(cid:48) :
+mm ∈/ KSet(aa, bb)⇒bb =b
+by (cid:104)1(cid:105)4, (cid:104)3(cid:105)2 def TypeOK, LearnsSent, TypeOK, sentMsgs, KSet
+(cid:104)4(cid:105)5. m.bal ∈ Ballot
+by (cid:104)4(cid:105)1, BMessageLemma def 1cMessage, msgsOfType, TypeOK
+(cid:104)4(cid:105)6.case KS1(KSet(a, m.bal)(cid:48))∧¬KS1(KSet(a, m.bal))
+by (cid:104)4(cid:105)6, (cid:104)4(cid:105)1, (cid:104)4(cid:105)4, (cid:104)4(cid:105)5 def KS1
+(cid:104)4(cid:105)7.case KS2(m.val, m.bal, KSet(a, m.bal)(cid:48))∧¬KS2(m.val, m.bal, KSet(a, m.bal))
+by (cid:104)4(cid:105)7, (cid:104)4(cid:105)1, (cid:104)4(cid:105)4, (cid:104)4(cid:105)5 def KS2
+(cid:104)4(cid:105) qed
+by (cid:104)4(cid:105)6, (cid:104)4(cid:105)7, (cid:104)4(cid:105)2, (cid:104)4(cid:105)3, KnowsSafeAtDef
+(cid:104)3(cid:105)5. qed
+by (cid:104)3(cid:105)3, (cid:104)3(cid:105)4
+(cid:104)2(cid:105).witness 1cmsgs(cid:48)\1cmsgs ∈ subset {m ∈ msgsOfType(“1c”):m.bal =b}
+(cid:104)2(cid:105).qed
+by (cid:104)2(cid:105)1 def msgs
+(cid:104)1(cid:105)5. assume new self ∈ Ballot, Phase1a(self)
+prove msgs(cid:48) =msgs ∪{[type (cid:55)→“1a”, bal (cid:55)→self]}
+by (cid:104)1(cid:105)5 def Phase1a, msgs, msgsOfType, 1bmsgs, 1bRestrict, 1cmsgs, KnowsSafeAt,
+2amsgs, acceptorMsgsOfType
+(cid:104)1(cid:105)6. assume new self ∈ Ballot, Phase1c(self)
+prove ∃S ∈ subset [type :{“1c”}, bal :{self}, val :Value]:
+∧∀m ∈ S :
+∃a ∈ Acceptor :KnowsSafeAt(a, m.bal, m.val)
+∧msgs(cid:48) =msgs ∪S
+(cid:104)2(cid:105)1. pick S ∈ subset [type :{“1c”}, bal :{self}, val :Value]:
+∧bmsgs(cid:48) =bmsgs ∪S
+∧knowsSent(cid:48) =knowsSent
+by (cid:104)1(cid:105)6 def Phase1c
+(cid:104)2(cid:105) define SS =∆ {m ∈ S :∃a ∈ Acceptor :KnowsSafeAt(a, m.bal, m.val)}
+(cid:104)2(cid:105) suffices msgs(cid:48) =msgs ∪SS
+by (cid:104)2(cid:105)1, Zenon
+(cid:104)2(cid:105)2.∧msgsOfType(“1a”)(cid:48) =msgsOfType(“1a”)
+∧1bmsgs(cid:48) =1bmsgs
+∧1cmsgs(cid:48) =1cmsgs ∪SS
+∧2amsgs(cid:48) =2amsgs
+∧acceptorMsgsOfType(“2b”)(cid:48) =acceptorMsgsOfType(“2b”)
+by (cid:104)2(cid:105)1 def msgsOfType, 1bmsgs, 1bRestrict, 1cmsgs, KnowsSafeAt, 2amsgs, acceptorMsgsOfType
+(cid:104)2(cid:105)3. qed
+by (cid:104)2(cid:105)2 def msgs
+(cid:104)1(cid:105)7. assume new self ∈ FakeAcceptor, FakingAcceptor(self)
+prove msgs(cid:48) =msgs
+by (cid:104)1(cid:105)7, BQA def FakingAcceptor, msgs, 1bMessage, 2avMessage, 2bMessage,
+23
+msgsOfType, 1cmsgs, KnowsSafeAt, 1bmsgs, 2amsgs, acceptorMsgsOfType, msgsOfType
+(cid:104)1(cid:105)9. qed
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, (cid:104)1(cid:105)3, (cid:104)1(cid:105)4, (cid:104)1(cid:105)5, (cid:104)1(cid:105)6, (cid:104)1(cid:105)7, Zenon
+WenowcometotheproofofinvarianceofourinductiveinvariantInv.
+theorem Invariance =∆ Spec ⇒(cid:50)Inv
+(cid:104)1(cid:105)1. Init ⇒Inv
+by FS EmptySet def Init, Inv, TypeOK, bmsgsFinite, 1bOr2bMsgs, 1bInv1, 1bInv2,
+maxBalInv, 2avInv1, 2avInv2, 2avInv3, accInv, knowsSentInv
+(cid:104)1(cid:105)2. Inv ∧[Next] ⇒Inv(cid:48)
+vars
+(cid:104)2(cid:105) suffices assume Inv, [Next]
+vars
+prove Inv(cid:48)
+obvious
+(cid:104)2(cid:105)1. assume new self ∈ Acceptor,
+new b ∈ Ballot,
+∨Phase1b(self, b)
+∨Phase2av(self, b)
+∨Phase2b(self, b)
+∨LearnsSent(self, b)
+prove Inv(cid:48)
+(cid:104)3(cid:105)1.case Phase1b(self, b)
+(cid:104)4(cid:105) define mb =∆ [type (cid:55)→“1b”, bal (cid:55)→b, acc (cid:55)→self,
+m2av (cid:55)→2avSent[self],
+mbal (cid:55)→maxVBal[self], mval (cid:55)→maxVVal[self]]
+mc =∆ [type (cid:55)→“1b”, acc (cid:55)→self, bal (cid:55)→b,
+mbal (cid:55)→maxVBal[self], mval (cid:55)→maxVVal[self]]
+(cid:104)4(cid:105)1. msgs(cid:48) =msgs ∪{mc}
+by (cid:104)3(cid:105)1, MsgsLemma def Inv
+(cid:104)4(cid:105)2. TypeOK(cid:48)
+by (cid:104)3(cid:105)1 def Inv, TypeOK, BMessage, 1bMessage, ByzAcceptor, Phase1b
+(cid:104)4(cid:105)3. bmsgsFinite(cid:48)
+by (cid:104)3(cid:105)1, FiniteMsgsLemma, Zenon def Inv, bmsgsFinite, Phase1b
+(cid:104)4(cid:105)4. 1bInv1(cid:48)
+by (cid:104)3(cid:105)1, (cid:104)4(cid:105)1, Isa def Phase1b, 1bInv1, Inv, accInv
+(cid:104)4(cid:105)5. 1bInv2(cid:48)
+by (cid:104)3(cid:105)1 def Phase1b, 1bInv2, Inv, maxBalInv, TypeOK, 1bMessage, Ballot
+(cid:104)4(cid:105)6. maxBalInv(cid:48)
+by (cid:104)3(cid:105)1, BMessageLemma def Phase1b, maxBalInv, Ballot, Inv, TypeOK,
+1bMessage, 2avMessage, 2bMessage
+(cid:104)4(cid:105)7. 2avInv1(cid:48)
+by (cid:104)3(cid:105)1 def Phase1b, Inv, 2avInv1
+(cid:104)4(cid:105)8. 2avInv2(cid:48)
+by (cid:104)3(cid:105)1 def Phase1b, Inv, 2avInv2
+24
+(cid:104)4(cid:105)9. 2avInv3(cid:48)
+by (cid:104)3(cid:105)1, (cid:104)4(cid:105)1 def Phase1b, Inv, 2avInv3
+(cid:104)4(cid:105)10. accInv(cid:48)
+(cid:104)5(cid:105) suffices assume new a ∈ Acceptor,
+new r ∈ 2avSent[a]
+prove ∧r.bal ≤maxBal(cid:48)[a]
+∧[type (cid:55)→“1c”, bal (cid:55)→r.bal, val (cid:55)→r.val]
+∈ msgs(cid:48)
+by (cid:104)3(cid:105)1, Zenon def accInv, Phase1b
+(cid:104)5(cid:105) [type (cid:55)→“1c”, bal (cid:55)→r.bal, val (cid:55)→r.val] ∈ msgs(cid:48)
+by (cid:104)3(cid:105)1, MsgsLemma def Inv, accInv
+(cid:104)5(cid:105) qed
+by (cid:104)3(cid:105)1 def Phase1b, Inv, Ballot, TypeOK, accInv
+(cid:104)4(cid:105)11. knowsSentInv(cid:48)
+by (cid:104)3(cid:105)1 def Phase1b, Inv, knowsSentInv, msgsOfType
+(cid:104)4(cid:105)12. qed
+by (cid:104)4(cid:105)2, (cid:104)4(cid:105)3, (cid:104)4(cid:105)4, (cid:104)4(cid:105)5, (cid:104)4(cid:105)6, (cid:104)4(cid:105)7, (cid:104)4(cid:105)8, (cid:104)4(cid:105)9, (cid:104)4(cid:105)10, (cid:104)4(cid:105)11 def Inv
+(cid:104)3(cid:105)2.case Phase2av(self, b)
+(cid:104)4(cid:105)1. pick mc ∈ sentMsgs(“1c”, b):
+∧KnowsSafeAt(self, b, mc.val)
+∧bmsgs(cid:48) =bmsgs ∪
+{[type (cid:55)→“2av”, bal (cid:55)→b,
+val (cid:55)→mc.val, acc (cid:55)→self]}
+∧2avSent(cid:48) =[2avSent except
+![self]={r ∈ 2avSent[self]:r.val (cid:54)=mc.val}
+∪{[val (cid:55)→mc.val, bal (cid:55)→b]}]
+by (cid:104)3(cid:105)2, Zenon def Phase2av
+(cid:104)4(cid:105)2. mc =[type (cid:55)→“1c”, bal (cid:55)→mc.bal, val (cid:55)→mc.val]
+by (cid:104)4(cid:105)1, BMessageLemma def sentMsgs, Inv, TypeOK, 1cMessage
+(cid:104)4(cid:105) define mb =∆ [type (cid:55)→“2av”, bal (cid:55)→b,
+val (cid:55)→mc.val, acc (cid:55)→self]
+mmc(v) =∆ [type (cid:55)→“1c”, bal (cid:55)→b, val (cid:55)→v]
+ma(v) =∆ [type (cid:55)→“2a”, bal (cid:55)→b, val (cid:55)→v]
+(cid:104)4(cid:105)3.∨msgs(cid:48) =msgs
+∨∃v ∈ Value :
+∧mmc(v) ∈ msgs
+∧msgs(cid:48) =msgs ∪{ma(v)}
+by (cid:104)3(cid:105)2, MsgsLemma, Zenon def Inv
+(cid:104)4(cid:105)4. msgs ⊆msgs(cid:48)
+by (cid:104)4(cid:105)3, Zenon
+(cid:104)4(cid:105)5. TypeOK(cid:48)
+by (cid:104)3(cid:105)2, (cid:104)4(cid:105)1, BMessageLemma
+def sentMsgs, Inv, TypeOK, 1cMessage, Phase2av, 2avMessage, ByzAcceptor, BMessage
+(cid:104)4(cid:105)6. bmsgsFinite(cid:48)
+by (cid:104)4(cid:105)1, FiniteMsgsLemma, Zenon def Inv, bmsgsFinite
+25
+(cid:104)4(cid:105)7. 1bInv1(cid:48)
+by (cid:104)3(cid:105)2, (cid:104)4(cid:105)1, (cid:104)4(cid:105)3, Isa def Phase2av, 1bInv1, Inv
+(cid:104)4(cid:105)8. 1bInv2(cid:48)
+by (cid:104)4(cid:105)1 def Inv, 1bInv2
+(cid:104)4(cid:105)9. maxBalInv(cid:48)
+by (cid:104)3(cid:105)2, (cid:104)4(cid:105)1, BMessageLemma
+def Phase2av, maxBalInv, Ballot, Inv, TypeOK, 1bMessage, 2avMessage, 2bMessage
+(cid:104)4(cid:105)10. 2avInv1(cid:48)
+by (cid:104)3(cid:105)2, (cid:104)4(cid:105)1 def Phase2av, Inv, 2avInv1, 2avInv2, TypeOK, 1bMessage, Ballot
+(cid:104)4(cid:105)11. 2avInv2(cid:48)
+(cid:104)5(cid:105)1. suffices assume new m ∈ bmsgs(cid:48),
+2avInv2!(m)!1
+prove ∃r ∈ 2avSent(cid:48)[m.acc]: ∧r.val =m.val
+∧r.bal ≥m.bal
+by def 2avInv2
+(cid:104)5(cid:105)2.case m.acc =self
+(cid:104)6(cid:105)1.case m =mb
+by (cid:104)4(cid:105)1, (cid:104)6(cid:105)1, Isa def Inv, TypeOK, Ballot
+(cid:104)6(cid:105)2.case m (cid:54)=mb
+(cid:104)7(cid:105)1. m ∈ bmsgs
+by (cid:104)4(cid:105)1, (cid:104)6(cid:105)2
+(cid:104)7(cid:105)2. pick r ∈ 2avSent[m.acc]: ∧r.val =m.val
+∧r.bal ≥m.bal
+by (cid:104)5(cid:105)1, (cid:104)7(cid:105)1 def Inv, 2avInv2
+(cid:104)7(cid:105)3.case r.val =mc.val
+(cid:104)8(cid:105).define rr =∆ [val (cid:55)→mc.val, bal (cid:55)→b]
+(cid:104)8(cid:105).rr ∈ 2avSent(cid:48)[m.acc]
+by (cid:104)4(cid:105)1, (cid:104)5(cid:105)2 def Inv, TypeOK
+(cid:104)8(cid:105).witness rr ∈ 2avSent(cid:48)[m.acc]
+(cid:104)8(cid:105).qed
+by (cid:104)7(cid:105)2, (cid:104)7(cid:105)3, (cid:104)5(cid:105)2, (cid:104)5(cid:105)1, (cid:104)3(cid:105)2, BMessageLemma
+def Phase2av, Inv, TypeOK, accInv, Ballot, 2avMessage
+(cid:104)7(cid:105)4.case r.val (cid:54)=mc.val
+by (cid:104)7(cid:105)2, (cid:104)4(cid:105)1, (cid:104)5(cid:105)2, (cid:104)7(cid:105)4 def Inv, TypeOK
+(cid:104)7(cid:105)5. qed
+by (cid:104)7(cid:105)3, (cid:104)7(cid:105)4
+(cid:104)6(cid:105)3. qed
+by (cid:104)6(cid:105)1, (cid:104)6(cid:105)2
+(cid:104)5(cid:105)3.case m.acc (cid:54)=self
+by (cid:104)5(cid:105)3, (cid:104)5(cid:105)1, (cid:104)4(cid:105)1, BMessageLemma def Inv, TypeOK, 2avInv2, 2avMessage
+(cid:104)5(cid:105)4. qed
+by (cid:104)5(cid:105)2, (cid:104)5(cid:105)3
+(cid:104)4(cid:105)12. 2avInv3(cid:48)
+by (cid:104)4(cid:105)1, (cid:104)4(cid:105)2, (cid:104)4(cid:105)4 def Inv, 2avInv3, sentMsgs, msgs, 1cmsgs, msgsOfType
+(cid:104)4(cid:105)13. accInv(cid:48)
+26
+(cid:104)5(cid:105)1. suffices assume new a ∈ Acceptor,
+new r ∈ 2avSent(cid:48)[a]
+prove ∧r.bal ≤maxBal(cid:48)[a]
+∧[type (cid:55)→“1c”, bal (cid:55)→r.bal, val (cid:55)→r.val]
+∈ msgs(cid:48)
+by Zenon def accInv
+(cid:104)5(cid:105)2.case r ∈ 2avSent[a]
+by (cid:104)5(cid:105)2, (cid:104)4(cid:105)4, (cid:104)4(cid:105)5, (cid:104)3(cid:105)2 def Phase2av, Inv, TypeOK, accInv, Ballot
+(cid:104)5(cid:105)3.case r ∈/ 2avSent[a]
+by (cid:104)5(cid:105)3, (cid:104)3(cid:105)2, (cid:104)4(cid:105)1, (cid:104)4(cid:105)2, (cid:104)4(cid:105)4
+def Phase2av, Inv, TypeOK, sentMsgs, msgsOfType, msgs, 1cmsgs, Ballot
+(cid:104)5(cid:105)4. qed
+by (cid:104)5(cid:105)2, (cid:104)5(cid:105)3
+(cid:104)4(cid:105)14. knowsSentInv(cid:48)
+by (cid:104)3(cid:105)2, (cid:104)4(cid:105)1 def Phase2av, Inv, knowsSentInv, msgsOfType
+(cid:104)4(cid:105)15. qed
+by (cid:104)4(cid:105)5, (cid:104)4(cid:105)6, (cid:104)4(cid:105)7, (cid:104)4(cid:105)8, (cid:104)4(cid:105)9, (cid:104)4(cid:105)10, (cid:104)4(cid:105)11, (cid:104)4(cid:105)12, (cid:104)4(cid:105)13, (cid:104)4(cid:105)14 def Inv
+(cid:104)3(cid:105)3.case Phase2b(self, b)
+(cid:104)4(cid:105)1. pick v ∈ Value :
+∧ ∃Q ∈ ByzQuorum :
+∀a ∈ Q :
+∃m ∈ sentMsgs(“2av”, b): ∧m.val =v
+∧m.acc =a
+∧ msgs(cid:48) =msgs ∪
+{[type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→v]}
+∧ bmsgs(cid:48) =(bmsgs ∪
+{[type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→v]})
+∧ maxVVal(cid:48) =[maxVVal except ![self]=v]
+by (cid:104)3(cid:105)3, MsgsLemma def Inv
+(cid:104)4(cid:105) define mb =∆ [type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→v]
+(cid:104)4(cid:105)2. TypeOK(cid:48)
+by (cid:104)3(cid:105)3, (cid:104)4(cid:105)1 def Phase2b, Inv, TypeOK, BMessage, 2bMessage, ByzAcceptor
+(cid:104)4(cid:105)3. bmsgsFinite(cid:48)
+by (cid:104)4(cid:105)1, FiniteMsgsLemma, Zenon def Inv, bmsgsFinite
+(cid:104)4(cid:105)4. 1bInv1(cid:48)
+by (cid:104)4(cid:105)1, Isa def Inv, 1bInv1
+(cid:104)4(cid:105)5. 1bInv2(cid:48)
+by (cid:104)4(cid:105)1 def Inv, 1bInv2
+(cid:104)4(cid:105)6. maxBalInv(cid:48)
+by (cid:104)3(cid:105)3, (cid:104)4(cid:105)1, (cid:104)4(cid:105)2, BMessageLemma
+def Phase2b, Inv, maxBalInv, TypeOK, Ballot, 1bMessage, 2avMessage, 2bMessage
+(cid:104)4(cid:105)7. 2avInv1(cid:48)
+by (cid:104)4(cid:105)1 def Inv, 2avInv1
+(cid:104)4(cid:105)8. 2avInv2(cid:48)
+by (cid:104)3(cid:105)3, (cid:104)4(cid:105)1 def Phase2b, Inv, TypeOK, 2avInv2
+27
+(cid:104)4(cid:105)9. 2avInv3(cid:48)
+by (cid:104)4(cid:105)1 def Inv, 2avInv3
+(cid:104)4(cid:105)10. accInv(cid:48)
+(cid:104)5(cid:105) suffices assume new a ∈ Acceptor,
+new r ∈ 2avSent[a]
+prove ∧r.bal ≤maxBal(cid:48)[a]
+∧[type (cid:55)→“1c”, bal (cid:55)→r.bal, val (cid:55)→r.val]
+∈ msgs(cid:48)
+by (cid:104)3(cid:105)3, Zenon def accInv, Phase2b
+(cid:104)5(cid:105) [type (cid:55)→“1c”, bal (cid:55)→r.bal, val (cid:55)→r.val] ∈ msgs(cid:48)
+by (cid:104)3(cid:105)3, MsgsLemma def Inv, accInv
+(cid:104)5(cid:105) qed
+by (cid:104)3(cid:105)3 def Phase2b, Inv, Ballot, TypeOK, accInv
+(cid:104)4(cid:105)11. knowsSentInv(cid:48)
+by (cid:104)3(cid:105)3, (cid:104)4(cid:105)1 def Phase2b, Inv, knowsSentInv, msgsOfType
+(cid:104)4(cid:105)12. qed
+by (cid:104)4(cid:105)2, (cid:104)4(cid:105)3, (cid:104)4(cid:105)4, (cid:104)4(cid:105)5, (cid:104)4(cid:105)6, (cid:104)4(cid:105)7, (cid:104)4(cid:105)8, (cid:104)4(cid:105)9, (cid:104)4(cid:105)10, (cid:104)4(cid:105)11 def Inv
+(cid:104)3(cid:105)4.case LearnsSent(self, b)
+(cid:104)4(cid:105)1. pick MS : ∧MS ⊆{m ∈ msgsOfType(“1c”):m.bal =b}
+∧msgs(cid:48) =msgs ∪MS
+by (cid:104)3(cid:105)4, MsgsLemma, Zenon def Inv
+(cid:104)4(cid:105)2. pick S :
+∧ S ⊆sentMsgs(“1b”, b)
+∧ knowsSent(cid:48) =
+[knowsSent except ![self]=knowsSent[self]∪S]
+by (cid:104)3(cid:105)4, Zenon def LearnsSent
+(cid:104)4(cid:105)3. TypeOK(cid:48)
+by (cid:104)3(cid:105)4, (cid:104)4(cid:105)2, BMessageLemma def Inv, TypeOK, sentMsgs, LearnsSent
+(cid:104)4(cid:105)4. bmsgsFinite(cid:48)
+by (cid:104)3(cid:105)4 def LearnsSent, Inv, bmsgsFinite, 1bOr2bMsgs
+(cid:104)4(cid:105)5. 1bInv1(cid:48)
+by (cid:104)3(cid:105)4, (cid:104)4(cid:105)1, Zenon def LearnsSent, Inv, 1bInv1
+(cid:104)4(cid:105)6. 1bInv2(cid:48)
+by (cid:104)3(cid:105)4 def LearnsSent, Inv, 1bInv2
+(cid:104)4(cid:105)7. maxBalInv(cid:48)
+by (cid:104)3(cid:105)4 def LearnsSent, Inv, maxBalInv
+(cid:104)4(cid:105)8. 2avInv1(cid:48)
+by (cid:104)3(cid:105)4 def LearnsSent, Inv, 2avInv1
+(cid:104)4(cid:105)9. 2avInv2(cid:48)
+by (cid:104)3(cid:105)4 def LearnsSent, Inv, 2avInv2
+(cid:104)4(cid:105)10. 2avInv3(cid:48)
+by (cid:104)3(cid:105)4, (cid:104)4(cid:105)1 def LearnsSent, Inv, 2avInv3
+(cid:104)4(cid:105)11. accInv(cid:48)
+by (cid:104)3(cid:105)4, (cid:104)4(cid:105)1, Zenon def LearnsSent, Inv, accInv
+(cid:104)4(cid:105)12. knowsSentInv(cid:48)
+28
+by (cid:104)3(cid:105)4, (cid:104)4(cid:105)2 def LearnsSent, Inv, TypeOK, knowsSentInv, sentMsgs, msgsOfType
+(cid:104)4(cid:105)13. qed
+by (cid:104)4(cid:105)3, (cid:104)4(cid:105)4, (cid:104)4(cid:105)5, (cid:104)4(cid:105)6, (cid:104)4(cid:105)7, (cid:104)4(cid:105)8, (cid:104)4(cid:105)9, (cid:104)4(cid:105)10, (cid:104)4(cid:105)11, (cid:104)4(cid:105)12 def Inv
+(cid:104)3(cid:105)5. qed
+by (cid:104)2(cid:105)1, (cid:104)3(cid:105)1, (cid:104)3(cid:105)2, (cid:104)3(cid:105)3, (cid:104)3(cid:105)4
+(cid:104)2(cid:105)2. assume new self ∈ Ballot,
+∨Phase1a(self)
+∨Phase1c(self)
+prove Inv(cid:48)
+(cid:104)3(cid:105)1.case Phase1a(self)
+(cid:104)4(cid:105) define ma =∆ [type (cid:55)→“1a”, bal (cid:55)→self]
+(cid:104)4(cid:105)1. msgs(cid:48) =msgs ∪{ma}
+by (cid:104)3(cid:105)1, MsgsLemma def Inv
+(cid:104)4(cid:105)2. TypeOK(cid:48)
+by (cid:104)3(cid:105)1 def Phase1a, Inv, TypeOK, BMessage, 1aMessage
+(cid:104)4(cid:105)3. bmsgsFinite(cid:48)
+by (cid:104)3(cid:105)1, FiniteMsgsLemma, Zenon def Inv, bmsgsFinite, Phase1a
+(cid:104)4(cid:105)4. 1bInv1(cid:48)
+by (cid:104)3(cid:105)1, (cid:104)4(cid:105)1, Isa def Phase1a, Inv, 1bInv1
+(cid:104)4(cid:105)5. 1bInv2(cid:48)
+by (cid:104)3(cid:105)1 def Phase1a, Inv, 1bInv2
+(cid:104)4(cid:105)6. maxBalInv(cid:48)
+by (cid:104)3(cid:105)1 def Phase1a, Inv, maxBalInv
+(cid:104)4(cid:105)7. 2avInv1(cid:48)
+by (cid:104)3(cid:105)1 def Phase1a, Inv, 2avInv1
+(cid:104)4(cid:105)8. 2avInv2(cid:48)
+by (cid:104)3(cid:105)1 def Phase1a, Inv, 2avInv2
+(cid:104)4(cid:105)9. 2avInv3(cid:48)
+by (cid:104)3(cid:105)1, (cid:104)4(cid:105)1 def Phase1a, Inv, 2avInv3
+(cid:104)4(cid:105)10. accInv(cid:48)
+by (cid:104)3(cid:105)1, (cid:104)4(cid:105)1, Zenon def Phase1a, Inv, accInv
+(cid:104)4(cid:105)11. knowsSentInv(cid:48)
+by (cid:104)3(cid:105)1 def Inv, knowsSentInv, msgsOfType, Phase1a
+(cid:104)4(cid:105)12. qed
+by (cid:104)4(cid:105)2, (cid:104)4(cid:105)3, (cid:104)4(cid:105)4, (cid:104)4(cid:105)5, (cid:104)4(cid:105)6, (cid:104)4(cid:105)7, (cid:104)4(cid:105)8, (cid:104)4(cid:105)9, (cid:104)4(cid:105)10, (cid:104)4(cid:105)11 def Inv
+(cid:104)3(cid:105)2.case Phase1c(self)
+(cid:104)4(cid:105)1. pick S : ∧S ∈ subset [type :{“1c”}, bal :{self}, val :Value]
+∧bmsgs(cid:48) =bmsgs ∪S
+by (cid:104)3(cid:105)2 def Phase1c
+(cid:104)4(cid:105)2. pick MS :
+∧MS ∈ subset [type :{“1c”}, bal :{self}, val :Value]
+∧∀m ∈ MS :
+∃a ∈ Acceptor :KnowsSafeAt(a, m.bal, m.val)
+∧msgs(cid:48) =msgs ∪MS
+by (cid:104)3(cid:105)2, MsgsLemma def Inv
+29
+(cid:104)4(cid:105)3. TypeOK(cid:48)
+by (cid:104)3(cid:105)2, (cid:104)4(cid:105)1 def Phase1c, Inv, TypeOK, BMessage, 1cMessage
+(cid:104)4(cid:105)4. bmsgsFinite(cid:48)
+by (cid:104)4(cid:105)1 def Inv, bmsgsFinite, 1bOr2bMsgs
+(cid:104)4(cid:105)5. 1bInv1(cid:48)
+by (cid:104)3(cid:105)2, (cid:104)4(cid:105)2, Zenon def Phase1c, Inv, 1bInv1
+(cid:104)4(cid:105)6. 1bInv2(cid:48)
+by (cid:104)4(cid:105)1 def Inv, 1bInv2
+(cid:104)4(cid:105)7. maxBalInv(cid:48)
+by (cid:104)3(cid:105)2 def Phase1c, Inv, maxBalInv
+(cid:104)4(cid:105)8. 2avInv1(cid:48)
+by (cid:104)4(cid:105)1 def Inv, 2avInv1
+(cid:104)4(cid:105)9. 2avInv2(cid:48)
+by (cid:104)3(cid:105)2 def Phase1c, Inv, 2avInv2
+(cid:104)4(cid:105)10. 2avInv3(cid:48)
+by (cid:104)3(cid:105)2, (cid:104)4(cid:105)2 def Phase1c, Inv, 2avInv3
+(cid:104)4(cid:105)11. accInv(cid:48)
+by (cid:104)3(cid:105)2, (cid:104)4(cid:105)2, Zenon def Phase1c, Inv, accInv
+(cid:104)4(cid:105)12. knowsSentInv(cid:48)
+by (cid:104)3(cid:105)2 def Inv, knowsSentInv, msgsOfType, Phase1c
+(cid:104)4(cid:105)13. qed
+by (cid:104)4(cid:105)3, (cid:104)4(cid:105)4, (cid:104)4(cid:105)5, (cid:104)4(cid:105)6, (cid:104)4(cid:105)7, (cid:104)4(cid:105)8, (cid:104)4(cid:105)9, (cid:104)4(cid:105)10, (cid:104)4(cid:105)11, (cid:104)4(cid:105)12 def Inv
+(cid:104)3(cid:105)3. qed
+by (cid:104)3(cid:105)1, (cid:104)3(cid:105)2, (cid:104)2(cid:105)2
+(cid:104)2(cid:105)3. assume new self ∈ FakeAcceptor,
+FakingAcceptor(self)
+prove Inv(cid:48)
+(cid:104)3(cid:105)1. pick m ∈ 1bMessage∪2avMessage∪2bMessage :
+∧m.acc ∈/ Acceptor
+∧bmsgs(cid:48) =bmsgs ∪{m}
+by (cid:104)2(cid:105)3, BQA def FakingAcceptor
+(cid:104)3(cid:105)2. msgs(cid:48) =msgs
+by (cid:104)2(cid:105)3, MsgsLemma def Inv
+(cid:104)3(cid:105)3. TypeOK(cid:48)
+by (cid:104)2(cid:105)3, (cid:104)3(cid:105)1 def Inv, TypeOK, BMessage, FakingAcceptor
+(cid:104)3(cid:105)4. bmsgsFinite(cid:48)
+by (cid:104)3(cid:105)1, FiniteMsgsLemma def Inv, TypeOK
+(cid:104)3(cid:105)5. 1bInv1(cid:48)
+by (cid:104)3(cid:105)1, (cid:104)3(cid:105)2, Zenon def Inv, 1bInv1
+(cid:104)3(cid:105)6. 1bInv2(cid:48)
+by (cid:104)3(cid:105)1 def Inv, 1bInv2
+(cid:104)3(cid:105)7. maxBalInv(cid:48)
+by (cid:104)2(cid:105)3, (cid:104)3(cid:105)1 def Inv, maxBalInv, FakingAcceptor
+(cid:104)3(cid:105)8. 2avInv1(cid:48)
+by (cid:104)3(cid:105)1 def Inv, 2avInv1
+30
+(cid:104)3(cid:105)9. 2avInv2(cid:48)
+by (cid:104)2(cid:105)3, (cid:104)3(cid:105)1 def Inv, 2avInv2, FakingAcceptor
+(cid:104)3(cid:105)10. 2avInv3(cid:48)
+by (cid:104)3(cid:105)1, (cid:104)3(cid:105)2 def Inv, 2avInv3
+(cid:104)3(cid:105)11. accInv(cid:48)
+by (cid:104)2(cid:105)3, (cid:104)3(cid:105)2, Zenon def Inv, accInv, FakingAcceptor
+(cid:104)3(cid:105)12. knowsSentInv(cid:48)
+by (cid:104)2(cid:105)3, (cid:104)3(cid:105)1 def Inv, knowsSentInv, msgsOfType, FakingAcceptor
+(cid:104)3(cid:105)13. qed
+by (cid:104)3(cid:105)3, (cid:104)3(cid:105)4, (cid:104)3(cid:105)5, (cid:104)3(cid:105)6, (cid:104)3(cid:105)7, (cid:104)3(cid:105)8, (cid:104)3(cid:105)9, (cid:104)3(cid:105)10, (cid:104)3(cid:105)11, (cid:104)3(cid:105)12 def Inv
+(cid:104)2(cid:105)4. assume unchanged vars
+prove Inv(cid:48)
+(cid:104)3(cid:105) use unchanged vars def Inv, vars
+(cid:104)3(cid:105) msgs =msgs(cid:48)
+by def msgs, msgsOfType, 1bmsgs, 1bRestrict, acceptorMsgsOfType, 1cmsgs,
+KnowsSafeAt, 2amsgs
+(cid:104)3(cid:105) qed
+by def TypeOK, bmsgsFinite, 1bOr2bMsgs, 1bInv1, 1bInv2,
+maxBalInv, 2avInv1, 2avInv2, 2avInv3, accInv, knowsSentInv, msgsOfType
+(cid:104)2(cid:105)5. qed
+by (cid:104)2(cid:105)1, (cid:104)2(cid:105)2, (cid:104)2(cid:105)3, (cid:104)2(cid:105)4, NextDef
+(cid:104)1(cid:105)3. qed
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, PTL def Spec
+We next use the invariance of Inv to prove that algorithm BPCon implements algorithm PCon
+undertherefinementmappingdefinedbytheinstance statementabove.
+theorem Spec ⇒P!Spec
+(cid:104)1(cid:105)1. Init ⇒P!Init
+(cid:104)2(cid:105).have Init
+(cid:104)2(cid:105)1. MaxBallot({})= −1
+by MaxBallotProp, FS EmptySet
+(cid:104)2(cid:105)2. P!Init!1∧P!Init!2∧P!Init!3
+by (cid:104)2(cid:105)1 def Init, PmaxBal, 1bOr2bMsgs, None, P!None
+(cid:104)2(cid:105)3. msgs ={}
+by BQA def Init, msgsOfType, acceptorMsgsOfType, 1bmsgs, 1cmsgs, 2amsgs, Quorum, msgs
+(cid:104)2(cid:105)4. qed
+by (cid:104)2(cid:105)2, (cid:104)2(cid:105)3 def P!Init
+(cid:104)1(cid:105)2. Inv ∧Inv(cid:48)∧[Next] ⇒[P!Next] !vars
+vars P
+(cid:104)2(cid:105) InvP =∆ Inv(cid:48)
+(cid:104)2(cid:105) suffices assume Inv, InvP, Next
+prove P!TLANext ∨P!vars(cid:48) =P!vars
+(cid:104)3(cid:105) unchanged vars ⇒unchanged P!vars
+by def vars, P!vars, PmaxBal, 1bOr2bMsgs, msgs, msgsOfType, acceptorMsgsOfType,
+31
+1bmsgs, 2amsgs, 1cmsgs, KnowsSafeAt
+(cid:104)3(cid:105) qed
+by PNextDef def Inv, P!ProcSet, P!Init, Ballot, P!Ballot
+(cid:104)2(cid:105) hide def InvP
+(cid:104)2(cid:105)2. ∀a ∈ Acceptor :PmaxBal[a] ∈ Ballot ∪{−1}
+by PMaxBalLemma3, MaxBallotProp def Inv, PmaxBal, 1bOr2bMsgs
+(cid:104)2(cid:105)3. assume new self ∈ Acceptor, new b ∈ Ballot,
+Phase1b(self, b)
+prove P!TLANext ∨P!vars(cid:48) =P!vars
+(cid:104)3(cid:105)1. msgs(cid:48) =msgs ∪{[type (cid:55)→“1b”, acc (cid:55)→self, bal (cid:55)→b,
+mbal (cid:55)→maxVBal[self], mval (cid:55)→maxVVal[self]]}
+by (cid:104)2(cid:105)3, MsgsLemma def Inv
+(cid:104)3(cid:105)2. P!sentMsgs(“1a”, b)(cid:54)={}
+by (cid:104)2(cid:105)3 def Phase1b, sentMsgs, msgsOfType, msgs, P!sentMsgs
+(cid:104)3(cid:105)3. unchanged (cid:104)maxVBal, maxVVal(cid:105)
+by (cid:104)2(cid:105)3 def Phase1b
+(cid:104)3(cid:105)4. b >PmaxBal[self]
+by (cid:104)2(cid:105)2, (cid:104)2(cid:105)3, PmaxBalLemma4 def Phase1b, Inv, TypeOK, Ballot
+(cid:104)3(cid:105)5. PmaxBal(cid:48) =[PmaxBal except ![self]=b]
+(cid:104)4(cid:105) define m =∆ [type (cid:55)→“1b”, bal (cid:55)→b, acc (cid:55)→self,
+m2av (cid:55)→2avSent[self],
+mbal (cid:55)→maxVBal[self], mval (cid:55)→maxVVal[self]]
+mA(a) =∆ {ma ∈ bmsgs : ∧ma.type ∈ {“1b”, “2b”}
+∧ma.acc =a}
+S(a) =∆ {ma.bal :ma ∈ mA(a)}
+(cid:104)4(cid:105)1. bmsgs(cid:48) =bmsgs ∪{m}
+by (cid:104)2(cid:105)3 def Phase1b
+(cid:104)4(cid:105)2. mA(self)(cid:48) =mA(self)∪{m}
+by (cid:104)4(cid:105)1
+(cid:104)4(cid:105)3.∧PmaxBal =[a ∈ Acceptor (cid:55)→MaxBallot(S(a))]
+∧PmaxBal(cid:48) =[a ∈ Acceptor (cid:55)→MaxBallot(S(a))(cid:48)]
+by def PmaxBal, 1bOr2bMsgs
+(cid:104)4(cid:105) hide def mA
+(cid:104)4(cid:105)4. S(self)(cid:48) =S(self)∪{b}
+by (cid:104)4(cid:105)2, Isa
+(cid:104)4(cid:105)5. MaxBallot(S(self)∪{b})=b
+(cid:104)5(cid:105) define SS =∆ S(self)∪{b}
+(cid:104)5(cid:105)1. IsFiniteSet(S(self))
+(cid:104)6(cid:105).IsFiniteSet(mA(self))
+by FS Subset def Inv, bmsgsFinite, mA, 1bOr2bMsgs
+(cid:104)6(cid:105).qed
+by FS Image, Isa
+(cid:104)5(cid:105)2. IsFiniteSet(SS)
+by (cid:104)5(cid:105)1, FS AddElement
+(cid:104)5(cid:105)3. S(self)⊆Ballot ∪{−1}
+32
+by BMessageLemma def mA, Inv, TypeOK, 1bMessage, 2bMessage
+(cid:104)5(cid:105)4. ∀x ∈ SS :b ≥x
+by (cid:104)3(cid:105)4, (cid:104)4(cid:105)3, (cid:104)5(cid:105)1, (cid:104)5(cid:105)3, MaxBallotProp, Z3T(10) def Ballot
+(cid:104)5(cid:105)5. qed
+by (cid:104)5(cid:105)2, (cid:104)5(cid:105)3, (cid:104)5(cid:105)4, MaxBallotLemma1
+(cid:104)4(cid:105)6. ∀a ∈ Acceptor :a (cid:54)=self ⇒S(a)(cid:48) =S(a)
+by (cid:104)4(cid:105)1 def mA
+(cid:104)4(cid:105)7. qed
+by (cid:104)4(cid:105)3, (cid:104)4(cid:105)4, (cid:104)4(cid:105)5, (cid:104)4(cid:105)6, Zenon def PmaxBal, 1bOr2bMsgs
+(cid:104)3(cid:105)6. qed
+by (cid:104)3(cid:105)1, (cid:104)3(cid:105)2, (cid:104)3(cid:105)3, (cid:104)3(cid:105)4, (cid:104)3(cid:105)5, Zenon def P!TLANext, P!Ballot, Ballot, P!Phase1b
+(cid:104)2(cid:105)4. assume new self ∈ Acceptor, new b ∈ Ballot,
+Phase2av(self, b)
+prove P!TLANext ∨P!vars(cid:48) =P!vars
+(cid:104)3(cid:105)1. PmaxBal(cid:48) =PmaxBal
+(cid:104)4(cid:105) define mm(m) =∆ [type (cid:55)→“2av”, bal (cid:55)→b,
+val (cid:55)→m.val, acc (cid:55)→self]
+(cid:104)4(cid:105)1. pick m :bmsgs(cid:48) =bmsgs ∪{mm(m)}
+by (cid:104)2(cid:105)4 def Phase2av
+(cid:104)4(cid:105)2. mm(m).type =“2av”
+obvious
+(cid:104)4(cid:105) qed
+by (cid:104)4(cid:105)1, (cid:104)4(cid:105)2, PmaxBalLemma1, Zenon
+(cid:104)3(cid:105)2.case msgs(cid:48) =msgs
+by (cid:104)3(cid:105)1, (cid:104)3(cid:105)2, (cid:104)2(cid:105)4 def Phase2av, P!vars
+(cid:104)3(cid:105)3.case ∧msgs(cid:48) (cid:54)=msgs
+∧∃v ∈ Value :
+∧[type (cid:55)→“1c”, bal (cid:55)→b, val (cid:55)→v] ∈ msgs
+∧msgs(cid:48) =msgs ∪{[type (cid:55)→“2a”, bal (cid:55)→b, val (cid:55)→v]}
+(cid:104)4(cid:105)1. pick v ∈ Value :
+∧[type (cid:55)→“1c”, bal (cid:55)→b, val (cid:55)→v] ∈ msgs
+∧msgs(cid:48) =msgs ∪{[type (cid:55)→“2a”, bal (cid:55)→b, val (cid:55)→v]}
+by (cid:104)3(cid:105)3
+(cid:104)4(cid:105)2. P!sentMsgs(“2a”, b)={}
+(cid:104)5(cid:105)1. suffices assume new m ∈ P!sentMsgs(“2a”, b)
+prove m =[type (cid:55)→“2a”, bal (cid:55)→b, val (cid:55)→v]
+by (cid:104)3(cid:105)3, (cid:104)4(cid:105)1 def P!sentMsgs
+(cid:104)5(cid:105)2.∧m ∈ 2amsgs
+∧m.type =“2a”
+∧m.bal =b
+by MsgsTypeLemma def P!sentMsgs
+(cid:104)5(cid:105)3. pick Q ∈ Quorum :
+∀a ∈ Q :
+∃mav ∈ acceptorMsgsOfType(“2av”):
+∧mav.acc =a
+33
+∧mav.bal =b
+∧mav.val =m.val
+by (cid:104)5(cid:105)2 def 2amsgs
+(cid:104)5(cid:105)4. pick Q2 ∈ Quorum :
+∀a ∈ Q2 :
+∃m2av ∈ acceptorMsgsOfType(“2av”)(cid:48) :
+∧m2av.acc =a
+∧m2av.bal =b
+∧m2av.val =v
+by (cid:104)4(cid:105)1, MsgsTypeLemmaPrime, Isa def 2amsgs
+(cid:104)5(cid:105)5. pick a ∈ Q ∩Q2:a ∈ Acceptor
+by QuorumTheorem
+(cid:104)5(cid:105)6. pick mav ∈ acceptorMsgsOfType(“2av”):
+∧mav.acc =a
+∧mav.bal =b
+∧mav.val =m.val
+by (cid:104)5(cid:105)3, (cid:104)5(cid:105)5
+(cid:104)5(cid:105)7. pick m2av ∈ acceptorMsgsOfType(“2av”)(cid:48) :
+∧m2av.acc =a
+∧m2av.bal =b
+∧m2av.val =v
+by (cid:104)5(cid:105)4, (cid:104)5(cid:105)5
+(cid:104)5(cid:105)8. mav ∈ acceptorMsgsOfType(“2av”)(cid:48)
+by (cid:104)2(cid:105)4 def acceptorMsgsOfType, msgsOfType, Phase2av
+(cid:104)5(cid:105)9. m.val =v
+by (cid:104)5(cid:105)5, (cid:104)5(cid:105)6, (cid:104)5(cid:105)7, (cid:104)5(cid:105)8 def 2avInv1, InvP, Inv, acceptorMsgsOfType, msgsOfType
+(cid:104)5(cid:105)10. qed
+by (cid:104)5(cid:105)2, (cid:104)5(cid:105)9 def 2amsgs
+(cid:104)4(cid:105)4. qed
+by (cid:104)2(cid:105)4, (cid:104)3(cid:105)1, (cid:104)4(cid:105)1, (cid:104)4(cid:105)2 def P!TLANext, P!Phase2a, Phase2av, Ballot, P!Ballot
+(cid:104)3(cid:105)4.∨msgs(cid:48) =msgs
+∨(∧msgs(cid:48) (cid:54)=msgs
+∧∃v ∈ Value :
+∧[type (cid:55)→“1c”, bal (cid:55)→b, val (cid:55)→v] ∈ msgs
+∧msgs(cid:48) =msgs ∪{[type (cid:55)→“2a”, bal (cid:55)→b, val (cid:55)→v]})
+by MsgsLemma, (cid:104)2(cid:105)4, Zenon def Inv
+(cid:104)3(cid:105)5. qed
+by (cid:104)3(cid:105)2, (cid:104)3(cid:105)3, (cid:104)3(cid:105)4
+(cid:104)2(cid:105)5. assume new self ∈ Acceptor, new b ∈ Ballot,
+Phase2b(self, b)
+prove P!TLANext ∨P!vars(cid:48) =P!vars
+(cid:104)3(cid:105)1. PmaxBal[self]≤b
+(cid:104)4(cid:105)1. PmaxBal[self]≤maxBal[self]
+by PmaxBalLemma4 def Inv
+(cid:104)4(cid:105)2. maxBal[self]≤b
+34
+by (cid:104)2(cid:105)5 def Phase2b
+(cid:104)4(cid:105)3. qed
+by (cid:104)4(cid:105)1, (cid:104)4(cid:105)2, PmaxBalLemma5 def Inv, TypeOK, Ballot
+(cid:104)3(cid:105)2. pick v ∈ Value :
+∧∃Q ∈ ByzQuorum :
+∀a ∈ Q :
+∃m ∈ sentMsgs(“2av”, b): ∧m.val =v
+∧m.acc =a
+∧msgs(cid:48) =msgs ∪
+{[type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→v]}
+∧bmsgs(cid:48) =bmsgs ∪
+{[type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→v]}
+∧maxVVal(cid:48) =[maxVVal except ![self]=v]
+by (cid:104)2(cid:105)5, MsgsLemma def Inv
+(cid:104)3(cid:105) define m =∆ [type (cid:55)→“2a”, bal (cid:55)→b, val (cid:55)→v]
+m2b =∆ [type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→v]
+(cid:104)3(cid:105)3. m ∈ P!sentMsgs(“2a”, b)
+(cid:104)4(cid:105)1. pick Q ∈ Quorum :
+∀a ∈ Q :
+∃mm ∈ sentMsgs(“2av”, b): ∧mm.val =v
+∧mm.acc =a
+by (cid:104)3(cid:105)2, Isa def Quorum
+(cid:104)4(cid:105)2. m ∈ 2amsgs
+by (cid:104)4(cid:105)1 def sentMsgs, Quorum, acceptorMsgsOfType, msgsOfType, 2amsgs
+(cid:104)4(cid:105)3. qed
+by (cid:104)4(cid:105)2 def P!sentMsgs, msgs
+(cid:104)3(cid:105)4. PmaxBal(cid:48) =[PmaxBal except ![self]=b]
+(cid:104)4(cid:105)1. assume new a ∈ Acceptor,
+a (cid:54)=self
+prove PmaxBal(cid:48)[a]=PmaxBal[a]
+by (cid:104)3(cid:105)2, (cid:104)4(cid:105)1, PmaxBalLemma2, m2b.acc =self, Zenon
+(cid:104)4(cid:105)2. PmaxBal(cid:48)[self]=b
+(cid:104)5(cid:105) define S =∆ {mm.bal :mm ∈ {ma ∈ bmsgs :
+∧ma.type ∈ {“1b”, “2b”}
+∧ma.acc =self}}
+T =∆ S ∪{m2b.bal}
+(cid:104)5(cid:105)1. IsFiniteSet(S)∧(S ∈ subset Ballot)
+by PMaxBalLemma3 def Inv
+(cid:104)5(cid:105)2. IsFiniteSet(T)∧(T ∈ subset Ballot)
+by (cid:104)5(cid:105)1, FS AddElement
+(cid:104)5(cid:105)3. PmaxBal[self]=MaxBallot(S)
+by def PmaxBal, 1bOr2bMsgs
+(cid:104)5(cid:105)4. PmaxBal(cid:48)[self]=MaxBallot(T)
+by (cid:104)3(cid:105)2, Zenon def PmaxBal, 1bOr2bMsgs
+(cid:104)5(cid:105) hide def S
+35
+(cid:104)5(cid:105)5.case S ={}
+(cid:104)6(cid:105) MaxBallot({b})=b
+by FS Singleton, MaxBallotLemma1, Isa def Ballot
+(cid:104)6(cid:105) qed
+by (cid:104)5(cid:105)4, (cid:104)5(cid:105)5
+(cid:104)5(cid:105)6.case S (cid:54)={}
+(cid:104)6(cid:105) ∀bb ∈ T :b ≥bb
+by (cid:104)3(cid:105)1, (cid:104)5(cid:105)1, (cid:104)5(cid:105)3, MaxBallotProp, PmaxBalLemma5 def Inv, Ballot
+(cid:104)6(cid:105) qed
+by (cid:104)5(cid:105)2, (cid:104)5(cid:105)4, MaxBallotLemma1
+(cid:104)5(cid:105)7. qed
+by (cid:104)5(cid:105)5, (cid:104)5(cid:105)6
+(cid:104)4(cid:105)3. qed
+by (cid:104)4(cid:105)1, (cid:104)4(cid:105)2, Zenon def PmaxBal, 1bOr2bMsgs
+(cid:104)3(cid:105)5.∧maxVBal(cid:48) =[maxVBal except ![self]=b]
+∧maxVVal(cid:48) =[maxVVal except ![self] =m.val]
+by (cid:104)2(cid:105)5, (cid:104)3(cid:105)2, Zenon def Phase2b
+(cid:104)3(cid:105)6. qed
+by (cid:104)3(cid:105)1, (cid:104)3(cid:105)2, (cid:104)3(cid:105)3, (cid:104)3(cid:105)4, (cid:104)3(cid:105)5, Zenon
+def P!TLANext, P!Phase2b, Ballot, P!Ballot
+(cid:104)2(cid:105)6. assume new self ∈ Acceptor, new b ∈ Ballot,
+LearnsSent(self, b)
+prove P!TLANext ∨P!vars(cid:48) =P!vars
+(cid:104)3(cid:105)1. pick SM ∈ subset {m ∈ msgsOfType(“1c”):m.bal =b}:
+msgs(cid:48) =msgs ∪SM
+by (cid:104)2(cid:105)6, MsgsLemma def Inv
+(cid:104)3(cid:105) define S =∆ {m.val :m ∈ SM}
+(cid:104)3(cid:105)2. S ∈ subset Value
+by BMessageLemma def Inv, TypeOK, msgsOfType, 1cMessage
+(cid:104)3(cid:105)3. msgs(cid:48) =msgs ∪{[type (cid:55)→“1c”, bal (cid:55)→b, val (cid:55)→v]:v ∈ S}
+by (cid:104)3(cid:105)1, BMessageLemma def Inv, TypeOK, msgsOfType, 1cMessage
+(cid:104)3(cid:105)4. assume new v ∈ S
+prove ∃Q ∈ Quorum :P!ShowsSafeAt(Q, b, v)
+(cid:104)4(cid:105)1. pick ac ∈ Acceptor :KnowsSafeAt(ac, b, v)(cid:48)
+by (cid:104)3(cid:105)1, MsgsTypeLemmaPrime def msgsOfType, 1cmsgs
+(cid:104)4(cid:105)2. bmsgs(cid:48) =bmsgs
+by (cid:104)2(cid:105)6 def LearnsSent
+(cid:104)4(cid:105) define Q(BQ) =∆ BQ ∩Acceptor
+SS =∆ {m ∈ knowsSent(cid:48)[ac]:m.bal =b}
+SQ(BQ) =∆ {1bRestrict(mm):
+mm ∈ {m ∈ SS :m.acc ∈ Q(BQ)}}
+Q1b(BQ) =∆ {m ∈ P!sentMsgs(“1b”, b):m.acc ∈ Q(BQ)}
+(cid:104)4(cid:105)3. assume new BQ ∈ ByzQuorum,
+∀a ∈ BQ :∃m ∈ SS :m.acc =a
+prove SQ(BQ)=Q1b(BQ)
+36
+(cid:104)5(cid:105)1. assume new m ∈ P!sentMsgs(“1b”, b),
+m.acc ∈ Q(BQ)
+prove m ∈ SQ(BQ)
+by (cid:104)4(cid:105)2, (cid:104)4(cid:105)3, (cid:104)5(cid:105)1, MsgsTypeLemma
+def P!sentMsgs, msgs, 1bmsgs, acceptorMsgsOfType, msgsOfType,
+1bRestrict, InvP, Inv, knowsSentInv, 1bInv2
+(cid:104)5(cid:105)2. assume new m ∈ SS,
+m.acc ∈ Q(BQ)
+prove 1bRestrict(m) ∈ Q1b(BQ)
+by (cid:104)4(cid:105)2, (cid:104)5(cid:105)2
+def InvP, Inv, knowsSentInv, msgsOfType, acceptorMsgsOfType, msgs,
+1bmsgs, P!sentMsgs, 1bRestrict
+(cid:104)5(cid:105)3. qed
+by (cid:104)5(cid:105)1, (cid:104)5(cid:105)2 def Q1b, SQ
+(cid:104)4(cid:105)4.case KnowsSafeAt(ac, b, v)!1!1(cid:48)
+(cid:104)5(cid:105)1. pick BQ ∈ ByzQuorum :KnowsSafeAt(ac, b, v)!1!1!(BQ)(cid:48)
+by (cid:104)4(cid:105)4
+(cid:104)5(cid:105)2. ∀a ∈ Q(BQ):∃m ∈ SQ(BQ): ∧m.acc =a
+∧m.mbal = −1
+by (cid:104)5(cid:105)1, Isa def 1bRestrict
+(cid:104)5(cid:105)3. ∀m ∈ SQ(BQ):m.mbal = −1
+by (cid:104)4(cid:105)2, (cid:104)5(cid:105)2
+def InvP, Inv, knowsSentInv, msgsOfType, 1bRestrict, 1bInv2
+(cid:104)5(cid:105)4. SQ(BQ)=Q1b(BQ)
+by (cid:104)4(cid:105)3, (cid:104)5(cid:105)1
+(cid:104)5(cid:105)5. Q(BQ) ∈ Quorum
+by def Quorum
+(cid:104)5(cid:105) hide def SS, Q, SQ
+(cid:104)5(cid:105) witness Q(BQ) ∈ Quorum
+(cid:104)5(cid:105)6. qed
+by (cid:104)5(cid:105)2, (cid:104)5(cid:105)3, (cid:104)5(cid:105)4 def P!ShowsSafeAt
+(cid:104)4(cid:105)5.case KnowsSafeAt(ac, b, v)!1!2(cid:48)
+(cid:104)5(cid:105)1. pick c ∈ 0..(b−1):KnowsSafeAt(ac, b, v)!1!2!(c)(cid:48)
+by (cid:104)4(cid:105)5
+(cid:104)5(cid:105)2. pick BQ ∈ ByzQuorum :
+∀a ∈ BQ :∃m ∈ SS : ∧m.acc =a
+∧m.mbal ≤c
+∧(m.mbal =c)⇒(m.mval =v)
+by (cid:104)5(cid:105)1
+(cid:104)5(cid:105)3. SQ(BQ)=Q1b(BQ)
+by (cid:104)5(cid:105)2, (cid:104)4(cid:105)3
+(cid:104)5(cid:105)4. P!ShowsSafeAt(Q(BQ), b, v)!1!1
+(cid:104)6(cid:105)1. suffices assume new a ∈ Q(BQ)
+prove ∃m ∈ Q1b(BQ):m.acc =a
+obvious
+37
+(cid:104)6(cid:105)2. pick m ∈ SS :m.acc =a
+by (cid:104)5(cid:105)2
+(cid:104)6(cid:105)3.∧1bRestrict(m) ∈ SQ(BQ)
+∧1bRestrict(m).acc =a
+by (cid:104)6(cid:105)2 def 1bRestrict
+(cid:104)6(cid:105).qed
+by (cid:104)6(cid:105)3, (cid:104)5(cid:105)3
+(cid:104)5(cid:105)5. pick m1c ∈ msgs :
+∧m1c =[type (cid:55)→“1c”, bal (cid:55)→m1c.bal, val (cid:55)→v]
+∧m1c.bal ≥c
+∧m1c.bal ∈ Ballot
+(cid:104)6(cid:105)1. pick WQ ∈ WeakQuorum :
+∀a ∈ WQ :∃m ∈ SS : ∧m.acc =a
+∧∃r ∈ m.m2av :
+∧r.bal ≥c
+∧r.val =v
+by (cid:104)5(cid:105)1
+(cid:104)6(cid:105)2. pick a ∈ WQ, m ∈ SS :
+∧a ∈ Acceptor
+∧m.acc =a
+∧∃r ∈ m.m2av : ∧r.bal ≥c
+∧r.val =v
+by (cid:104)6(cid:105)1, BQA
+(cid:104)6(cid:105)4. pick r ∈ m.m2av : ∧r.bal ≥c
+∧r.val =v
+by (cid:104)6(cid:105)2
+(cid:104)6(cid:105)5.∧m.bal =b
+∧m ∈ bmsgs
+∧m.type =“1b”
+∧r.bal ∈ Ballot
+by (cid:104)4(cid:105)2, (cid:104)6(cid:105)2, BMessageLemma
+def Inv, InvP, TypeOK, 1bMessage, knowsSentInv, msgsOfType
+(cid:104)6(cid:105).qed
+by (cid:104)6(cid:105)2, (cid:104)6(cid:105)4, (cid:104)6(cid:105)5, Zenon def Inv, 1bInv1
+(cid:104)5(cid:105)6. assume new m ∈ Q1b(BQ)
+prove ∧m1c.bal ≥m.mbal
+∧(m1c.bal =m.mbal)⇒(m.mval =v)
+(cid:104)6(cid:105)1. pick mm ∈ SS : ∧mm.acc =m.acc
+∧mm.mbal ≤c
+∧(mm.mbal =c)⇒(mm.mval =v)
+by (cid:104)5(cid:105)2
+(cid:104)6(cid:105)2. pick mm2 ∈ SS : ∧mm2.acc =m.acc
+∧m =1bRestrict(mm2)
+by (cid:104)5(cid:105)3 def 1bRestrict
+(cid:104)6(cid:105)3.∧mm =mm2
+38
+∧mm2.mbal ∈ Ballot ∪{−1}
+by (cid:104)4(cid:105)2, (cid:104)6(cid:105)1, (cid:104)6(cid:105)2, BMessageLemma
+def Inv, InvP, TypeOK, knowsSentInv, 1bInv2, msgsOfType, 1bMessage
+(cid:104)6(cid:105).qed
+(cid:104)7(cid:105) ∀m1cbal, mmbal ∈ Ballot ∪{−1}:
+mmbal ≤c∧m1cbal ≥c ⇒ ∧m1cbal ≥mmbal
+∧mmbal =m1cbal ⇒mmbal =c
+by def Ballot
+(cid:104)7(cid:105) qed
+by (cid:104)5(cid:105)5, (cid:104)6(cid:105)1, (cid:104)6(cid:105)2, (cid:104)6(cid:105)3 def 1bRestrict
+(cid:104)5(cid:105)7. P!ShowsSafeAt(Q(BQ), b, v)!1!2!2!(m1c)
+by (cid:104)5(cid:105)5, (cid:104)5(cid:105)6
+(cid:104)5(cid:105).qed
+by (cid:104)5(cid:105)4, (cid:104)5(cid:105)7, Isa def P!ShowsSafeAt, Quorum
+(cid:104)4(cid:105)6. qed
+by (cid:104)3(cid:105)1, (cid:104)4(cid:105)1, (cid:104)4(cid:105)4, (cid:104)4(cid:105)5 def KnowsSafeAt
+(cid:104)3(cid:105)6. qed
+by (cid:104)2(cid:105)6, (cid:104)3(cid:105)1, (cid:104)3(cid:105)2, (cid:104)3(cid:105)3, (cid:104)3(cid:105)4, Zenon
+def LearnsSent, P!Phase1c, P!TLANext, Ballot, P!Ballot, PmaxBal, 1bOr2bMsgs
+(cid:104)2(cid:105)7. assume new self ∈ Ballot,
+Phase1a(self)
+prove P!TLANext ∨P!vars(cid:48) =P!vars
+(cid:104)3(cid:105)1. msgs(cid:48) =msgs ∪{[type (cid:55)→“1a”, bal (cid:55)→self]}
+by (cid:104)2(cid:105)7, MsgsLemma def Inv
+(cid:104)3(cid:105)2. unchanged (cid:104)PmaxBal, maxVBal, maxVVal(cid:105)
+by (cid:104)2(cid:105)7, Isa def Phase1a, PmaxBal, 1bOr2bMsgs
+(cid:104)3(cid:105).qed
+by (cid:104)3(cid:105)1, (cid:104)3(cid:105)2 def P!Phase1a, P!TLANext, Ballot, P!Ballot
+(cid:104)2(cid:105)8. assume new self ∈ Ballot,
+Phase1c(self)
+prove P!TLANext ∨P!vars(cid:48) =P!vars
+(cid:104)3(cid:105)1. pick SS ∈ subset [type :{“1c”}, bal :{self}, val :Value]:
+∧∀m ∈ SS :∃a ∈ Acceptor :KnowsSafeAt(a, m.bal, m.val)
+∧msgs(cid:48) =msgs ∪SS
+by (cid:104)2(cid:105)8, MsgsLemma def Inv
+(cid:104)3(cid:105) define S =∆ {m.val :m ∈ SS}
+(cid:104)3(cid:105)2. SS ={[type (cid:55)→“1c”, bal (cid:55)→self, val (cid:55)→v]:v ∈ S}
+obvious
+(cid:104)3(cid:105)3. assume new v ∈ S
+prove ∃Q ∈ Quorum :P!ShowsSafeAt(Q, self, v)
+(cid:104)4(cid:105) define m =∆ [type (cid:55)→“1c”, bal (cid:55)→self, val (cid:55)→v]
+(cid:104)4(cid:105)1. pick a ∈ Acceptor :KnowsSafeAt(a, self, v)
+by (cid:104)3(cid:105)1
+(cid:104)4(cid:105) define SK =∆ {mm ∈ knowsSent[a]:mm.bal =self}
+(cid:104)4(cid:105)2. assume new BQ ∈ ByzQuorum,
+39
+∀ac ∈ BQ :∃mm ∈ SK :mm.acc =ac
+prove P!ShowsSafeAt(BQ ∩Acceptor, self, v)!1!1
+(cid:104)5(cid:105) define Q =∆ BQ ∩Acceptor
+Q1b =∆ {mm ∈ P!sentMsgs(“1b”, self):mm.acc ∈ Q}
+(cid:104)5(cid:105) suffices assume new ac ∈ BQ ∩Acceptor
+prove ∃mm ∈ Q1b :mm.acc =ac
+obvious
+(cid:104)5(cid:105)1. pick mm ∈ SK :mm.acc =ac
+by (cid:104)4(cid:105)2
+(cid:104)5(cid:105)2.∧1bRestrict(mm) ∈ P!sentMsgs(“1b”, self)
+∧1bRestrict(mm).acc =ac
+by (cid:104)5(cid:105)1 def acceptorMsgsOfType, msgsOfType, 1bmsgs, msgs, Inv, knowsSentInv,
+1bRestrict, P!sentMsgs
+(cid:104)5(cid:105).qed
+by (cid:104)5(cid:105)2
+(cid:104)4(cid:105)3.case KnowsSafeAt(a, self, v)!1!1
+(cid:104)5(cid:105)1. pick BQ ∈ ByzQuorum :
+∀ac ∈ BQ :∃mm ∈ SK : ∧mm.acc =ac
+∧mm.mbal = −1
+by (cid:104)4(cid:105)3
+(cid:104)5(cid:105) define Q =∆ BQ ∩Acceptor
+Q1b =∆ {mm ∈ P!sentMsgs(“1b”, self):mm.acc ∈ Q}
+(cid:104)5(cid:105)2. P!ShowsSafeAt(Q, self, v)!1!1
+by (cid:104)5(cid:105)1, (cid:104)4(cid:105)2
+(cid:104)5(cid:105)3. assume new mm ∈ Q1b
+prove mm.mbal = −1
+by (cid:104)5(cid:105)1, MsgsTypeLemma
+def P!sentMsgs, 1bmsgs, acceptorMsgsOfType, msgsOfType, 1bRestrict,
+Inv, knowsSentInv, 1bInv2, 1bRestrict
+(cid:104)5(cid:105).qed
+by (cid:104)5(cid:105)2, (cid:104)5(cid:105)3, Zenon def P!ShowsSafeAt, Quorum
+(cid:104)4(cid:105)4.case KnowsSafeAt(a, self, v)!1!2
+(cid:104)5(cid:105)1. pick c ∈ 0..(self −1):KnowsSafeAt(a, self, v)!1!2!(c)
+by (cid:104)4(cid:105)4
+(cid:104)5(cid:105)2. pick BQ ∈ ByzQuorum :KnowsSafeAt(a, self, v)!1!2!(c)!1!(BQ)
+by (cid:104)5(cid:105)1
+(cid:104)5(cid:105) define Q =∆ BQ ∩Acceptor
+Q1b =∆ {mm ∈ P!sentMsgs(“1b”, self):mm.acc ∈ Q}
+(cid:104)5(cid:105)3. P!ShowsSafeAt(Q, self, v)!1!1
+by (cid:104)5(cid:105)2, (cid:104)4(cid:105)2
+(cid:104)5(cid:105)4. pick WQ ∈ WeakQuorum :KnowsSafeAt(a, self, v)!1!2!(c)!2!(WQ)
+by (cid:104)5(cid:105)1
+(cid:104)5(cid:105)5. pick ac ∈ WQ ∩Acceptor :
+KnowsSafeAt(a, self, v)!1!2!(c)!2!(WQ)!(ac)
+by (cid:104)5(cid:105)4, BQA
+40
+(cid:104)5(cid:105)6. pick mk ∈ SK : ∧mk.acc =ac
+∧∃r ∈ mk.m2av : ∧r.bal ≥c
+∧r.val =v
+by (cid:104)5(cid:105)5
+(cid:104)5(cid:105)7. pick r ∈ mk.m2av : ∧r.bal ≥c
+∧r.val =v
+by (cid:104)5(cid:105)6
+(cid:104)5(cid:105) define mc =∆ [type (cid:55)→“1c”, bal (cid:55)→r.bal, val (cid:55)→v]
+(cid:104)5(cid:105)9. mc ∈ msgs
+by (cid:104)5(cid:105)6, (cid:104)5(cid:105)7 def Inv, 1bInv1, knowsSentInv, msgsOfType
+(cid:104)5(cid:105)10. assume new mq ∈ Q1b
+prove ∧mc.bal ≥mq.mbal
+∧(mc.bal =mq.mbal)⇒(mq.mval =v)
+by (cid:104)5(cid:105)2, (cid:104)5(cid:105)7, MsgsTypeLemma, BMessageLemma
+def P!sentMsgs, 1bmsgs, acceptorMsgsOfType, msgsOfType, 1bRestrict,
+Inv, TypeOK, 1bInv2, knowsSentInv, 1bMessage, Ballot
+(cid:104)5(cid:105)11. qed
+(cid:104)6(cid:105) Q ∈ Quorum
+by def Quorum
+(cid:104)6(cid:105) witness Q ∈ Quorum
+(cid:104)6(cid:105) qed
+by (cid:104)5(cid:105)3, (cid:104)5(cid:105)9, (cid:104)5(cid:105)10 def P!ShowsSafeAt
+(cid:104)4(cid:105)5. qed
+by (cid:104)4(cid:105)1, (cid:104)4(cid:105)3, (cid:104)4(cid:105)4 def KnowsSafeAt
+(cid:104)3(cid:105).qed
+by (cid:104)2(cid:105)8, (cid:104)3(cid:105)1, (cid:104)3(cid:105)2, (cid:104)3(cid:105)3, Zenon
+def P!Phase1c, Phase1c, PmaxBal, 1bOr2bMsgs, P!TLANext, Ballot, P!Ballot
+(cid:104)2(cid:105)9. assume new self ∈ FakeAcceptor,
+FakingAcceptor(self)
+prove P!TLANext ∨P!vars(cid:48) =P!vars
+(cid:104)3(cid:105)1. msgs(cid:48) =msgs
+by (cid:104)2(cid:105)9, MsgsLemma def Inv
+(cid:104)3(cid:105)2. PmaxBal(cid:48) =PmaxBal
+by (cid:104)2(cid:105)9, BQA, Zenon def FakingAcceptor, PmaxBal, 1bOr2bMsgs
+(cid:104)3(cid:105).qed
+by (cid:104)2(cid:105)9, (cid:104)3(cid:105)1, (cid:104)3(cid:105)2 def P!vars, FakingAcceptor
+(cid:104)2(cid:105)10. qed
+by (cid:104)2(cid:105)3, (cid:104)2(cid:105)4, (cid:104)2(cid:105)5, (cid:104)2(cid:105)6, (cid:104)2(cid:105)7, (cid:104)2(cid:105)8, (cid:104)2(cid:105)9, NextDef
+(cid:104)1(cid:105)3. qed
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, Invariance, PTL def Spec, P!Spec
+To see how learning is implemented, we must describe how to determine that a value has been
+chosen. Thisisdonebythefollowingdefinitionofchosen tobethesetofchosenvalues.
+41
+chosen =∆ {v ∈ Value :∃BQ ∈ ByzQuorum, b ∈ Ballot :
+∀a ∈ BQ :∃m ∈ msgs : ∧m.type =“2b”
+∧m.acc =a
+∧m.bal =b
+∧m.val =v}
+The correctness of our definition of chosen is expressed by the following theorem, which asserts
+that if a value is in chosen , then it is also in the set chosen of the emulated execution of the
+PCon algorithm.
+ThestatefunctionchosendoesnotnecessarilyequalthecorrespondingstatefunctionofthePCon
+algorithm. Itrequiresevery(realorfake)acceptorinaByzQuorumtovotefor(send2bmessages)
+for a value v in the same ballot for v to be in chosen for the BPCon algorithm, but it requires
+only that every (real) acceptor in a Quorum vote for v in the same ballot for v to be in the set
+chosen oftheemulatedexecutionofalgorithmPCon.
+LivenessforBPCon requiresthat,undersuitableassumptions,somevalueiseventuallyinchosen
+. Sincewecan’tassumethatafakeacceptordoesanythinguseful,livenessrequirestheassumption
+thatthereisaByzQuorum composedentirelyofrealacceptors(thefirstconjunctofassumption
+BQLA).
+theorem chosen ⊆P!chosen
+by Isa def chosen, P!chosen, Quorum, Ballot, P!Ballot
+\*ModificationHistory
+\*LastmodifiedFri Jul 2417:51:34CEST 2020bymerz
+\*LastmodifiedWed Apr 1515:16:26CEST 2020bydoligez
+\*LastmodifiedMon Aug 1814:57:27CEST 2014bytomer
+\*LastmodifiedMon Mar 0417:24:05CET 2013bydoligez
+\*LastmodifiedWed Nov 3015:47:26PST 2011bylamport
+\*LastmodifiedWed Dec 0111:35:29PST 2010bylamport
+42

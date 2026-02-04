@@ -1,0 +1,407 @@
+Source: fifteen-supp.pdf
+================================================================================
+
+The Fifteen Puzzle
+A Motivating Example for
+the Alternating Group
+(Supplemental Material for
+Intro to Modern Algebra)
+Robert A. Beeler∗
+August 7, 2015
+1 Introduction
+In the infamous “Fifteen Puzzle,” numbered tiles are slid either horizontally
+or vertically into an empty slot. Folklore tells us that in 1886, puzzle master
+Sam Loyd offered a one-thousand dollar prize if anyone could swap tiles 14
+and 15 and return the other tiles to their original slots. However, Slocum’s
+book [6] argues that the puzzle is much older. Regardless of the origins of the
+puzzle, we wish to know if this is possible. Fortunately, the tools of modern
+algebra will help us to unravel this puzzle. Our treatment of the puzzle will
+follow many of the articles written on this puzzle such as [1, 4, 5, 7].
+1 2 3 4 1 2 3 4
+5 6 7 8 ? 5 6 7 8
+9 10 11 12 → 9 10 11 12
+13 14 15 13 15 14
+∗Department of Mathematics andStatistics, EastTennessee State University,Johnson
+City, TN 37614-1700USA email: beelerr@etsu.edu
+1
+2
+2 Results about Permutations from Modern
+Algebra
+Recall that a permutation on a (finite) set S is a bijection that maps S to
+itself. Typically, we think of a permutation as a function that rearranges or
+shuffles the elements of S. Thus, any possible (or impossible) state of the
+FifteenPuzzleissimplyapermutationofthetiles. Withoutlossofgenerality,
+we can assume that any permutation on the tiles returns the “blank” tile to
+the lower right corner. As usual, we can represent any state of the Fifteen
+Puzzle using our “two-line notation” for permutations. In this case, we can
+use the top line or the array to represent the “slot” and the second line of
+the array to represent the tile currently occupying the slot. For example,
+11 14 10 6
+9 4 12 5
+15 8 3 13
+2 1 7
+can be represented as
+1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+.
+(cid:18) 11 14 10 6 9 4 12 5 15 8 3 13 2 1 7 (cid:19)
+Remark 2.1 Thereare two mainconventionsformmultiplying permutation.
+Some authors such as Herstein [3] multiply permutations from left to right.
+Others such as Fraleigh [2] multiply permutations from right to left. For
+consistency, we will adopt the convention used in Fraleigh.
+Recall that every permutation can represented as a product of disjoint
+cycles. Note that these disjoint cycles can be written in any order as disjoint
+cycles commute. So the above permutation can represented more compactly
+using the orbits (or cycles) of the elements. By convention, algebraists typ-
+ically omit any point that is mapped to itself (i.e., we omit the fixed points
+of the permutation). In our example, slot 1 now has tile 11. Slot 11 now has
+tile 3. Likewise, slot 3 now has tile 10, and so on. This gives us the cycle
+notation for the above permutation:
+(1,11,3,10,8,5,9,15,7,12,13,2,14)(4,6).
+3
+Recall that a transposition is a 2-cycle. Further, we can write any cycle as
+product of transpositions. For example,
+(1,2,3,4,5) = (1,5)(1,4)(1,3)(1,2).
+In particular, the permutation in our example can be written as
+(1,11,3,10,8,5,9,15,7,12,13,2,14)(4,6)=
+(1,14)(1,2)(1,13)(1,12)(1,7)(1,15)(1,9)(1,5)(1,8)(1,10)(1,3)(1,11)(4,6).
+In this case, our permutation has been written as a product of thirteen trans-
+positions. Likewise, thepermutation thatflips tiles14and15while returning
+all other tiles to their original positions can be written as (14,15), which is
+a single transposition.
+Any permutation can be written as either
+(i) A product of an even number of transpositions or
+(ii) A product of an odd number of transpositions.
+Notethatno permutationcanbewrittenasboth aproductofanevennumber
+of transpositions and a product of an odd number of transpositions.
+Recall that the set of all permutations onn symbols is the nth Symmetric
+group, denoted S . Clearly, the set of permutations on the tiles of the Fifteen
+n
+Puzzle is a subgroup of S . Whereas the subgroup of S consisting of only
+15 n
+the even permutations is known as the Alternating group on n symbols. The
+nth Alternating group is denoted A .
+n
+Note that the permutation (14,15) is an odd permutation. Hence, if we
+can show that the group of permutations on the tiles of the Fifteen Puzzle
+is a subgroup of the Alternating group, then swapping those tiles as Loyd
+described is impossible.
+Consider the set of permutations in which the blank tile is returned to
+its original position. In particular, look at paths that start and end with the
+blank tile in the bottom right corner. One such circuitous path is as follows:
+4
+Observe that in this circuit:
+(i) For every up, there is a down.
+(ii) For every left, there is a right.
+Thus, we must have an even number of transpositions. Thus the next
+proposition follows immediately.
+Proposition 2.2 The set of permutations on the tiles of the Fifteen Puzzle
+that return the blank tile to the bottom right corner is a subgroup of the
+Alternating group, A .
+15
+Hence, swapping tiles 14 and 15 while returning all other tiles to their
+original position is impossible!
+A natural question is whether every even permutation is obtainable as
+a permutation of the tiles of the Fifteen Puzzle. In other words, is the set
+of permutations on the tiles of the Fifteen Puzzle in which the blank tile is
+returned to the bottom right corner isomorphic to A ? In order to answer
+15
+this question, we will need a few facts about the Alternating group.
+3 True facts about the Alternating group
+Recall that if S is a generating set of a group G, then every element of G
+can be written as a product of the elements of S. Typically, we think of the
+elements of S as an “alphabet.” If S is a generating set, then every element
+in G can be written as a “word,” where the letters of the word come from
+our alphabet. So, how do we generate the Alternating group?
+Proposition 3.1 The Alternating group A , n ≥ 3, is generated by the set
+n
+of 3-cycles. In other words,
+A = h(a,b,c) : a,b,c ∈ [n],a 6= b,a 6= c,b 6= ci.
+n
+Proof. Note that A ∼ = Z , so the claim clearly holds. We may then assume
+3 3
+that n ≥ 4.
+Take a,b,c,d to be distinct elements of [n]. Note that a pair of transpo-
+sitions will share at most two of these elements. We need only show how to
+5
+represent every possible pair of transpositions (up to relabeling the letters)
+can be represented as a product of three cycles. The possibilities are:
+e = (a,b)(a,b) = (a,b,c) 3,
+(a,c)(a,b) = (a,b,c),
+(a,b)(a,c) = (a,c,b),
+(a,b)(c,d) = (a,c,b)(a,c,d).
+Showing that we can get every possible 3-cycle as a permutation could
+be both difficult and time consuming. For this reason, our next proposition
+provides a more useful way of generating the Alternating group.
+Proposition 3.2 Let a and b be distinct, fixed (but arbitrary) elements of
+[n], where n ≥ 3. The Alternating group A is generated by 3-cycles of the
+n
+form (a,b,k), where k ∈ [n]−{a,b}. In other words,
+A = h(a,b,k) : k ∈ [n]−{a,b}i.
+n
+Proof. By Proposition3.1, A is generated by the set of all possible 3-cycles.
+n
+Thus, it is sufficient to show that we can represent any 3-cycle as a product
+of 3-cycles of the form (a,b,k). Note that any 3-cycle will contain at most
+two of the elements of {a,b}. For this reason, the possibilities are:
+(a,k,b) = (a,b,k) −1 = (a,b,k) 2,
+(a,c,d) = (a,b,d)(a,b,c) 2,
+(b,c,d) = (a,b,d) 2 (a,b,c),
+(c,d,e) = (a,b,c) 2 (a,b,e)(a,b,d) 2 (a,b,c)
+= (a,b,c)
+−1
+(a,b,e)(a,b,d)
+−1
+(a,b,c).
+(cid:0) (cid:1)
+In our next section, we will use these results to prove that set of permu-
+tations on the tiles of the Fifteen Puzzle is isomorphic to the Alternating
+group A .
+15
+6
+4 The Puzzle Group for the Fifteen Puzzle
+In order to show our main result, we only need to show that we can get
+the 3-cycles described in Proposition 3.2 as a permutation of the tiles of the
+Fifteen Puzzle. First we examine a permutation of the tiles in the bottom
+right corner.
+Lemma 4.1 The set of permutations of the Fifteen Puzzle contains the 3-
+cycle τ = (11,12,15).
+Proof. In its natural state, tiles in the bottom right corner are:
+11 12
+15
+Shift tile 15 to the right. This gives the following configuration:
+11 12
+15
+Shift tile 11 down. This gives the following configuration:
+12
+11 15
+Shift tile 12 left. This gives the following configuration:
+12
+11 15
+Shift tile 15 up. This gives the following configuration:
+12 15
+11
+Hence, we have obtained the permutation (11,12,15).
+For the remaining 3-cycles, we will construct a “long cycle” that leaves
+two elements (say 11 and 12) and passes through the remaining elements.
+Such a cycle would look like:
+7
+Our next lemma explicitly describes how to achieve this “long cycle.”
+Lemma 4.2 The cycle ρ = (1,2,6,7,3,4,8,15,10,14,13,9,5) is a permuta-
+tion of the tiles of the Fifteen Puzzle.
+Proof. Begin by moving 12 down, 11 right, 15 up, 12 left, and 11 down.
+The bottom right corner now has the following configuration:
+15
+11 12
+Note that at this point, all other tiles are still in their original positions.
+We now perform the “long cycle” described above as follows: move 15 right,
+10 right, 14 up, 13 right, 9 down, 5 down, 1 down, 2 left, 6 up, 7 left, 3 down,
+4 left, 8 up, and 15 up. Currently, the tiles are in the following configuration:
+2 6 4 8
+1 7 3 15
+5 14 10
+9 13 12 11
+Finally, we move 11 up, 12 right, 10 down, 11 left, and 12 up. This results
+in the following configuration:
+2 6 4 8
+1 7 3 15
+5 14 11 12
+9 13 10
+This is the permutation (1,2,6,7,3,4,8,15,10,14,13,9,5).
+Notice that if we apply ρ once, then tile 10 is in slot 15. If we apply ρ
+enough times, we can move any of the tiles in the set [15]−{11,12} into the
+8
+slot 15. For instance, if we wished to have tile 3 in slot 15, then we would
+apply ρ ten times. This action is typically represented by ρ10.
+Our goal is to show that every permutation in A is a permutation on
+15
+the tiles of the Fifteen Puzzle. To do this, we let 11 and 12 fulfill the roles
+of a and b, respectively, in Proposition 3.2. Thus, for k ∈ [15]−{11,12}, we
+need only show that the permutation (11,12,k) is a permutation of the tiles
+of the Fifteen Puzzle.
+To do this, we take advantage of the concept of conjugacy. Recall that
+elements a and b are conjugate elements in the group G if there is an element
+g ∈ G such that g−1ag = b. Our strategy will be to show that any 3-cycle
+of the form (11,12,k) is conjugate with the 3-cycle (11,12,15) (recall that
+we showed (11,12,15) is possible in Lemma 4.1). To do this, we will use ρm
+(where ρ is defined in Lemma 4.2) to position our target tile k in slot 15. We
+then apply the permutation (11,12,15) to rotate tiles 11, 12, and the target.
+Finally, we apply the permutation
+ρ−m
+to return all tiles except 11, 12, and
+k to their original positions.
+For example, to obtain the permutation (11,12,8) = (8,11,12), we will
+apply ρ, then τ, and finally ρ−1. This can be represented symbolically as
+ρ
+−1τρ
+=
+(1,2,6,7,3,4,8,15,10,14,13,9,5)
+−1
+(11,12,15)(1,2,6,7,3,4,8,15,10,14,13,9,5)
+= (1,5,9,13,14,10,15,8,4,3,7,6,2)(11,12,15)(1,2,6,7,3,4,8,15,10,14,13,9,5)
+= (8,11,12).
+Theorem 4.3 The set of permutations on the tiles of the Fifteen Puzzle is
+isomorphic to A , the Alternating group on 15 symbols.
+15
+Proof. By Lemma 4.1 and Lemma 4.2, the permutations τ = (11,12,15)
+and ρ = (1,2,6,7,3,4,8,15,10,14,13,9,5) are permutations of the tiles of
+the Fifteen Puzzle. Suppose that m is the smallest positive integer such that
+ρm maps tile k to slot 15. We first apply ρm in order to position tile k in slot
+15. We then apply τ to rotate tiles 11, 12, and 15. We then apply ρ−m to
+return all tiles (except 11, 12, and k to their original positions). This results
+in the permutation (11,12,k). Since k is arbitrary, we can generate A by
+15
+Proposition 3.2.
+In our next section, we consider a generalization of the Fifteen Puzzle in
+which there are n rows and m columns.
+9
+5 Generalizations of the Fifteen Puzzle
+Supposethatwehaveaslidingtilepuzzleinanbymrectangulargrid. Again,
+there is one empty slot and the tiles can move horizontally or vertically. Let
+P denote the group of permutations on the tiles of this puzzle. Using the
+n,m
+same argument as in Proposition 2.2, the following proposition is immediate.
+Proposition 5.1 The group P is a subgroup of the Alternating group
+n,m
+A nm−1 .
+Note that in its original configuration, the tile in the ith row and jth
+column is (i−1)n+j. Note that we can get a specific 3-cycle (nm−m−
+1,nm−m,nm−1) using the same argument as in Lemma 4.1.
+Lemma 5.2 The group P(n,m) contains the 3-cycle (nm − m − 1,nm −
+m,nm−1).
+Proof. Move nm−1 right, nm−m−1 down, nm−m left, and nm−1 up.
+Lemma 5.3 Ifmis even, then P n,m containsthe cycleσ = (nm−1,a 1 ,...,a nm−4 ),
+where {a 1 ,...,a nm−4 } = [nm−1]−{nm−m−1,nm−m,nm−1}.
+Proof.
+Note that we can rotate the elements nm − m − 1,nm − m,nm − 1 so
+that nm−1 is in slot nm−m−1 and the blank tile is in slot nm−m as
+in Lemma 4.2. It suffices to give a “long cycle” that passes through each tile
+(other than nm−m−1 and nm−m) exactly once. Once such cycle is given
+below:
+10
+We then rotate the three tiles in the bottom right corner so that tiles
+nm − m − 1 and nm − m have been returned to their original position.
+Lemma 5.4 If m is even, then P contains the 3-cycle (nm−m−1,nm−
+n,m
+m,a ), where a ∈ [nm−1]−{nm−m−1,nm−m}.
+k k
+Proof. By Lemma 5.2 and Lemma 5.3 the permutations (nm−m−1,nm−
+m,nm−1) and σ = (nm−1,a 1 ,...,a nm−4 ), where {a 1 ,...,a nm−4 } = [nm−
+1]−{nm−m−1,nm−m,nm−1}. Note that σk maps tile a to slot nm−1.
+k
+Thus,
+(nm−m−1,nm−m,a ) = σ
+−k(nm−m−1,nm−m,nm−1)σk.
+k
+Lemma 5.4 in fact proves that when m is even, P n,m ∼ = A nm−1 . To prove
+the case when n and m are both odd, we would hope to find a “long cycle”
+such as in Lemma 5.3. Unfortunately, such a “long cycle”is impossible when
+n and m are both odd, as will be discussed in the next section. However, we
+can again use the idea of conjugacy to get the remaining cases.
+Theorem 5.5 The puzzle group P is isomorphic to the isomorphic to the
+n,m
+Alternating group, A nm−1 .
+Proof. If n or m is even, then the result follows from Proposition 3.2 and
+Lemma 5.4. Thus, we may assume that n and m are both odd.
+Consider the tiles in columns 2,...,m. Since the number of columns in
+this subgrid is even, every permutation of the form (nm−m−1,nm−m,k),
+where k 6= 1 (mod m) is possible. In particular, the permutation (nm−m−
+1,nm−m,2) is possible.
+Slide the tiles nm−1, nm−2,...,nm−m+2 to the right. Notice that the
+blanktileisnowinslotnm−m+2. Moreover, thefirst twocolumnsnowform
+a P . Thus, we can get every 3-cycle on these tiles by the above arguments.
+n,2
+In particular, we can get every permutation of the form (2,2+m,1+km),
+where 0 ≤ k ≤ n−1. Now,
+(nm−m−1,nm−m,1+km) =
+11
+(2,2+m,1+km)
+−1
+(nm−m−1,nm−m,2)(2,2+m,1+km)
+= (2,1+km,2+m)(nm−m−1,nm−m,2)(2,2+m,1+km).
+Again, this allows us to generate the Alternating group A nm−1 by Propo-
+sition 3.2.
+6 Hamilton Cycles and Bipartite Graphs
+In the previous section, we made note of the fact that it was impossible to
+create a “long cycle” on the n by m grid, when n and m are bothodd. In this
+section, we prove this. To do this, we will need a few elementary concepts
+from graph theory. For a more comprehensive introduction to graph theory,
+refer to West [8].
+If you have taken graph theory course, then you know that a graph is a
+collection of vertices (usually, these are visually represented as points in the
+plane) and edges between pairs of distinct vertices. If G is a graph, then
+the vertex set of G is denoted V(G). Likewise, the edge set of G is denoted
+E(G). If an edge uv is between two vertices u and v, then we say that u and
+v are adjacent.
+We now describe the rectangular play field of the Fifteen Puzzle in terms
+of graphs. Begin by assigning a vertex for each slot in the Fifteen Puzzle.
+The slot in the ith row and jth column will be associated with vertex (i,j).
+So,
+V(G) = {(i,j) : 1 ≤ i ≤ n,1 ≤ j ≤ m}.
+Two vertices (i,j),(r,s) ∈ V(G) are adjacent if and only if either
+(i) i−r = ±1 and j = s or
+(ii) i = r and j −s = ±1.
+In graph theory, such a graph on n rows and m columns is called a mesh and
+is denoted M .
+n,m
+We say that G is a bipartite graph if V(G) = X∪Y such that X∩Y = ∅
+and if xy ∈ E(G), then x ∈ X and y ∈ Y. In our next result, we show that
+all meshes are bipartite graphs. To do this, we basically place the slots in a
+“checker board” pattern.
+Proposition 6.1 The mesh M is a bipartite graph.
+n,m
+12
+Proof. We need only assign vertices to the sets X and Y. We assign vertex
+(i,j) to set X if i+j is even. Likewise, if i+j is odd, we assign (i,j) to set
+Y. Suppose that (i,j),(r,s) ∈ X. Since i+j and r +s are both even then
+either |i− r| ≥ 2 or |j −s| ≥ 2. In either case, the two vertices cannot be
+adjacent. A similar argument holds if both vertices are in Y.
+In graphtheory, these “long cycles” are often described in terms of hamil-
+ton cycles. A hamilton cycle on a graph is a cycle that passes through every
+vertex once and exactly once and returns to the original vertex. As usual,
+the edges of the hamilton cycle must be edges in the original graph. These
+cycles are named in honor of William Rowan Hamilton who developed the
+icosian game. An example of a hamilton cycle is given on the icosian game
+below.
+In the last section, we gave a partial result on the existence of a hamilton
+cycle on the mesh M , where at least one of n or m is even.
+n,m
+Proposition 6.2 Suppose m is even. The mesh M has a hamilton cycle.
+n,m
+Proof. Since m is even, we write it as m = 2t. We use a “saw tooth” pattern
+as in the previous section. The explicit pattern is to start at (2,1):
+(i) For i = 1,...,t, traverse (j,2i − 1), where j = 2,...,n, then traverse
+(n−p+2,2i), where p = 2,...,n.
+(ii) Next, traverse (1,2t−q +1), where q = 1,...,2t.
+(iii) Finally, return to (2,1).
+13
+We finally, show our main result for this section. Namely, we show that if
+n and m are both odd, then M has no hamilton cycle. Actually, we show
+n,m
+a more general result regarding bipartite graphs.
+Proposition 6.3 Let G be a bipartite graph with V(G) = X ∪Y. If |X| =6
+|Y|, then G has no hamilton cycle.
+Proof. Any hamilton cycle on a bipartite graph must alternate between
+vertices in X and vertices in Y. Since |X| =6 |Y|, this is impossible.
+In particular, using the “checker board” pattern described in Proposition
+6.1 on M results in |X| = 2nm+n+m+1 and |Y| = 2nm+n+m.
+2n+1,2m+1
+Hence, there is no hamilton cycle on M .
+2n+1,2m+1
+References
+[1] Aaron F. Archer. A modern treatment of the 15 puzzle. Amer. Math.
+Monthly, 106(9):793–799, 1999.
+[2] John B. Fraleigh. A first course in abstract algebra. Addison-Wesley
+Publishing Co., Reading, Mass.-London-Don Mills, Ont., 1967.
+[3] I. N. Herstein. Topics in algebra. Blaisdell Publishing Co. Ginn and Co.
+New York-Toronto-London, 1964.
+[4] Hans Liebeck. Some Generalizations of the 14-15 Puzzle. Math. Mag.,
+44(4):185–189, 1971.
+[5] Joseph Newmark. An overview of the fifteen puzzle using the ancient
+Chinese concept of pairing. Internat. J. Math. Ed. Sci. Tech., 19(5):711–
+717, 1988.
+[6] Jerry Slocum and Dic Sonneveld. The 15 Puzzle. Slocum Puzzle Foun-
+dation, Beverley Hills, CA, 2006.
+[7] Edward L. Spitznagel, Jr. A New Look at the Fifteen Puzzle. Math.
+Mag., 40(4):171–174, 1967.
+[8] Douglas B. West. Introduction to graph theory. Prentice Hall Inc., Upper
+Saddle River, NJ, 1996.

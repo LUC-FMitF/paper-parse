@@ -1,0 +1,215 @@
+Source: KeithArticle2011.pdf
+================================================================================
+
+VINTAGE PLASTIC SLIDING-LETTER PUZZLES
+Mike Keith
+Furlong, PA
+One artifact from my childhood in the 1960’s that I still remember vividly is the series of plastic sliding-
+block puzzles manufactured by The Roalex Company of Forest Hills, NY (no relation to the maker of fine
+timepieces). These consisted of a high-quality plastic puzzle glued to a piece of cardboard containing
+information about the puzzle. Most of their sixty or so
+different designs were based on cartoons or TV shows of
+the time, such as The Flintstones or The Honeymooners,
+and typically consist of a single drawing spread over all
+the tiles, or illustrations of four characters from the
+show, one in each column. Usually the picture on each
+tile is different, which means that, just like the Fifteen
+Puzzle, only half of the possible permutations of the tiles
+can actually be reached by sliding the tiles.
+As a budding logophile, the most interesting Roalex
+puzzle to me was the one called “Ro-Let” shown in the
+image to the right. Its design is quite inspired. Not only
+is the message spelled out by the letters a self-referential
+advertisement but it is composed from fifteen different
+letters. Therefore, this puzzle also obeys the parity
+principle of the Fifteen Puzzle, with only half of the anagrams of its letters being attainable by sliding the
+tiles. (If a sliding-letter puzzle has even a single pair of identical letters (say, two As) then all anagrams of
+its letters become possible. The half that would normally be impossible become possible if you simply
+interchange the two A’s.)
+My best friend Jim Tilson and I spent many hours - nay, days and months - playing with the Ro-Let, usually
+with the goal of finding interesting alternative things for it to say. We filled numerous pages in one of those
+black-and-white-speckled “composition books” with our creations. In retrospect, most of our efforts were
+not very good, but some have stood the test of time fairly well:
+YAMS GROW BUT HIDE BUD GOES WITH ARMY
+WHAT GUYS BID MORE? WEB HUGS MIRY TOAD
+RUBY SAID, “GET WHOM?” BUY GAME WITH RODS
+MUG WITH BOYS, DEAR BOY AGES WITH DRUM
+GUY’S WORM BIT HEAD AID THEM...GROW BUSY
+One can drop the requirement to be a full sentence, which leads to phrases such as
+DEAR BOYS WITH GUM TWO HUGE ARMY BIDS
+GOD WITH BUSY MARE DAY-TIME GRUB SHOW
+with the last one conjuring visions of an imaginary television cookery program. After much exploration of
+the 4,4,4,3 form and its permutations we eventually branched out to others, such as 8,4,3 or 7,4,3, where the
+long word is formed by two adjacent lines of tiles:
+WOE, SMUG BIRTHDAY! BAG DEWY HUMORIST
+WIDE HAMBURG TOYS DUMB WEIGHTY OARS
+How can you tell, without actually sliding the tiles, if a given phrase can be formed or not? Here is a simple
+method. Write BUYTHISWORDGAME and then, below that, the letters of your proposed phrase; we’ll use
+as an example BUY THIS AGED WORM. Then repeat the following procedure until you have visited all
+the letters in both rows.
+1. Pick a letter in the top row that has not been visited yet
+2. Draw a line from the letter you’re at to the letter below it.
+3. Draw a line from the letter you’re at to the same letter on the top row.
+For instance, if you’re at the “A” on the bottom row, continue to the “A” on the top row.
+4. Repeat steps 2 and 3 until you arrive back at the letter you started at in step 1.
+For this target phrase the end result is the following diagram:
+Let p be the number of separate paths in the diagram. In this example there are two long paths (numbered 1
+and 2), the degenerate path numbered 3, and seven more degenerate paths using the letters BUYTHIS, for a
+total of p = 10. Let r be the row number of the 4x4 grid that contains the empty space, with the rows
+numbered 1,2,3,4 from top to bottom. In this example r = 1, since the blank space goes with the word BUY.
+Now for the rule: a given arrangement of the tiles can be achieved if and only if p+r is an even number. In
+this case p = 10, r = 1, and p+r = 11, so it is impossible.
+A corollary of the above rule is this well-known fact: starting from a given arrangement in a sliding-block
+puzzle it is impossible to interchange a single pair of tiles while leaving all the others, and the empty space,
+fixed. If the empty space does not move then the reachable positions are precisely those in which an even
+number of pairs of tiles are interchanged.
+Before moving on to the next puzzle of this kind, a little story. Once upon a time, in that far-off Analog Age,
+there was a large printing company. On the upper floors of their building employees could be found setting
+type for books and the like, but the real action (so some said) occurred in the basement, where the actual
+pieces of type were manufactured, sorted, and readied for action. When someone upstairs had need of more
+letters, or a specialized symbol, they would send down a request. The people “down there” were too busy, or
+too proud, to deign to deliver the requested bits of type in person; instead, a massive system of small
+elevators in the walls (dumbwaiters) was used to transport the items. Different departments
+upstairs were served by different dumbwaiters, which came to be known by the kinds of type
+they generally carried: the Latin Dumbwaiters, Arabic Dumbwaiters, and so forth. Sometimes
+their names were a bit more whimsical - for example, the ones that carried Greek letters were
+universally known as the Upsilon Dumbwaiters. But most special of all were the two in the
+southwest corner of the building, used exclusively for those setting manuscripts in Middle
+English, who had frequent need for various obsolete characters such as thorn, eth, yogh, or wyn
+(see picture at right). These were, appropriately, called the
+YOGH DUMBWAITERS
+And so ends our somewhat shaggy story, with an inevitable postscript noting that this phrase is one which
+can be formed with the Ro-Let tiles. Not only does it contain an 11-letter word, but that word breaks
+naturally between its three lines (DUMB - WAIT - ERS).
+Another manufacturer of sliding-tile puzzles in the 1960’s was a Brooklyn, NY company called Plastrix
+(sometimes written Plas-Trix). Their answer to BUY THIS WORD GAME is shown in the picture here.
+The top two and bottom two rows of tiles are different colors, which leads to a neat
+puzzle: slide the tiles so that the colors remain the same and it spells RATE YOUR
+MIND LAP - a feat that involves swapping just a single pair of letters and so should
+be impossible. Of course there are two A’s in the puzzle, but they cannot be switched
+since they have different colors. The key is that there are two R’s of the same color,
+which can be switched along with L/A to achieve the goal. Because of the duplicate
+letters it is possible to form any desired anagram by sliding the tiles in this puzzle.
+Just like with the Ro-Let, these letters can make many other sentences (RATE OUR MIND PLAY, PART
+LOUD AIRY MEN, PLAN OUR ARMY DIET, etc.) but since there are a few repeated letters to work with,
+a harder challenge suggests itself: find an arrangement with a word in every row and column. No such
+arrangement is possible with BUY THIS WORD GAME using words in Webster’s 3rd Unabridged, but a few
+dozen can be fashioned from RATE YOUR MIND PAL even with the smaller TWL06 North American
+Scrabble word list. Here are some of them:
+A bigger and richer puzzle made by Roalex, called “Scribe-O”, is shown in the picture below. It is an 8x4
+grid containing 26 letters, 5 blank red-colored tiles, and the empty space. Each letter also has a point value
+assigned, as follows: A=1, C=4, D=4, E=1, G=3, H=4, I=2, L=5, M=7, N=3, O=2, P=8, R=3, S=3, T=6, U=3,
+Y=9. I do not know how the tiles were
+arranged when Scribe-O was originally
+sold, but my guess is that it was probably
+just a collection of words like the diagram
+on the lower right of the card. The design
+shown in the picture is mine, consisting of
+5x4 and a 2x3 rectangles with valid
+Scrabble words in all the rows and
+columns.
+The instructions on the card suggest two
+modes of play: (1) Form words in the rows
+and add up the points for the letters used,
+and (2) Form words crossword style as in
+the picture on the lower left of the card,
+summing the points for the letters in the
+horizontal words and the letters in the
+vertical words.
+The first game is too easy, as it’s a simple matter to find a set of words that uses all the letters, thus achieving
+the maximum possible score of 97. In fact, it’s quite easy to do it with only four words (one per line) and
+with any possible set of word lengths. Here is an example for each word-length allocation:
+8 8 8 2 MAHOGANY CASUALTY POWDERED IN
+8 8 7 3 HOLIDAYS GRADUATE COMPANY NEW
+8 8 6 4 SHOUTING COMPARED ANYWAY DEAL
+8 8 5 5 PURCHASE DELAYING TODAY WOMAN
+8 7 7 4 EMPLOYED AUTHORS DANCING AWAY
+8 7 6 5 HARMONIC GATEWAY PLAYED SOUND
+8 6 6 6 CHAMPION ARGUED OLDEST ANYWAY
+7 7 7 5 TUESDAY HOLDING COMPANY AWARE
+7 7 6 6 ANIMALS DOORWAY CHANGE DEPUTY
+It’s even possible to do it with three words, using a 16-letter word spanning two adjacent lines:
+16 5 5 NONATMOSPHERICAL GAUDY YAWED
+16 6 4 PACHYDERMATOUSLY ANGINA OWED
+The crossword mode of play is more interesting. Is the maximum score of 97 x 2 = 194 possible? To
+achieve this requires every letter to appear in both a horizontal word and a vertical word, which is equivalent
+to there being, in crossword terminology, no unchecked letters (which, in turn, is equivalent to saying that
+every horizontal and vertical word has at least two letters). To attack this problem I first determined all
+possible ways to place the six blanks such that there are no unchecked letters. There are 3764 different ways
+to do this, and a spot check of a few of them leads to an estimate of a total of tens of thousands of solutions!
+For example, this configuration of the blank tiles
+leads to 1052 solutions all by itself (note: from here on all statements like this apply to the TWL06 Scrabble
+word list). The huge number of optimal crosswords suggests another question: it is possible to achieve a
+score of 194 without using any two-letter words (as is required in New York Times puzzles)? Only 52 of the
+3764 blanks configurations satisfy this requirement, and it is not too hard to exhaustively search them all for
+solutions using a computer program. I found a total of 69 solutions of this kind; here are eight of the best:
+The last one of these is remarkable since the letter grid fits within a 7x4 sub-rectangle (and is the only grid
+with words of ≥3 letters to do so). This suggests another puzzle: if two-letter words are allowed, how many
+grids scoring 194 are there that fit in a 7x4? The answer is 80; a few of the best are shown below. The one
+on the right is surely one of the most elegant Scribe-O crosswords, as (a) it fits within a 7x4, (b) the 7x4 grid
+has horizontal symmetry, and (c) it is composed entirely of common words.
+Plastrix made a somewhat similar product called “The Cornell Crossword”, shown in the picture here. It
+consists of 25 letters, two blank tiles, and the empty space in a 4x7 grid. The instructions on the left side of
+the card are:
+When the jumbled letters are properly rearranged
+they will form words both across and down as in a
+regular crossword puzzle.
+However there are no hints as to what the words
+are or where they go. [...] The two red chips and the
+vacant space indicate spaces between words. These
+also must be properly placed to complete the puzzle.
+For solution send self-addressed and stamped
+envelope to...
+This suggests that there should be a single solution
+(“When the jumbled letters are properly arranged”,
+“For [presumably unique] solution send...”, etc.).
+But on the right side of the card it says:
+ONE SOLUTION ONLY!
+The first Word Down is PILGRIM
+HINT: The vacant space and the two red chips
+go here.
+Does this mean there is only one solution with those
+extra constraints, or that there is only one solution,
+period, and it just happens to have PILGRIM in the first column and the three blanks as shown? It’s not
+clear, especially in light of what I discovered when I searched for solutions.
+If unchecked letters are allowed (which obviously they are, as the example grid for PILGRIM has three) then
+there are thousands of solutions if the blanks can be placed anywhere and the first column does not have to
+spell PILGRIM. There are even 50 solutions with no unchecked letters; here are some of the best:
+Putting the three blanks in the locations shown on the card, and forcing PILGRIM in the first column, using
+the TWL06 word list I find...no solutions. Expanding the word list by including all 2-, 3-, and 4-letters from
+Web3 leads to a handful of solutions - none of them particularly satisfying. Here is the (arguably) best one:
+This uses five words not in TWL06 but in Web3: ILA (a people and language of northern Rhodesia), GER (a
+Hebrew-derived word for “foreigner”), IO (interjection), ITER (a Roman road) and ORA (an ancient British
+currency). Could this really be the intended solution? It seems doubtful. But any solution must have
+employed some uncommon words or proper names, as there seems to be no arrangement of the tiles using
+everyday words that fits this particular grid and has PILGRIM in the first column. We leave this as a
+conundrum for readers to ponder.
+Our final sliding-letter puzzle, made by Roalex, was called Lingo, and is rather spectacular in size:
+I’ve never seen an actual Lingo and this is the only picture of one available on the entire Internet. Again, I
+do not know what the original tile arrangement was but I assume it was a series of short words (what the
+diagrams at the bottom of the card show, though this picture isn’t detailed enough to read the words). Lingo
+has 45 letters, 11 empty tiles, and the empty space in a 14 x 4 = 56-tile grid.
+It’s unfortunate that the letter distribution is lousy (only one E, no U’s, not enough H’s, too many M’s, etc),
+but even so, there’s enough to do with a Lingo to keep one busy for a very long time. One obvious challenge
+is to make just four words from the tiles, one per line:
+If we allow more and shorter words then the number of possibilities becomes large enough to suggest a
+writing challenge reminiscent of those propounded by the Oulipo: write a text in which each successive
+chunk of 45 letters can be spelled out on the Lingo puzzle, with every word contained wholly within a line.
+Here is a very short story using this rule:
+A pagan cowboy strolls amidst the rambling food
+camps. From plains he gambols idly past catacombs
+toward Nog, the domain of symbolic pomp, sallow cats,
+and braggarts.
+A strong woman soberly climbs to a damp, sad cap of
+light. The two calmly pass, disrobing, as from old pagan
+combat: bawdy, clasping, a scandal of the top trim. Orgasms
+bloom.
+with the grids for the first three sets shown below.
+Fashioning a crossword grid with Lingo is a challenging problem even if two-letter words and unchecked
+letters are allowed, primarily because of the paucity of vowels - the Lingo letter set has just 33% vowels,
+compared to 40% for Ro-Let and 46% for Scribe-O and “Rate Your Mind Pal”, while a typical crossword
+grid contains 40-45% vowels. Also, the space of all Lingo crosswords is too large to search exhaustively
+even with a computer, so some shortcuts or heuristics must be employed. My best effort is shown below.
+All words are in TWL06 and it contains just one unchecked letter and one two-letter word.
+Can these values (number of unchecked letters, number of two-letter words) be reduced to (1,0) or (0,1) or
+(0,0)? This question is left as a challenge for the reader.

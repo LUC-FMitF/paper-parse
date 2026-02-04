@@ -1,0 +1,211 @@
+Source: Consensus.pdf
+================================================================================
+
+module Consensus
+Theconsensusproblemrequiresasetofprocessestochooseasinglevalue. Thismodulespecifies
+theproblembyspecifyingexactlywhattherequirementsareforchoosingavalue.
+extends Naturals, FiniteSets, FiniteSetTheorems, TLAPS
+WelettheconstantparameterValue bethesetofallvaluesthatcanbechosen.
+constant Value
+***************************************************************************
+Wenowspecifythesafetypropertyofconsensusasatrivialalgorithmthatdescribestheallowed
+behaviorsofaconsensusalgorithm. Itusesthevariablechosen torepresentthesetofallchosen
+values. The algorithm is trivial; it allows only behaviors that contain a single state-change in
+which the variable chosen is changed from its initial value {} to the value {v} for an arbitrary
+valuev inValue. Thealgorithmitselfdoesnotspecifyanyfairnessproperties,soitalsoallowsa
+behaviorinwhichchosen isnotchanged. Wecoulduseatranslatoroptiontohavethetranslation
+include a fairness requirement, but we don’t bother because it is easy enough to add it by hand
+tothesafetyspecificationthatthetranslatorproduces.
+Arealspecificationofconsensuswouldalsoincludeadditionalvariablesandactions. Inparticular,
+itwouldhaveProposeactionsinwhichclientsproposevaluesandLearnactionsinwhichclients
+learn what value has been chosen. It would allow only a proposed value to be chosen. However,
+theinterestingpartofaconsensusalgorithmisthechoosingofasinglevalue. Wethereforerestrict
+ourattentiontothataspectofconsensusalgorithms. Inpractice,giventhealgorithmforchoosing
+avalue,itisobvioushowtoimplementtheProposeandLearnactions.
+Forconvenience,wedefinethemacroChoose()thatdescribestheactionofchangingthevalueof
+chosen from{}to{v},foranondeterministicallychosenv inthesetValue. (Thereislittlereason
+toencapsulatesuchasimpleactioninamacro; howeverourotherspecsareeasiertoreadwhen
+writtenwithsuchmacros,sowestartusingthemnow.) Thewhenstatementcanbeexecutedonly
+when its condition, chosen ={}, is true. Hence, at most one Choose() action can be performed
+in any execution. The with statement executes its body for a nondeterministically chosen v in
+Value. Execution of this statement is enabled only if Value is non-empty–something we do not
+assumeatthispointbecauseitisnotrequiredforthesafetypartofconsensus,whichissatisfied
+ifnovalueischosen.
+WeputtheChoose()actioninsideawhile statementthatloopsforever. Ofcourse,onlyasingle
+Choose()actioncanbeexecuted. ThealgorithmstopsafterexecutingaChoose()action. Techni-
+cally,thealgorithmdeadlocksafterexecutingaChoose()actionbecausecontrolisatastatement
+whoseexecutionisneverenabled. Formally,terminationissimplydeadlockthatwewanttohap-
+pen. We could just as well have omitted the while and let the algorithm terminate. However,
+addingthewhile loopmakestheTLA+representationofthealgorithmatinybitsimpler.
+--algorithm Consensus{
+variable chosen ={};
+macro Choose( ) { when chosen ={};
+with ( v ∈ Value ) { chosen :={v} } }
+{ lbl:while ( true ) { Choose() }
+}
+}
+ThePlusCal translatorwritestheTLA+translationofthisalgorithmbelow. TheformulaSpecis
+theTLA+specificationdescribedbythealgorithm’scode. Fornow,youshouldjustunderstand
+itstwosubformulasInit andNext. FormulaInit istheinitialpredicateanddescribesallpossible
+initial states of an execution. Formula Next is the next-state relation; it describes the possible
+statechanges(changesofthevaluesofvariables),whereunprimedvariablesrepresenttheirvalues
+intheoldstateandprimedvariablesrepresenttheirvaluesinthenewstate.
+1
+****************************************************************************
+****BEGINTRANSLATION
+variable chosen
+vars =∆ (cid:104)chosen(cid:105)
+Init =∆ Globalvariables
+∧chosen ={}
+Next =∆ ∧chosen ={}
+∧∃v ∈ Value :
+chosen(cid:48) ={v}
+Spec =∆ Init ∧(cid:50)[Next]
+vars
+****ENDTRANSLATION
+We now prove the safety property that at most one value is chosen. We first define the type-
+correctness invariant TypeOK, and then define Inv to be the inductive invariant that asserts
+TypeOK and that the cardinality of the set chosen is at most 1. We then prove that, in any
+behaviorsatisfyingthesafetyspecificationSpec,theinvariantInv istrueinallstates. Thismeans
+thatatmostonevalueischoseninanybehavior.
+TypeOK =∆ ∧chosen ⊆Value
+∧IsFiniteSet(chosen)
+Inv =∆ ∧TypeOK
+∧Cardinality(chosen)≤1
+We now prove that Inv is an invariant, meaning that it is true in every state in every behavior.
+Before trying to prove it, we should first use TLC to check that it is true. It’s hardly worth
+bothering to either check or prove the obvious fact that Inv is an invariant, but it’s a nice tiny
+exercise. ModelcheckingisinstantaneouswhenValue issettoanysmallfiniteset.
+Tounderstandthefollowingproof,youneedtounderstandtheformulaSpec ,whichequals
+Init∧(cid:50)[Next] vars
+where vars is the tuple (cid:104)chosen,pc(cid:105) of all variables. It is a temporal formula satisfied by a
+behavior iff the behavior starts in a state satisfying Init and such that each step (sequence of
+states)satisfies[Next] vars,whichequals
+Next∨ (vars(cid:48)=vars)
+Thus, each step satisfies either Next (so it is a step allowed by the next-state relation) or it is
+a “stuttering step” that leaves all the variables unchanged. The reason why a spec must allow
+stuttering steps will become apparent when we prove that a consensus algorithm satisfies this
+specificationofconsensus.
+ThefollowinglemmaassertsthatInv isaninductiveinvariantofthenext-stateactionNext. Itis
+thekeystepinprovingthatInv isaninvariantof(trueineverybehaviorallowedby)specification
+Spec.
+lemma InductiveInvariance =∆
+Inv ∧[Next] ⇒Inv(cid:48)
+vars
+2
+(cid:104)1(cid:105).suffices assume Inv, [Next]
+vars
+prove Inv(cid:48)
+obvious
+(cid:104)1(cid:105)1.case Next
+Inthefollowingby proof,(cid:104)1(cid:105)1denotesthecaseassumptionNext
+by (cid:104)1(cid:105)1, FS EmptySet, FS AddElement def Inv, TypeOK, Next
+(cid:104)1(cid:105)2.case vars(cid:48) =vars
+by (cid:104)1(cid:105)2 def Inv, TypeOK, vars
+(cid:104)1(cid:105)3. qed
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2 def Next
+theorem Invariance =∆ Spec ⇒(cid:50)Inv
+(cid:104)1(cid:105)1. Init ⇒Inv
+by FS EmptySet def Init, Inv, TypeOK
+(cid:104)1(cid:105)2. qed
+by PTL, (cid:104)1(cid:105)1, InductiveInvariance def Spec
+We now define LiveSpec to be the algorithm’s specification with the added fairness condition of
+weakfairnessofthenext-staterelation,whichassertsthatexecutiondoesnotstopifsomeaction
+is enabled. The temporal formula Success asserts that some value is eventually chosen. Below,
+we prove that LiveSpec implies Success This means that, in every behavior satisfying LiveSpec,
+somevalueischosen.
+LiveSpec =∆ Spec∧WF (Next)
+vars
+Success =∆ (cid:51)(chosen (cid:54)={})
+Forliveness,weneedtoassumethatthereexistsatleastonevalue.
+assume ValueNonempty =∆ Value (cid:54)={}
+TLAPS does not yet reason about enabled . Therefore, we must omit all proofs that involve
+enabled formulas. Toperformasmuchoftheproofaspossible,asmuchaspossiblewerestrict
+theuseofanenabled expressiontoastepassertingthatitequalsitsdefinition. enabled Ais
+true of a state s iff there is a state t such that the step s → t satisfies A. It follows from this
+semanticdefinitionthatENABLEDAequalstheformulaobtainedby
+1.ExpandingalldefinitionsofdefinedsymbolsinAuntilallprimesareprimingvariables.
+2.For each primed variable, replacing every instance of that primed variable by a new symbol
+(thesamesymbolforeachprimedvariable).
+3. Existentiallyquantifyingoverthosenewsymbols.
+lemma EnabledDef =∆
+TypeOK ⇒
+((enabled (cid:104)Next(cid:105) )≡(chosen ={}))
+vars
+(cid:104)1(cid:105) define E =∆
+∃chosenp :
+∧ ∧chosen ={}
+∧∃v ∈ Value :chosenp ={v}
+∧ ¬((cid:104)chosenp(cid:105)=(cid:104)chosen(cid:105))
+3
+(cid:104)1(cid:105)1. E =enabled (cid:104)Next(cid:105)
+vars
+by def Next,vars
+proof omitted
+(cid:104)1(cid:105)2. suffices assume TypeOK
+prove E =(chosen ={})
+by (cid:104)1(cid:105)1, Zenon
+(cid:104)1(cid:105)3. E =∃chosenp :E!(chosenp)!1
+by (cid:104)1(cid:105)2, Isa def TypeOK
+(cid:104)1(cid:105)4. @=(chosen ={})
+by (cid:104)1(cid:105)2, ValueNonempty, Zenon def TypeOK
+(cid:104)1(cid:105)5. qed
+by (cid:104)1(cid:105)3, (cid:104)1(cid:105)4, Zenon
+Here is our proof that Livespec implies Success. It uses the standard TLA proof rules. For
+exampleRuleWF1isdefinedintheTLAPS moduletobetheruleWF1discussedin
+AUTHOR = "Leslie Lamport",
+TITLE = "The Temporal Logic of Actions",
+JOURNAL = toplas,
+volume = 16,
+number = 3,
+YEAR = 1994,
+month = may,
+PAGES = "872--923"
+PTL stands for propositional temporal logic reasoning. We expect that, when TLAPS handles
+temporalreasoning,itwilluseadecisionprocedureforPTL.
+theorem LiveSpec ⇒Success
+(cid:104)1(cid:105)1.(cid:50)Inv ∧(cid:50)[Next] ∧WF (Next)⇒(chosen ={}(cid:59)chosen (cid:54)={})
+vars vars
+(cid:104)2(cid:105).define P =∆ chosen ={}
+Q =∆ chosen (cid:54)={}
+(cid:104)2(cid:105)1. suffices (cid:50)[Next] ∧WF (Next)⇒((Inv ∧P)(cid:59)Q)
+vars vars
+by PTL
+(cid:104)2(cid:105)2. (Inv ∧P)∧[Next] ⇒((Inv(cid:48)∧P(cid:48))∨Q(cid:48))
+vars
+by InductiveInvariance
+(cid:104)2(cid:105)3. (Inv ∧P)∧(cid:104)Next(cid:105) ⇒Q(cid:48)
+vars
+by def Inv, Next, vars
+(cid:104)2(cid:105)4. (Inv ∧P)⇒enabled (cid:104)Next(cid:105)
+vars
+by EnabledDef def Inv
+(cid:104)2(cid:105).hide def P, Q
+(cid:104)2(cid:105).qed
+by (cid:104)2(cid:105)2, (cid:104)2(cid:105)3, (cid:104)2(cid:105)4, PTL
+(cid:104)1(cid:105)2. (chosen ={}(cid:59)chosen (cid:54)={})⇒((chosen ={})⇒(cid:51)(chosen (cid:54)={}))
+by PTL
+(cid:104)1(cid:105)3. qed
+by Invariance, (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, PTL def LiveSpec, Spec, Init, Success
+ThefollowingtheoremisusedintherefinementproofinmoduleVoteProof.
+4
+theorem LiveSpecEquals =∆
+LiveSpec ≡Spec∧((cid:50)(cid:51)(cid:104)Next(cid:105) ∨(cid:50)(cid:51)(chosen (cid:54)={}))
+vars
+(cid:104)1(cid:105)1.∧Spec ≡Spec∧(cid:50)TypeOK
+∧LiveSpec ≡LiveSpec∧(cid:50)TypeOK
+by Invariance, PTL def LiveSpec, Inv
+(cid:104)1(cid:105)2. (chosen (cid:54)={})≡¬(chosen ={})
+obvious
+(cid:104)1(cid:105)3.(cid:50)TypeOK ⇒(((cid:50)(cid:51)¬enabled (cid:104)Next(cid:105) )≡(cid:50)(cid:51)(chosen (cid:54)={}))
+vars
+by (cid:104)1(cid:105)2, EnabledDef, PTL
+(cid:104)1(cid:105)4. qed
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)3, PTL def LiveSpec
+\*ModificationHistory
+\*LastmodifiedMon May1118:36:27CEST 2020bymerz
+\*LastmodifiedMon Aug 1815:00:45CEST 2014bytomer
+\*LastmodifiedMon Aug 1814:58:57CEST 2014bytomer
+\*LastmodifiedTue Feb 1413:35:49PST 2012bylamport
+\*LastmodifiedMon Feb 0714:46:59PST 2011bylamport
+5

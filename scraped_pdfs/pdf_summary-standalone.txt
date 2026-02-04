@@ -1,0 +1,284 @@
+Source: summary-standalone.pdf
+================================================================================
+
+Summary of TLA+
+Module-Level Constructs
+The Constant Operators
+Miscellaneous Constructs
+Action Operators
+(cid:27)
+Temporal Operators
+(cid:45)
+User-Definable Operator Symbols
+Precedence Ranges of Operators
+Operators Defined in Standard Modules.
+ASCII Representation of Typeset Symbols
+1
+Module-Level Constructs
+module M
+Begins the module or submodule named M.
+extends M , ... , M
+1 n
+Incorporates the declarations, definitions, assumptions, and theorems from
+(cid:27) the modules named M , ..., M into the current module.
+1 n
+(cid:45)
+constants C , ... , C (1)
+1 n
+DeclarestheC tobeconstantparameters(rigidvariables). EachC iseither
+j j
+an identifier or has the form C( , ..., ), the latter form indicating that C
+is an operator with the indicated number of arguments.
+variables x , ... , x (1)
+1 n
+Declares the x to be variables (parameters that are flexible variables).
+j
+assume P
+Asserts P as an assumption.
+F(x , ..., x ) =∆ exp
+1 n
+Defines F to be the operator such that F(e , ..., e ) equals exp with each
+1 n
+identifier x replaced by e . (For n =0, it is written F =∆ exp.)
+k k
+f[x ∈ S] =∆ exp (2)
+Defines f to be the function with domain S such that f[x] = exp for all x
+in S. (The symbol f may occur in exp, allowing a recursive definition.)
+(1)Theterminalsinthekeywordisoptional.
+(2)x ∈S may be replaced by a comma-separated list of items v ∈S, where v is either a
+comma-separatedlistoratupleofidentifiers.
+instance M with p ←e , ... , p ←e
+1 1 m m
+For each defined operator F of module M, this defines F to be the operator
+whose definition is obtained from the definition of F in M by replacing each
+declaredconstantorvariablep ofM withe . (Ifm =0,thewithisomitted.)
+j j
+2
+N(x , ..., x ) =∆ instance M with p ←e , ... , p ←e
+1 n 1 1 m m
+ForeachdefinedoperatorF ofmoduleM,thisdefinesN(d ,...,d )!F tobe
+1 n
+theoperatorwhosedefinitionisobtainedfromthedefinitionofF byreplacing
+each declared constant or variable p of M with e , and then replacing each
+j j
+identifier x with d . (If m =0, the with is omitted.)
+k k
+theorem P
+Asserts that P can be proved from the definitions and assumptions of the
+(cid:27) current module.
+(cid:45)
+local def
+Makes the definition(s) of def (which may be a definition or an instance
+statement)localtothecurrentmodule, therebynotobtainedwhenextending
+or instantiating the module.
+Ends the current module or submodule.
+3
+The Constant Operators
+Logic
+∧ ∨ ¬ ⇒ ≡
+true false boolean [the set {true, false}]
+∀x ∈ S : p (1) ∃x ∈ S : p (1)
+choose x ∈ S : p [An x in S satisfying p]
+Sets
+(cid:27)
+= (cid:54)= ∈ ∈/ ∪ ∩ ⊆ \ [set difference]
+(cid:45) {e ,...,e } [Set consisting of elements e ]
+1 n i
+{x ∈ S : p} (2) [Set of elements x in S satisfying p]
+{e : x ∈ S} (1) [Set of elements e such that x in S]
+subset S [Set of subsets of S]
+union S [Union of all elements of S]
+Functions
+f[e] [Function application]
+domain f [Domain of function f]
+[x ∈ S (cid:55)→e] (1) [Function f such that f[x]=e for x ∈ S]
+[S → T] [Set of functions f with f[x] ∈ T for x ∈ S]
+[f except ![e
+1
+] = e
+2
+] (3) [Function(cid:98)f equal to f except(cid:98)f[e
+1
+]=e
+2
+]
+Records
+e.h [The h-field of record e]
+[h (cid:55)→e ,...,h (cid:55)→e ] [The record whose h field is e ]
+1 1 n n i i
+[h : S ,...,h : S ] [Set of all records with h field in S ]
+1 1 n n i i
+[r except !.h =e] (3) [Record r equal to r except r.h =e]
+(cid:98) (cid:98)
+Tuples
+e[i] [The ith component of tuple e]
+(cid:104)e ,...,e (cid:105) [The n-tuple whose ith component is e ]
+1 n i
+S ×...×S [The set of all n-tuples with ith component in S ]
+1 n i
+(1)x ∈S may be replaced by a comma-separated list of items v ∈S, where v is either a
+comma-separatedlistoratupleofidentifiers.
+(2)x maybeanidentifierortupleofidentifiers.
+(3) ![e1] or !.h may be replaced by a comma separated list of items !a1···an, where each
+ai is[ei]or.hi.
+4
+Miscellaneous Constructs
+if p then e else e [e if p true, else e ]
+1 2 1 2
+case p →e (cid:50) ... (cid:50)p →e [Some e such that p true]
+1 1 n n i i
+case p →e (cid:50) ... (cid:50)p →e (cid:50)other →e [Some e such that p true,
+1 1 n n i i
+or e if all p are false]
+i
+let d =∆ e ... d =∆ e in e [e in the context of the definitions]
+1 1 n n
+(cid:27) ∧ p 1 [the conjunction p 1 ∧...∧p n ] ∨ p 1 [the disjunction p 1 ∨...∨p n ]
+. .
+. .
+(cid:45) . .
+∧ p ∨ p
+n n
+Action Operators
+e(cid:48) [The value of e in the final state of a step]
+[A] [A∨(e(cid:48) =e)]
+e
+(cid:104)A(cid:105) [A∧(e(cid:48) (cid:54)=e)]
+e
+enabled A [An A step is possible]
+unchanged e [e(cid:48) =e]
+A·B [Composition of actions]
+Temporal Operators
+(cid:50)F [F is always true]
+(cid:51)F [F is eventually true]
+WF (A) [Weak fairness for action A]
+e
+SF (A) [Strong fairness for action A]
+e
+F (cid:59)G [F leads to G]
+5
+User-Definable Operator Symbols
+Infix Operators
++(1) − (1) ∗ (1) / (2) ◦ (3) ++
+÷(1) % (1) ^ (1,4) .. (1) ... −−
+⊕(5) (cid:9) (5) ⊗ (cid:11) (cid:12) ∗∗
+<(1) > (1) ≤ (1) ≥ (1) (cid:117) //
+≺ (cid:31) (cid:22) (cid:23) (cid:116) ^^
+(cid:27) (cid:28) (cid:29) <: :>(6) & &&
+(cid:60) (cid:61) (cid:118) (5) (cid:119) | %%
+(cid:45)
+⊂ ⊃ ⊇ (cid:63) @@(6)
+(cid:96) (cid:97) |= =| • ##
+∼ (cid:39) ≈ ∼ = $ $$
+.
+(cid:13) ::= (cid:16) = ?? !!
+∝ (cid:111) (cid:93)
+Postfix Operators (7)
+^+ ^∗ ^#
+(1)DefinedbytheNaturals,Integers,andReals modules.
+(2)DefinedbytheReals module.
+(3)DefinedbytheSequences module.
+(4)x^y isprintedasxy.
+(5)DefinedbytheBags module.
+(6)DefinedbytheTLC module.
+(7)e^+isprintedase+,andsimilarlyfor^∗and^#.
+6
+Precedence Ranges of Operators
+The relative precedence of two operators is unspecified if their ranges overlap.
+Left-associative operators are indicated by (a).
+Prefix Operators
+¬ 4–4 (cid:50) 4–15 union 8–8
+(cid:27) enabled 4–15 (cid:51) 4–15 domain 9–9
+unchanged 4–15 subset 8–8 − 12–12
+(cid:45)
+Infix Operators
+⇒ 1–1 ≤ 5–5 <: 7–7 (cid:9) 11–11(a)
+−+(cid:46) 2–2 (cid:28) 5–5 \ 8–8 − 11–11(a)
+≡ 2–2 ≺ 5–5 ∩ 8–8 (a) −− 11–11(a)
+(cid:59) 2–2 (cid:22) 5–5 ∪ 8–8 (a) & 13–13(a)
+∧ 3–3(a) ∝ 5–5 .. 9–9 && 13–13(a)
+∨ 3–3(a) ∼ 5–5 ... 9–9 (cid:12) 13–13(a)
+(cid:54)= 5–5 (cid:39) 5–5 !! 9–13 (cid:11) 13–13
+(cid:97) 5–5 (cid:60) 5–5 ## 9–13 (a) ⊗ 13–13(a)
+::= 5–5 (cid:118) 5–5 $ 9–13 (a) ∗ 13–13(a)
+:= 5–5 (cid:61) 5–5 $$ 9–13 (a) ∗∗ 13–13(a)
+< 5–5 (cid:119) 5–5 ?? 9–13 (a) / 13–13
+= 5–5 ⊂ 5–5 (cid:117) 9–13 (a) // 13–13
+=| 5–5 ⊆ 5–5 (cid:116) 9–13 (a) (cid:13) 13–13(a)
+> 5–5 (cid:31) 5–5 (cid:93) 9–13 (a) • 13–13(a)
+≈ 5–5 (cid:23) 5–5 (cid:111) 9–14 ÷ 13–13
+(cid:16) 5–5 ⊃ 5–5 ⊕ 10–10(a) ◦ 13–13(a)
+∼ = 5–5 ⊇ 5–5 + 10–10(a) (cid:63) 13–13(a)
+.
+= 5–5 (cid:96) 5–5 ++ 10–10(a) ^ 14–14
+≥ 5–5 |= 5–5 % 10–11 ^^ 14–14
+(cid:29) 5–5 ·(1) 5–14(a) %% 10–11(a) .(2) 17–17(a)
+∈ 5–5 @@ 6–6 (a) | 10–11(a)
+∈/ 5–5 :> 7–7 (cid:107) 10–11(a)
+Postfix Operators
+^+ 15–15 ^* 15–15 ^# 15–15 (cid:48) 15–15
+(1)Actioncomposition(\cdot).
+(2)Recordfield(period).
+7
+Operators Defined in Standard Modules.
+Modules Naturals, Integers, Reals
++ −(1) ∗ /(2) ^(3) .. Nat Real(2)
+÷ % ≤ ≥ < > Int(4) Infinity(2)
+(1)Onlyinfix−isdefinedinNaturals.
+(2)DefinedonlyinReals module.
+(3)Exponentiation.
+(cid:27) (4)NotdefinedinNaturals module.
+(cid:45)
+Module Sequences
+◦ Head SelectSeq SubSeq
+Append Len Seq Tail
+Module FiniteSets
+IsFiniteSet Cardinality
+Module Bags
+⊕ BagIn CopiesIn SubBag
+(cid:9) BagOfAll EmptyBag
+(cid:118) BagToSet IsABag
+BagCardinality BagUnion SetToBag
+Module RealTime
+RTBound RTnow now (declaredtobeavariable)
+Module TLC
+:> @@ Print Assert JavaTime Permutations
+SortSeq
+8
+ASCII Representation of Typeset Symbols
+∧ /\ or \land ∨ \/ or \lor ⇒ =>
+¬ ~ or \lnot or \neg ≡ <=> or \equiv =∆ ==
+∈ \in ∈/ \notin (cid:54)= # or /=
+(cid:104) << (cid:105) >> (cid:50) []
+< < > > (cid:51) <>
+≤ \leq or =< or <= ≥ \geq or >= (cid:59) ~>
+(cid:27) (cid:28) \ll (cid:29) \gg −+(cid:46) -+->
+≺ \prec (cid:31) \succ (cid:55)→ |->
+(cid:45) (cid:22) \preceq (cid:23) \succeq ÷ \div
+⊆ \subseteq ⊇ \supseteq · \cdot
+⊂ \subset ⊃ \supset ◦ \o or \circ
+(cid:60) \sqsubset (cid:61) \sqsupset • \bullet
+(cid:118) \sqsubseteq (cid:119) \sqsupseteq (cid:63) \star
+(cid:96) |- (cid:97) -| (cid:13) \bigcirc
+|= |= =| =| ∼ \sim
+→ -> ← <- (cid:39) \simeq
+∩ \cap or \intersect ∪ \cup or \union (cid:16) \asymp
+(cid:117) \sqcap (cid:116) \sqcup ≈ \approx
+⊕ (+) or \oplus (cid:93) \uplus ∼ = \cong
+.
+(cid:9) (-) or \ominus × \X or \times = \doteq
+(cid:12) (.) or \odot (cid:111) \wr xy x^y (2)
+⊗ (\X) or \otimes ∝ \propto x+ x^+ (2)
+(cid:11) (/) or \oslash “s” "s" (1) x∗ x^* (2)
+∃ \E ∀ \A x# x^# (2)
+∃∃∃∃∃∃ \EE ∀∀∀∀∀∀ \AA (cid:48) ’
+] ]_v (cid:105) >>_v
+v v
+WF WF_v SF SF_v
+v v
+-------- (3) -------- (3)
+-------- (3) ======== (3)
+(1)s isasequenceofcharacters.
+(2)x andy areanyexpressions.
+(3)asequenceoffourormore-or=characters.
+9

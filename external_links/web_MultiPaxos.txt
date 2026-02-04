@@ -1,9 +1,0 @@
-Source URL: https://github.com/nano-o/MultiPaxos
-Final URL: https://github.com/nano-o/MultiPaxos/blob/master/MultiPaxos.pdf
-================================================================================
-
-# MultiPaxos
-A formalization of the Multi-Paxos algorithm.
-Heavily inspired by a few of Leslie Lamport's papers.
-
-Also contains a formalization of Disk Paxos in PlusCal.

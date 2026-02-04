@@ -1,0 +1,13 @@
+Source: a_new_approach-corrigendum.pdf
+================================================================================
+
+134 Corrigendum
+CORRIGENDUM
+A New Approach to Proving the Correctness of Multiprocess Programs
+L. Lamport, ACM Trans. Programming Languages and Systems 1, 1 (July
+1979), 84-97.
+Leslie Lamport Recd 24 Sept. 1979
+SRI International, 333 Ravenswood Ave., Menlo Park, CA 94025
+Axiom A2, on page 89 of the above paper, should read as follows:
+A2. IfA ~ B thenA --. B and B -j. A.
+ACM Transactions on Programming Languages and Systems, Vol. 2, No. 1, January 1980.

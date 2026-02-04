@@ -1,0 +1,1309 @@
+Source: VoteProof.pdf
+================================================================================
+
+module VoteProof
+Thisisahigh-levelconsensusalgorithminwhichasetofprocessescalledacceptors cooperatively
+choose a value. The algorithm uses numbered ballots, where a ballot is a round of voting. Ac-
+ceptorscastvotesinballots,castingatmostonevoteperballot. Avalueischosenwhenalarge
+enoughsetofacceptors,calledaquorum ,haveallvotedforthesamevalueinthesameballot.
+Ballotsarenotexecutedinorder. Differentacceptorsmaybeconcurrentlyperformingactionsfor
+differentballots.
+extends Integers, NaturalsInduction, FiniteSets, FiniteSetTheorems,
+WellFoundedInduction, TLC, TLAPS
+constant Value, AsinmoduleConsensus,thesetofchoosablevalues.
+Acceptor, Thesetofallacceptors.
+Quorum Thesetofallquorums.
+The following assumption asserts that a quorum is a set of acceptors, and the fundamental as-
+sumptionwemakeaboutquorums: anytwoquorumshaveanon-emptyintersection.
+assume QA =∆ ∧∀Q ∈ Quorum :Q ⊆Acceptor
+∧∀Q1, Q2 ∈ Quorum :Q1∩Q2(cid:54)={}
+theorem QuorumNonEmpty =∆ ∀Q ∈ Quorum :Q (cid:54)={}
+proof by QA
+Ballot is the set of all ballot numbers. For simplicity, we let it be the set of natural numbers.
+However,wewriteBallot forthatsettomakeitclearwhatthefunctionofthosenaturalnumbers
+are.
+ThealgorithmanditsrefinementsworkwithBallot anysetwithminimalelement0, −1notan
+elementofBallot,andawell-foundedtotalorder < onBallot∪{−1}withminimalelement −1,
+and 0<b for all non-zero b in Ballot. In the proof, any set of the form i ..j must be replaced
+bythesetofallelementsb inBallot∪{−1}withi ≤b≤j,andi ..(j−1)bythesetofsuchb
+withi ≤b<j.
+Ballot =∆ Nat
+Inthealgorithm,eachacceptorcancastoneormorevotes,whereeachvotecastbyanacceptor
+hastheform(cid:104)b,v(cid:105)indicatingthattheacceptorhasvotedforvaluev inballotb. Avalueischosen
+ifaquorumofacceptorshavevotedforitinthesameballot.
+The algorithm uses two variables, votes and maxBal , both arrays indexed by acceptor. Their
+meaningsare:
+votes[a]− Thesetofvotescastbyacceptora .
+maxBal[a]− Thenumberofthehighest-numberedballotinwhicha hascastavote, or −1if
+ithasnotyetvoted.
+Thealgorithmdoesnotletacceptora voteinanyballotlessthanmaxBal[a].
+1
+We specify our algorithm by the following PlusCal algorithm. The specification Spec defined by
+this algorithm describes only the safety properties of the algorithm. In other words, it specifies
+whatstepsthealgorithmmaytake. Itdoesnotrequirethatany(non-stuttering)stepsbetaken.
+WeprovethatthisspecificationSpecimplementsthespecificationSpecofmoduleConsensusunder
+arefinementmappingdefinedbelow. Thisshowsthatthesafetypropertiesofthevotingalgorithm
+(andhencethealgorithmwithadditionallivenessrequirements)implythesafetypropertiesofthe
+Consensus specification. Livenessisdiscussedlater.
+**************************
+--algorithm Voting{
+variables votes =[a ∈ Acceptor (cid:55)→{}],
+maxBal =[a ∈ Acceptor (cid:55)→ −1];
+define {
+WenowdefinetheoperatorSafeAt soSafeAt(b,v)isfunctionofthestatethatequalstrueif
+novalueotherthanv hasbeenchosenorcaneverbechoseninthefuture(becausethevalues
+ofthevariablesvotesandmaxBal aresuchthatthealgorithmdoesnotallowenoughacceptors
+tovoteforit). Wesaythatvaluev issafeatballotnumberb iffSafe(b,v)istrue. Wedefine
+Safeintermsofthefollowingtwooperators.
+Note: This definition is weaker than would be necessary to allow a refinement of ordinary
+Paxos consensus,sinceitallowsdifferentquorumsto“cooperate”indeterminingsafetyatb.
+ThisisusedinalgorithmslikeVerticalPaxos thataredesignedtoallowreconfigurationwithin
+asingleconsensusinstance,butnotinordinaryPaxos. See
+AUTHOR= “LeslieLamport andDahliaMalkhi andLidong Zhou ”,
+TITLE = “VerticalPaxos andPrimary-BackupReplication”,
+Journal = “ACM SIGACT News (DistributedComputingColumn)”,
+editor ={Srikanta Tirthapura and Lorenzo Alvisi},
+booktitle={PODC},
+publisher ={ACM},YEAR=2009,PAGES = “312–313”
+VotedFor(a, b, v) =∆ (cid:104)b, v(cid:105) ∈ votes[a]
+Trueiffacceptorahasvotedforv inballotb.
+DidNotVoteIn(a, b) =∆ ∀v ∈ Value :¬VotedFor(a, b, v)
+WenowdefineSafeAt. Wedefineitrecursively. Thenicestdefinitionis
+recursive SafeAt( , )
+SafeAt(b,v) =∆
+∨b=0
+∨∃Q ∈Quorum :
+∧∀a ∈Q : maxBal[a]≥b
+∧∃c ∈ −1..(b−1):
+∧ (c(cid:54)= −1) ⇒ ∧SafeAt(c,v)
+∧∀a ∈Q : ∀w ∈Value :
+VotedFor(a,c,w)⇒ (w =v)
+∧∀d ∈ (c+1)..(b−1),a ∈Q : DidNotVoteIn(a,d)
+However, TLAPS does not currently support recursive operator definitions. We therefore
+defineitasfollowsusingarecursivefunctiondefinition.
+SafeAt(b, v) =∆
+let SA[bb ∈ Ballot] =∆
+2
+ThisrecursivelydefinesSA[bb]toequalSafeAt(bb,v).
+∨bb =0
+∨∃Q ∈ Quorum :
+∧∀a ∈ Q :maxBal[a]≥bb
+∧∃c ∈ −1..(bb−1):
+∧(c (cid:54)= −1)⇒ ∧SA[c]
+∧∀a ∈ Q :
+∀w ∈ Value :
+VotedFor(a, c, w)⇒(w =v)
+∧∀d ∈ (c+1)..(bb−1), a ∈ Q :DidNotVoteIn(a, d)
+in SA[b]
+}
+Therearetwopossibleactionsthatanacceptorcanperform,eachdefinedbyamacro. Inthese
+macros,self istheacceptorthatistoperformtheaction. Thefirstaction,IncreaseMaxBal(b)
+allowsacceptorself tosetmaxBal[self]tobifbisgreaterthanthecurrentvalueofmaxBal[self].
+macro IncreaseMaxBal( b ) {
+when b >maxBal[self];
+maxBal[self]:=b
+}
+Action VoteFor(b,v) allows acceptor self to vote for value v in ballot b if its when condition
+issatisfied.
+macro VoteFor( b, v ) {
+when ∧maxBal[self]≤b
+∧DidNotVoteIn(self, b)
+∧∀p ∈ Acceptor\{self}:
+∀w ∈ Value :VotedFor(p, b, w)⇒(w =v)
+∧SafeAt(b, v);
+votes[self] :=votes[self]∪{(cid:104)b, v(cid:105)};
+maxBal[self]:=b
+}
+The following process declaration asserts that every process self in the set Acceptor exe-
+cutes its body, which loops forever nondeterministically choosing a Ballot b and executing
+either an IncreaseMaxBal(b) action or nondeterministically choosing a value v and executing
+a VoteFor(b,v) action. The single label indicates that an entire execution of the body of the
+while loopisperformedasasingleatomicaction.
+Fromthisintuitivedescriptionoftheprocessdeclaration,onemightthinkthataprocesscould
+be deadlocked by choosing a ballot b in which neither an IncreaseMaxBal(b) action nor any
+VoteFor(b,v)actionisenabled. AnexaminationoftheTLA+translation(andanelementary
+knowledgeofthemeaningofexistentialquantification)showsthatthisisnotthecase. Youcan
+thinkofallpossiblechoicesofbandofv beingexaminedsimultaneously,andoneofthechoices
+forwhichastepispossiblebeingmade.
+process ( acceptor ∈ Acceptor ) {
+acc : while ( true ) {
+with ( b ∈ Ballot ) {
+3
+either IncreaseMaxBal(b)
+or with ( v ∈ Value ) { VoteFor(b, v) }
+}
+}
+}
+}
+The following is the TLA+ specification produced by the translation. Blank lines, produced by
+thetranslationbecauseofthecomments,havebeendeleted.
+***************************
+BEGINTRANSLATION
+variables votes, maxBal
+definestatement
+VotedFor(a, b, v) =∆ (cid:104)b, v(cid:105) ∈ votes[a]
+DidNotVoteIn(a, b) =∆ ∀v ∈ Value :¬VotedFor(a, b, v)
+SafeAt(b, v) =∆
+let SA[bb ∈ Ballot] =∆
+∨bb =0
+∨∃Q ∈ Quorum :
+∧∀a ∈ Q :maxBal[a]≥bb
+∧∃c ∈ −1..(bb−1):
+∧(c (cid:54)= −1)⇒ ∧SA[c]
+∧∀a ∈ Q :
+∀w ∈ Value :
+VotedFor(a, c, w)⇒(w =v)
+∧∀d ∈ (c+1)..(bb−1), a ∈ Q :DidNotVoteIn(a, d)
+in SA[b]
+vars =∆ (cid:104)votes, maxBal(cid:105)
+ProcSet =∆ (Acceptor)
+Init =∆ Globalvariables
+∧votes =[a ∈ Acceptor (cid:55)→{}]
+∧maxBal =[a ∈ Acceptor (cid:55)→ −1]
+acceptor(self) =∆ ∃b ∈ Ballot :
+∨ ∧b >maxBal[self]
+∧maxBal(cid:48) =[maxBal except ![self]=b]
+∧unchanged votes
+∨ ∧∃v ∈ Value :
+∧ ∧maxBal[self]≤b
+∧DidNotVoteIn(self, b)
+∧∀p ∈ Acceptor\{self}:
+∀w ∈ Value :VotedFor(p, b, w)⇒(w =v)
+4
+∧SafeAt(b, v)
+∧votes(cid:48) =[votes except ![self]=votes[self]∪{(cid:104)b, v(cid:105)}]
+∧maxBal(cid:48) =[maxBal except ![self]=b]
+Next =∆ (∃self ∈ Acceptor :acceptor(self))
+Spec =∆ Init ∧(cid:50)[Next]
+vars
+ENDTRANSLATION
+Toreasonaboutarecursively-definedoperator,onemustproveatheoremaboutit. Inparticular,
+to reason about SafeAt, we need to prove that SafeAt(b,v) equals the right-hand side of its
+definition,forb ∈Ballot andv ∈Value. Thisisnotautomaticallytrueforarecursivedefinition.
+Forexample,fromtherecursivedefinition
+Silly[n ∈Nat] =∆ choose v : v (cid:54)=Silly[n]
+wecannotdeducethat
+Silly[42]=choose v : v (cid:54)=Silly[42]
+(Fromthat,wecouldeasilydeduceSilly[42](cid:54)=Silly[42].)
+Here is the theorem that essentially asserts that SafeAt(b,v) equals the right-hand side of its
+definition.
+theorem SafeAtProp =∆
+∀b ∈ Ballot, v ∈ Value :
+SafeAt(b, v)≡
+∨b =0
+∨∃Q ∈ Quorum :
+∧∀a ∈ Q :maxBal[a]≥b
+∧∃c ∈ −1..(b−1):
+∧(c (cid:54)= −1)⇒ ∧SafeAt(c, v)
+∧∀a ∈ Q :
+∀w ∈ Value :
+VotedFor(a, c, w)⇒(w =v)
+∧∀d ∈ (c+1)..(b−1), a ∈ Q :DidNotVoteIn(a, d)
+(cid:104)1(cid:105)1. suffices assume new v ∈ Value
+prove ∀b ∈ Ballot :SafeAtProp!(b, v)
+by Zenon
+(cid:104)1(cid:105) use def Ballot
+(cid:104)1(cid:105) define Def(SA, bb) =∆
+∨ bb =0
+∨ ∃Q ∈ Quorum :
+∧∀a ∈ Q :maxBal[a]≥bb
+∧∃c ∈ −1..(bb−1):
+∧(c (cid:54)= −1)⇒ ∧SA[c]
+∧∀a ∈ Q :
+∀w ∈ Value :
+5
+VotedFor(a, c, w)⇒(w =v)
+∧∀d ∈ (c+1)..(bb−1), a ∈ Q :DidNotVoteIn(a, d)
+SA[bb ∈ Ballot] =∆ Def(SA, bb)
+(cid:104)1(cid:105)2. ∀b :SafeAt(b, v)=SA[b]
+by def SafeAt
+(cid:104)1(cid:105)3. assume new n ∈ Nat, new g, new h,
+∀i ∈ 0..(n−1):g[i]=h[i]
+prove Def(g, n)=Def(h, n)
+by (cid:104)1(cid:105)3
+(cid:104)1(cid:105)4. SA=[b ∈ Ballot (cid:55)→Def(SA, b)]
+(cid:104)2(cid:105) hide def Def
+(cid:104)2(cid:105) qed
+by (cid:104)1(cid:105)3, RecursiveFcnOfNat, Isa
+(cid:104)1(cid:105)5. ∀b ∈ Ballot :SA[b]=Def(SA, b)
+(cid:104)2(cid:105) hide def Def
+(cid:104)2(cid:105) qed
+by (cid:104)1(cid:105)4, Zenon
+(cid:104)1(cid:105)6. qed
+by (cid:104)1(cid:105)2, (cid:104)1(cid:105)5, Zenon def SafeAt
+WenowdefineTypeOK tobethetype-correctnessinvariant.
+TypeOK =∆ ∧votes ∈ [Acceptor →subset (Ballot ×Value)]
+∧maxBal ∈ [Acceptor →Ballot ∪{−1}]
+We now define chosen to be the state function so that the algorithm specified by formula Spec
+conjoined with the liveness requirements described below implements the algorithm of module
+Consensus (satisfiesthespecificationLiveSpec ofthatmodule)underarefinementmappingthat
+substitutesthisstatefunctionchosenforthevariablechosenofmoduleConsensus. Thedefinition
+usesthefollowingone,whichdefinesChosenIn(b,v)tobetrueiffaquorumofacceptorshaveall
+votedforv inballotb.
+ChosenIn(b, v) =∆ ∃Q ∈ Quorum :∀a ∈ Q :VotedFor(a, b, v)
+chosen =∆ {v ∈ Value :∃b ∈ Ballot :ChosenIn(b, v)}
+ThefollowinglemmaisusedforreasoningabouttheoperatorSafeAt. ItisprovedfromSafeAtProp
+byinduction.
+lemma SafeLemma =∆
+TypeOK ⇒
+∀b ∈ Ballot :
+∀v ∈ Value :
+SafeAt(b, v)⇒
+∀c ∈ 0..(b−1) :
+∃Q ∈ Quorum :
+∀a ∈ Q : ∧maxBal[a]≥c
+∧ ∨DidNotVoteIn(a, c)
+6
+∨VotedFor(a, c, v)
+(cid:104)1(cid:105) suffices assume TypeOK
+prove SafeLemma!2
+obvious
+(cid:104)1(cid:105) define P(b) =∆ ∀c ∈ 0..b :SafeLemma!2!(c)
+(cid:104)1(cid:105) use def Ballot
+(cid:104)1(cid:105)1. P(0)
+obvious
+(cid:104)1(cid:105)2. assume new b ∈ Ballot, P(b)
+prove P(b+1)
+(cid:104)2(cid:105)1.∧b+1 ∈ Ballot\{0}
+∧(b+1)−1=b
+obvious
+(cid:104)2(cid:105)2. 0..(b+1)=(0..b)∪{b+1}
+obvious
+(cid:104)2(cid:105)3. suffices assume new v ∈ Value,
+SafeAt(b+1, v),
+new c ∈ 0..b
+prove ∃Q ∈ Quorum :
+∀a ∈ Q : ∧maxBal[a]≥c
+∧ ∨DidNotVoteIn(a, c)
+∨VotedFor(a, c, v)
+by (cid:104)1(cid:105)2
+(cid:104)2(cid:105)4. pick Q ∈ Quorum :
+∧∀a ∈ Q :maxBal[a]≥(b+1)
+∧∃cc ∈ −1..b :
+∧(cc (cid:54)= −1)⇒ ∧SafeAt(cc, v)
+∧∀a ∈ Q :
+∀w ∈ Value :
+VotedFor(a, cc, w)⇒(w =v)
+∧∀d ∈ (cc+1)..b, a ∈ Q :DidNotVoteIn(a, d)
+by SafeAtProp, (cid:104)2(cid:105)3, (cid:104)2(cid:105)1, Zenon
+(cid:104)2(cid:105)5. pick cc ∈ −1..b :
+∧(cc (cid:54)= −1)⇒ ∧SafeAt(cc, v)
+∧∀a ∈ Q :
+∀w ∈ Value :
+VotedFor(a, cc, w)⇒(w =v)
+∧∀d ∈ (cc+1)..b, a ∈ Q :DidNotVoteIn(a, d)
+by (cid:104)2(cid:105)4
+(cid:104)2(cid:105)6.case c >cc
+by (cid:104)2(cid:105)4, (cid:104)2(cid:105)5, (cid:104)2(cid:105)6, QA def TypeOK
+(cid:104)2(cid:105)7.case c =cc
+(cid:104)3(cid:105)2. ∀a ∈ Q :maxBal[a] ∈ Ballot ∪{−1}
+by QA def TypeOK
+(cid:104)3(cid:105)3. ∀a ∈ Q :maxBal[a]≥c
+7
+by (cid:104)2(cid:105)4, (cid:104)2(cid:105)7, (cid:104)3(cid:105)2
+(cid:104)3(cid:105)4. ∀a ∈ Q : ∨DidNotVoteIn(a, c)
+∨VotedFor(a, c, v)
+by (cid:104)2(cid:105)7, (cid:104)2(cid:105)5 def DidNotVoteIn
+(cid:104)3(cid:105)5. qed
+by (cid:104)3(cid:105)3, (cid:104)3(cid:105)4
+(cid:104)2(cid:105)8.case c <cc
+by (cid:104)2(cid:105)8, (cid:104)1(cid:105)2, (cid:104)2(cid:105)5
+(cid:104)2(cid:105)9. qed
+by (cid:104)2(cid:105)6, (cid:104)2(cid:105)7, (cid:104)2(cid:105)8
+(cid:104)1(cid:105)3. ∀b ∈ Ballot :P(b)
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, NatInduction, Isa
+(cid:104)1(cid:105)4. qed
+by (cid:104)1(cid:105)3
+We now define the invariant that is used to prove the correctness of our algorithm–meaning
+thatspecificationSpec implementsspecificationSpecofmoduleConsensus underourrefinement
+mapping. Correctnessofthevotingalgorithmfollowsfromthethefollowingthreeinvariants:
+VInv1: Inanyballot,anacceptorcanvoteforatmostonevalue.
+VInv2:Anacceptorcanvoteforavaluev inballotb iffv issafeatb.
+VInv3:Twodifferentacceptorscannotvotefordifferentvaluesinthesameballot.
+Theirprecisedefinitionsareasfollows.
+VInv1 =∆ ∀a ∈ Acceptor, b ∈ Ballot, v, w ∈ Value :
+VotedFor(a, b, v)∧VotedFor(a, b, w)⇒(v =w)
+VInv2 =∆ ∀a ∈ Acceptor, b ∈ Ballot, v ∈ Value :
+VotedFor(a, b, v)⇒SafeAt(b, v)
+VInv3 =∆ ∀a1, a2 ∈ Acceptor, b ∈ Ballot, v1, v2 ∈ Value :
+VotedFor(a1, b, v1)∧VotedFor(a2, b, v2)⇒(v1=v2)
+Itisobvious,thatVInv3impliesVInv1–afactthatwenowletTLAPS proveasalittlecheckthat
+wehaven’tmadeamistakeinourdefinitions. (Actually,weusedTLC tocheckeverythingbefore
+attempting any proofs.) We define VInv1 separately because VInv3 is not needed for proving
+safety,onlyforliveness.
+theorem VInv3⇒VInv1
+by def VInv1, VInv3
+ThefollowinglemmaprovesthatSafeAt(b,v)impliesthatnovalueotherthanv canhavebeen
+choseninanyballotnumberedlessthanb. Thefactthatitalsoimpliesthatnovalueotherthanv
+caneverbechoseninthefuturefollowsfromthisandthefactthatSafeAt(b,v)isstable–meaning
+thatonceitbecomestrue,itremainstrueforever. ThestabilityofSafeAt(b,v)isprovedasstep
+(cid:104)1(cid:105)6oftheoremInductiveInvariance below.
+ThislemmaisusedonlyintheproofoftheoremVT1below.
+lemma VT0 =∆ ∧TypeOK
+8
+∧VInv1
+∧VInv2
+⇒∀v, w ∈ Value, b, c ∈ Ballot :
+(b >c)∧SafeAt(b, v)∧ChosenIn(c, w)⇒(v =w)
+(cid:104)1(cid:105) suffices assume TypeOK, VInv1, VInv2,
+new v ∈ Value, new w ∈ Value
+prove ∀b, c ∈ Ballot :
+(b >c)∧SafeAt(b, v)∧ChosenIn(c, w)⇒(v =w)
+obvious
+(cid:104)1(cid:105) P(b) =∆ ∀c ∈ Ballot :
+(b >c)∧SafeAt(b, v)∧ChosenIn(c, w)⇒(v =w)
+(cid:104)1(cid:105) use def Ballot
+(cid:104)1(cid:105)1. P(0)
+obvious
+(cid:104)1(cid:105)2. assume new b ∈ Ballot, ∀i ∈ 0..(b−1):P(i)
+prove P(b)
+(cid:104)2(cid:105)1.case b =0
+by (cid:104)2(cid:105)1
+(cid:104)2(cid:105)2.case b (cid:54)=0
+(cid:104)3(cid:105)1. suffices assume new c ∈ Ballot, b >c, SafeAt(b, v), ChosenIn(c, w)
+prove v =w
+obvious
+(cid:104)3(cid:105)2. pick Q ∈ Quorum :∀a ∈ Q :VotedFor(a, c, w)
+by (cid:104)3(cid:105)1 def ChosenIn
+(cid:104)3(cid:105)3. pick QQ ∈ Quorum,
+d ∈ −1..(b−1):
+∧(d (cid:54)= −1)⇒ ∧SafeAt(d, v)
+∧∀a ∈ QQ :
+∀x ∈ Value :
+VotedFor(a, d, x)⇒(x =v)
+∧∀e ∈ (d +1)..(b−1), a ∈ QQ :DidNotVoteIn(a, e)
+by (cid:104)2(cid:105)2, (cid:104)3(cid:105)1, SafeAtProp, Zenon
+(cid:104)3(cid:105) pick aa ∈ QQ ∩Q :true
+by QA
+(cid:104)3(cid:105)4. c ≤d
+by (cid:104)3(cid:105)1, (cid:104)3(cid:105)2, (cid:104)3(cid:105)3 def DidNotVoteIn
+(cid:104)3(cid:105)5.case c =d
+by (cid:104)3(cid:105)2, (cid:104)3(cid:105)3, (cid:104)3(cid:105)4, (cid:104)3(cid:105)5
+(cid:104)3(cid:105)6.case d >c
+by (cid:104)1(cid:105)2, (cid:104)3(cid:105)1, (cid:104)3(cid:105)3, (cid:104)3(cid:105)4, (cid:104)3(cid:105)6
+(cid:104)3(cid:105)7. qed
+by (cid:104)3(cid:105)4, (cid:104)3(cid:105)5, (cid:104)3(cid:105)6
+(cid:104)2(cid:105).qed by (cid:104)2(cid:105)1, (cid:104)2(cid:105)2
+(cid:104)1(cid:105)3. ∀b ∈ Ballot :P(b)
+9
+(cid:104)2(cid:105).hide def P
+(cid:104)2(cid:105).qed by (cid:104)1(cid:105)2, GeneralNatInduction, Isa
+(cid:104)1(cid:105)4. qed
+by (cid:104)1(cid:105)3
+ThefollowingtheoremassertsthattheinvarianceofTypeOK,VInv1,andVInv2impliesthatthe
+algorithm satisfies the basic consensus property that at most one value is chosen (at any time).
+Ifyoucanproveit,thenyouunderstandwhythePaxos consensusalgorithmallowsonlyasingle
+valuetobechosen. NotethatVInv3isnotneededtoprovethisproperty.
+theorem VT1 =∆ ∧TypeOK
+∧VInv1
+∧VInv2
+⇒∀v, w :
+(v ∈ chosen)∧(w ∈ chosen)⇒(v =w)
+(cid:104)1(cid:105)1. suffices assume TypeOK, VInv1, VInv2,
+new v, new w,
+v ∈ chosen, w ∈ chosen
+prove v =w
+obvious
+(cid:104)1(cid:105)2. v ∈ Value∧w ∈ Value
+by (cid:104)1(cid:105)1 def chosen
+(cid:104)1(cid:105)3. pick b ∈ Ballot, c ∈ Ballot :ChosenIn(b, v)∧ChosenIn(c, w)
+by (cid:104)1(cid:105)1 def chosen
+(cid:104)1(cid:105)4. pick Q ∈ Quorum, R ∈ Quorum :
+∧∀a ∈ Q :VotedFor(a, b, v)
+∧∀a ∈ R :VotedFor(a, c, w)
+by (cid:104)1(cid:105)3 def ChosenIn
+(cid:104)1(cid:105)5. pick av ∈ Q, aw ∈ R : ∧VotedFor(av, b, v)
+∧VotedFor(aw, c, w)
+by (cid:104)1(cid:105)4, QuorumNonEmpty
+(cid:104)1(cid:105)6. SafeAt(b, v)∧SafeAt(c, w)
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, (cid:104)1(cid:105)5, QA def VInv2
+(cid:104)1(cid:105)7.case b =c
+(cid:104)2(cid:105) pick a ∈ Q ∩R :true
+by QA
+(cid:104)2(cid:105)1.∧VotedFor(a, b, v)
+∧VotedFor(a, c, w)
+by (cid:104)1(cid:105)4
+(cid:104)2(cid:105)2. qed
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, (cid:104)1(cid:105)7, (cid:104)2(cid:105)1, QA def VInv1
+(cid:104)1(cid:105)8.case b >c
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)6, (cid:104)1(cid:105)3, (cid:104)1(cid:105)8, VT0, (cid:104)1(cid:105)2
+(cid:104)1(cid:105)9.case c >b
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)6, (cid:104)1(cid:105)3, (cid:104)1(cid:105)9, VT0, (cid:104)1(cid:105)2
+(cid:104)1(cid:105)10. qed
+by (cid:104)1(cid:105)7, (cid:104)1(cid:105)8, (cid:104)1(cid:105)9 def Ballot
+10
+TherestoftheproofusesonlytheprimedversionofVT1–thatis,thetheoremwhosestatementis
+VT1(cid:48). (RememberthatVT1namestheformulabeingassertedbythetheoremwecallVT1.) The
+formulaVT1(cid:48) assertsthatVT1istrueinthesecondstateofanytransition(pairofstates). We
+derivethattheoremfromVT1bysimpletemporallogic,andsimilarlyforVT0andSafeAtProp.
+theorem SafeAtPropPrime =∆
+∀b ∈ Ballot, v ∈ Value :
+SafeAt(b, v)(cid:48) ≡
+∨b =0
+∨∃Q ∈ Quorum :
+∧∀a ∈ Q :maxBal(cid:48)[a]≥b
+∧∃c ∈ −1..(b−1):
+∧(c (cid:54)= −1)⇒ ∧SafeAt(c, v)(cid:48)
+∧∀a ∈ Q :
+∀w ∈ Value :
+VotedFor(a, c, w)(cid:48) ⇒(w =v)
+∧∀d ∈ (c+1)..(b−1), a ∈ Q :DidNotVoteIn(a, d)(cid:48)
+(cid:104)1(cid:105)1. SafeAtProp(cid:48) by SafeAtProp, PTL
+(cid:104)1(cid:105).qed by (cid:104)1(cid:105)1
+lemma VT0Prime =∆
+∧TypeOK(cid:48)
+∧VInv1(cid:48)
+∧VInv2(cid:48)
+⇒∀v, w ∈ Value, b, c ∈ Ballot :
+(b >c)∧SafeAt(b, v)(cid:48)∧ChosenIn(c, w)(cid:48) ⇒(v =w)
+(cid:104)1(cid:105)1. VT0(cid:48) by VT0, PTL
+(cid:104)1(cid:105).qed by (cid:104)1(cid:105)1
+theorem VT1Prime =∆
+∧TypeOK(cid:48)
+∧VInv1(cid:48)
+∧VInv2(cid:48)
+⇒∀v, w :
+(v ∈ chosen(cid:48))∧(w ∈ chosen(cid:48))⇒(v =w)
+(cid:104)1(cid:105)1. VT1(cid:48) by VT1, PTL
+(cid:104)1(cid:105).qed by (cid:104)1(cid:105)1
+TheinvarianceofVInv2dependsonSafeAt(b,v)beingstable,meaningthatonceitbecomestrue
+itremainstrueforever. StabilityofSafeAt(b,v)dependsonthefollowinginvariant.
+VInv4 =∆ ∀a ∈ Acceptor, b ∈ Ballot :
+maxBal[a]<b ⇒DidNotVoteIn(a, b)
+The inductive invariant that we use to prove correctness of this algorithm is VInv, defined as
+follows.
+VInv =∆ TypeOK ∧VInv2∧VInv3∧VInv4
+11
+Tosimplifyreasoningaboutthenext-stateactionNext,wewanttoexpressitinamoreconvenient
+form. ThisisdonebylemmaNextDef below,whichshowsthatNext equalsanactiondefinedin
+termsofthefollowingsubactions.
+IncreaseMaxBal(self, b) =∆
+∧b >maxBal[self]
+∧maxBal(cid:48) =[maxBal except ![self]=b]
+∧unchanged votes
+VoteFor(self, b, v) =∆
+∧maxBal[self]≤b
+∧DidNotVoteIn(self, b)
+∧∀p ∈ Acceptor\{self}:
+∀w ∈ Value :VotedFor(p, b, w)⇒(w =v)
+∧SafeAt(b, v)
+∧votes(cid:48) =[votes except ![self]=votes[self]∪{(cid:104)b, v(cid:105)}]
+∧maxBal(cid:48) =[maxBal except ![self]=b]
+BallotAction(self, b) =∆
+∨IncreaseMaxBal(self, b)
+∨∃v ∈ Value :VoteFor(self, b, v)
+WhenprovinglemmaNextDef,weweresurprisedtodiscoverthatitrequiredtheassumptionthat
+thesetofacceptorsisnon-empty. Thisassumptionisn’tnecessaryforsafety,sinceifthereareno
+acceptors there can be no quorums (see theorem QuorumNonEmpty above) so no value is ever
+chosen and the Consensus specification is trivially implemented under our refinement mapping.
+However,theassumptionisnecessaryforlivenessanditallowsustolemmaNextDef forthesafety
+proofaswell,soweassertitnow.
+assume AcceptorNonempty =∆ Acceptor (cid:54)={}
+Theproofofthelemmaitselfisquitesimple.
+lemma NextDef =∆
+TypeOK ⇒
+(Next = ∃self ∈ Acceptor :
+∃b ∈ Ballot :BallotAction(self, b))
+(cid:104)1(cid:105) have TypeOK
+(cid:104)1(cid:105)2. Next =∃self ∈ Acceptor :acceptor(self)
+by AcceptorNonempty def Next, ProcSet
+(cid:104)1(cid:105)3. @=NextDef !2!2
+by def Next, BallotAction, IncreaseMaxBal, VoteFor, ProcSet, acceptor
+(cid:104)1(cid:105)4. qed
+by (cid:104)1(cid:105)2, (cid:104)1(cid:105)3
+We now come to the proof that VInv is an invariant of the specification. This follows from the
+followingresult,whichassertsthatitisaninductiveinvariantofthenext-stateaction. Thisfact
+isusedinthelivenessproofaswell.
+theorem InductiveInvariance =∆ VInv ∧[Next] ⇒VInv(cid:48)
+vars
+(cid:104)1(cid:105)1. VInv ∧(vars(cid:48) =vars)⇒VInv(cid:48)
+12
+by Isa
+def VInv, vars, TypeOK, VInv2, VotedFor, SafeAt, DidNotVoteIn, VInv3, VInv4
+(cid:104)1(cid:105) suffices assume VInv,
+new self ∈ Acceptor,
+new b ∈ Ballot,
+BallotAction(self, b)
+prove VInv(cid:48)
+by (cid:104)1(cid:105)1, NextDef def VInv
+(cid:104)1(cid:105)2. TypeOK(cid:48)
+(cid:104)2(cid:105)1.case IncreaseMaxBal(self, b)
+by (cid:104)2(cid:105)1 def IncreaseMaxBal, VInv, TypeOK
+(cid:104)2(cid:105)2.case ∃v ∈ Value :VoteFor(self, b, v)
+by (cid:104)2(cid:105)2 def VInv, TypeOK, VoteFor
+(cid:104)2(cid:105)3. qed
+by (cid:104)2(cid:105)1, (cid:104)2(cid:105)2 def BallotAction
+(cid:104)1(cid:105)3. assume new a ∈ Acceptor, new c ∈ Ballot, new w ∈ Value,
+VotedFor(a, c, w)
+prove VotedFor(a, c, w)(cid:48)
+(cid:104)2(cid:105)1.case IncreaseMaxBal(self, b)
+by (cid:104)2(cid:105)1, (cid:104)1(cid:105)3 def IncreaseMaxBal, VotedFor
+(cid:104)2(cid:105)2.case ∃v ∈ Value :VoteFor(self, b, v)
+(cid:104)3(cid:105)1. pick v ∈ Value :VoteFor(self, b, v)
+by (cid:104)2(cid:105)2
+(cid:104)3(cid:105)2.case a =self
+(cid:104)4(cid:105)1. votes(cid:48)[a]=votes[a]∪{(cid:104)b, v(cid:105)}
+by (cid:104)3(cid:105)1, (cid:104)3(cid:105)2 def VoteFor, VInv, TypeOK
+(cid:104)4(cid:105)2. qed
+by (cid:104)1(cid:105)3, (cid:104)4(cid:105)1 def VotedFor
+(cid:104)3(cid:105)3.case a (cid:54)=self
+(cid:104)4(cid:105)1. votes[a]=votes(cid:48)[a]
+by (cid:104)3(cid:105)1, (cid:104)3(cid:105)3 def VoteFor, VInv, TypeOK
+(cid:104)4(cid:105)2. qed
+by (cid:104)1(cid:105)3, (cid:104)4(cid:105)1 def VotedFor
+(cid:104)3(cid:105)4. qed
+by (cid:104)3(cid:105)2, (cid:104)3(cid:105)3 def VoteFor
+(cid:104)2(cid:105)3. qed
+by (cid:104)2(cid:105)1, (cid:104)2(cid:105)2 def BallotAction
+(cid:104)1(cid:105)4. assume new a ∈ Acceptor, new c ∈ Ballot, new w ∈ Value,
+¬VotedFor(a, c, w), VotedFor(a, c, w)(cid:48)
+prove (a =self)∧(c =b)∧VoteFor(self, b, w)
+(cid:104)2(cid:105)1.case IncreaseMaxBal(self, b)
+by (cid:104)2(cid:105)1, (cid:104)1(cid:105)4 def IncreaseMaxBal, VInv, TypeOK, VotedFor
+(cid:104)2(cid:105)2.case ∃v ∈ Value :VoteFor(self, b, v)
+13
+(cid:104)3(cid:105)1. pick v ∈ Value :VoteFor(self, b, v)
+by (cid:104)2(cid:105)2
+(cid:104)3(cid:105)2. a =self
+by (cid:104)3(cid:105)1, (cid:104)1(cid:105)4 def VoteFor, VInv, TypeOK, VotedFor
+(cid:104)3(cid:105)3. votes(cid:48)[a]=votes[a]∪{(cid:104)b, v(cid:105)}
+by (cid:104)3(cid:105)1, (cid:104)3(cid:105)2 def VoteFor, VInv, TypeOK
+(cid:104)3(cid:105)4. c =b∧v =w
+by (cid:104)1(cid:105)4, (cid:104)3(cid:105)3 def VotedFor
+(cid:104)3(cid:105)5. qed
+by (cid:104)3(cid:105)1, (cid:104)3(cid:105)2, (cid:104)3(cid:105)4
+(cid:104)2(cid:105)3. qed
+by (cid:104)2(cid:105)1, (cid:104)2(cid:105)2 def BallotAction
+(cid:104)1(cid:105)5. assume new a ∈ Acceptor
+prove ∧maxBal[a] ∈ Ballot ∪{−1}
+∧maxBal(cid:48)[a] ∈ Ballot ∪{−1}
+∧maxBal(cid:48)[a]≥maxBal[a]
+by def VInv, TypeOK, IncreaseMaxBal, VInv, VoteFor, BallotAction, DidNotVoteIn,
+VotedFor, Ballot
+(cid:104)1(cid:105)6. assume new c ∈ Ballot, new w ∈ Value,
+SafeAt(c, w)
+prove SafeAt(c, w)(cid:48)
+(cid:104)2(cid:105) use def Ballot
+(cid:104)2(cid:105) define P(i) =∆ ∀j ∈ 0..i :SafeAt(j, w)⇒SafeAt(j, w)(cid:48)
+(cid:104)2(cid:105)1. P(0)
+by SafeAtPropPrime, 0..0={0}, Zenon
+(cid:104)2(cid:105)2. assume new d ∈ Ballot, P(d)
+prove P(d +1)
+(cid:104)3(cid:105)1. suffices assume new e ∈ 0..(d +1), SafeAt(e, w)
+prove SafeAt(e, w)(cid:48)
+obvious
+(cid:104)3(cid:105)2.case e ∈ 0..d
+by (cid:104)2(cid:105)2, (cid:104)3(cid:105)1, (cid:104)3(cid:105)2
+(cid:104)3(cid:105)3.case e =d +1
+(cid:104)4(cid:105).e ∈ Ballot\{0}
+by (cid:104)3(cid:105)3
+(cid:104)4(cid:105)1. pick Q ∈ Quorum :SafeAtProp!(e, w)!2!2!(Q)
+by (cid:104)3(cid:105)1, SafeAtProp, Zenon
+(cid:104)4(cid:105)2. ∀aa ∈ Q :maxBal(cid:48)[aa]≥e
+by (cid:104)1(cid:105)5, (cid:104)4(cid:105)1, QA
+(cid:104)4(cid:105)3. ∃cc ∈ −1..(e−1):
+∧(cc (cid:54)= −1)⇒ ∧SafeAt(cc, w)(cid:48)
+∧∀ax ∈ Q :
+∀z ∈ Value :
+14
+VotedFor(ax, cc, z)(cid:48) ⇒(z =w)
+∧∀dd ∈ (cc+1)..(e−1), ax ∈ Q :DidNotVoteIn(ax, dd)(cid:48)
+(cid:104)5(cid:105)1. assume new cc ∈ 0..(e−1),
+new ax ∈ Q, new z ∈ Value,
+VotedFor(ax, cc, z)(cid:48), ¬VotedFor(ax, cc, z)
+prove false
+(cid:104)6(cid:105)1. (ax =self)∧(cc =b)∧VoteFor(self, b, z)
+by (cid:104)5(cid:105)1, (cid:104)1(cid:105)4, QA
+(cid:104)6(cid:105)2.∧maxBal[ax]≥e
+∧maxBal[self]≤b
+by (cid:104)4(cid:105)1, (cid:104)6(cid:105)1 def VoteFor
+(cid:104)6(cid:105).qed by (cid:104)3(cid:105)3, (cid:104)6(cid:105)1, (cid:104)6(cid:105)2 def VInv, TypeOK
+(cid:104)5(cid:105)2. pick cc ∈ −1..(e−1):SafeAtProp!(e, w)!2!2!(Q)!2!(cc)
+by (cid:104)4(cid:105)1
+(cid:104)5(cid:105)3. assume cc (cid:54)= −1
+prove ∧SafeAt(cc, w)(cid:48)
+∧∀ax ∈ Q :∀z ∈ Value :
+VotedFor(ax, cc, z)(cid:48) ⇒(z =w)
+(cid:104)6(cid:105)1.∧SafeAt(cc, w)
+∧∀ax ∈ Q :
+∀z ∈ Value :VotedFor(ax, cc, z)⇒(z =w)
+by (cid:104)5(cid:105)2, (cid:104)5(cid:105)3
+(cid:104)6(cid:105)2. SafeAt(cc, w)(cid:48)
+by (cid:104)6(cid:105)1, (cid:104)5(cid:105)3, (cid:104)3(cid:105)3, (cid:104)2(cid:105)2
+(cid:104)6(cid:105)3. assume new ax ∈ Q, new z ∈ Value, VotedFor(ax, cc, z)(cid:48)
+prove z =w
+(cid:104)7(cid:105)1.case VotedFor(ax, cc, z)
+by (cid:104)6(cid:105)1, (cid:104)7(cid:105)1
+(cid:104)7(cid:105)2.case ¬VotedFor(ax, cc, z)
+by (cid:104)7(cid:105)2, (cid:104)6(cid:105)3, (cid:104)5(cid:105)1, (cid:104)5(cid:105)3
+(cid:104)7(cid:105)3. qed
+by (cid:104)7(cid:105)1, (cid:104)7(cid:105)2
+(cid:104)6(cid:105)4. qed
+by (cid:104)6(cid:105)2, (cid:104)6(cid:105)3
+(cid:104)5(cid:105)4. assume new dd ∈ (cc+1)..(e−1), new ax ∈ Q,
+¬DidNotVoteIn(ax, dd)(cid:48)
+prove false
+by (cid:104)5(cid:105)2, (cid:104)5(cid:105)1, (cid:104)5(cid:105)4 def DidNotVoteIn
+(cid:104)5(cid:105)5. qed
+by (cid:104)5(cid:105)3, (cid:104)5(cid:105)4
+(cid:104)4(cid:105)4. ∨e =0
+∨∃Q 1 ∈ Quorum :
+∧∀aa ∈ Q 1:maxBal(cid:48)[aa]≥e
+∧∃c 1 ∈ −1..e−1:
+∧c 1(cid:54)= −1
+15
+⇒(∧SafeAt(c 1, w)(cid:48)
+∧∀aa ∈ Q 1:
+∀w 1 ∈ Value :
+VotedFor(aa, c 1, w 1)(cid:48) ⇒w 1=w)
+∧∀d 1 ∈ c 1+1..e−1, aa ∈ Q 1:
+DidNotVoteIn(aa, d 1)(cid:48)
+by (cid:104)4(cid:105)2, (cid:104)4(cid:105)3, (cid:104)3(cid:105)3
+(cid:104)4(cid:105)6. SafeAt(e, w)(cid:48) ≡(cid:104)4(cid:105)4
+by SafeAtPropPrime, (cid:104)3(cid:105)3, Zenon
+(cid:104)4(cid:105)7. qed
+by (cid:104)4(cid:105)2, (cid:104)4(cid:105)3, (cid:104)4(cid:105)6
+(cid:104)3(cid:105)4. qed
+by (cid:104)3(cid:105)2, (cid:104)3(cid:105)3
+(cid:104)2(cid:105)3. ∀d ∈ Ballot :P(d)
+by (cid:104)2(cid:105)1, (cid:104)2(cid:105)2, NatInduction, Isa
+(cid:104)2(cid:105)4. qed
+by (cid:104)2(cid:105)3, (cid:104)1(cid:105)6
+(cid:104)1(cid:105)7. VInv2(cid:48)
+(cid:104)2(cid:105)1. suffices assume new a ∈ Acceptor, new c ∈ Ballot, new v ∈ Value,
+VotedFor(a, c, v)(cid:48)
+prove SafeAt(c, v)(cid:48)
+by def VInv2
+(cid:104)2(cid:105)2.case VotedFor(a, c, v)
+by (cid:104)1(cid:105)6, (cid:104)2(cid:105)2 def VInv, VInv2
+(cid:104)2(cid:105)3.case ¬VotedFor(a, c, v)
+by (cid:104)1(cid:105)6, (cid:104)2(cid:105)1, (cid:104)2(cid:105)3, (cid:104)1(cid:105)4 def VoteFor
+(cid:104)2(cid:105)4. qed
+by (cid:104)2(cid:105)2, (cid:104)2(cid:105)3
+(cid:104)1(cid:105)8. VInv3(cid:48)
+(cid:104)2(cid:105)1. assume new a1 ∈ Acceptor, new a2 ∈ Acceptor,
+new c ∈ Ballot, new v1 ∈ Value, new v2 ∈ Value,
+VotedFor(a1, c, v1)(cid:48),
+VotedFor(a2, c, v2)(cid:48),
+VotedFor(a1, c, v1),
+VotedFor(a2, c, v2)
+prove v1=v2
+by (cid:104)2(cid:105)1 def VInv, VInv3
+(cid:104)2(cid:105)2. assume new a1 ∈ Acceptor, new a2 ∈ Acceptor,
+new c ∈ Ballot, new v1 ∈ Value, new v2 ∈ Value,
+VotedFor(a1, c, v1)(cid:48),
+VotedFor(a2, c, v2)(cid:48),
+¬VotedFor(a1, c, v1)
+prove v1=v2
+16
+(cid:104)3(cid:105)1. (a1=self)∧(c =b)∧VoteFor(self, b, v1)
+by (cid:104)2(cid:105)2, (cid:104)1(cid:105)4
+(cid:104)3(cid:105)2.case a2=self
+(cid:104)4(cid:105)1. ¬VotedFor(self, b, v2)
+by (cid:104)3(cid:105)1 def VoteFor, DidNotVoteIn
+(cid:104)4(cid:105)2. VoteFor(self, b, v2)
+by (cid:104)2(cid:105)2, (cid:104)3(cid:105)1, (cid:104)3(cid:105)2, (cid:104)4(cid:105)1, (cid:104)1(cid:105)4
+(cid:104)4(cid:105).qed by (cid:104)3(cid:105)1, (cid:104)4(cid:105)2, (cid:104)2(cid:105)2 def VotedFor, VoteFor, VInv, TypeOK
+(cid:104)3(cid:105)3.case a2(cid:54)=self
+by (cid:104)3(cid:105)1, (cid:104)3(cid:105)3, (cid:104)2(cid:105)2 def VotedFor, VoteFor, VInv, TypeOK
+(cid:104)3(cid:105)4. qed
+by (cid:104)3(cid:105)2, (cid:104)3(cid:105)3
+(cid:104)2(cid:105)3. qed
+by (cid:104)2(cid:105)1, (cid:104)2(cid:105)2 def VInv3
+(cid:104)1(cid:105)9. VInv4(cid:48)
+(cid:104)2(cid:105)1. suffices assume new a ∈ Acceptor, new c ∈ Ballot,
+maxBal(cid:48)[a]<c,
+¬DidNotVoteIn(a, c)(cid:48)
+prove false
+by def VInv4
+(cid:104)2(cid:105)2. maxBal[a]<c
+by (cid:104)1(cid:105)5, (cid:104)2(cid:105)1 def Ballot
+(cid:104)2(cid:105)3. DidNotVoteIn(a, c)
+by (cid:104)2(cid:105)2 def VInv, VInv4
+(cid:104)2(cid:105)4. pick v ∈ Value :VotedFor(a, c, v)(cid:48)
+by (cid:104)2(cid:105)1 def DidNotVoteIn
+(cid:104)2(cid:105)5. (a =self)∧(c =b)∧VoteFor(self, b, v)
+by (cid:104)1(cid:105)4, (cid:104)2(cid:105)1, (cid:104)2(cid:105)3, (cid:104)2(cid:105)4 def DidNotVoteIn
+(cid:104)2(cid:105)6. maxBal(cid:48)[a]=c
+by (cid:104)2(cid:105)5 def VoteFor, VInv, TypeOK
+(cid:104)2(cid:105)7. qed
+by (cid:104)2(cid:105)1, (cid:104)2(cid:105)6 def Ballot
+(cid:104)1(cid:105)10. qed
+by (cid:104)1(cid:105)2, (cid:104)1(cid:105)7, (cid:104)1(cid:105)8, (cid:104)1(cid:105)9 def VInv
+TheinvarianceofVInv followseasilyfromtheoremInductiveInvariance andthefollowingresult,
+whichiseasytoprovewithTLAPS.
+theorem InitImpliesInv =∆ Init ⇒VInv
+by def Init, VInv, TypeOK, ProcSet, VInv2, VInv3, VInv4, VotedFor, DidNotVoteIn
+ThefollowingtheoremassertsthatVInv isaninvariantofSpec.
+theorem VT2 =∆ Spec ⇒(cid:50)VInv
+by InitImpliesInv, InductiveInvariance, PTL def Spec
+17
+Thefollowinginstance statementinstantiatesmoduleConsensus withthefollowingexpressions
+substitutedfortheparameters(theconstants andvariables )ofthatmodule:
+ParameterofConsensus Expression(ofthismodule)
+Value Valuechosen chosen
+(Notethatifnosubstitutionisspecifiedforaparameter,thedefaultistosubstitutetheparameter
+or defined operator of the same name.) More precisely, for each defined identifier id of module
+Consensus,thisstatementdefinesC!id toequalthevalueofid underthesesubstitutions.
+C =∆ instance Consensus
+Thefollowingtheoremassertsthatthesafetypropertiesofthevotingalgorithm(specifiedbyfor-
+mulaSpec)ofthismoduleimplementtheconsensussafetyspecificationSpecofmoduleConsensus
+underthesubstitution(refinementmapping)oftheinstance statement.
+theorem VT3 =∆ Spec ⇒C!Spec
+(cid:104)1(cid:105)1. Init ⇒C!Init
+(cid:104)2(cid:105) suffices assume Init
+prove C!Init
+obvious
+(cid:104)2(cid:105)1. suffices assume new v ∈ chosen
+prove false
+by def C!Init
+(cid:104)2(cid:105)2. pick b ∈ Ballot, Q ∈ Quorum :∀a ∈ Q :VotedFor(a, b, v)
+by (cid:104)2(cid:105)1 def chosen, ChosenIn
+(cid:104)2(cid:105)3. pick a ∈ Q :(cid:104)b, v(cid:105) ∈ votes[a]
+by QuorumNonEmpty, (cid:104)2(cid:105)2 def VotedFor
+(cid:104)2(cid:105)4. qed
+by (cid:104)2(cid:105)3, QA def Init
+(cid:104)1(cid:105)2. VInv ∧VInv(cid:48)∧[Next] ⇒[C!Next] !vars
+vars C
+(cid:104)2(cid:105).suffices assume VInv, VInv(cid:48), [Next]
+vars
+prove [C!Next] !vars
+C
+obvious
+(cid:104)2(cid:105)1.case vars(cid:48) =vars
+by (cid:104)2(cid:105)1 def vars, C!vars, chosen, ChosenIn, VotedFor
+(cid:104)2(cid:105)2. suffices assume new self ∈ Acceptor,
+new b ∈ Ballot,
+BallotAction(self, b)
+prove [C!Next] !vars
+C
+by (cid:104)2(cid:105)1, NextDef def VInv
+(cid:104)2(cid:105)3. assume IncreaseMaxBal(self, b)
+prove C!vars(cid:48) =C!vars
+by (cid:104)2(cid:105)3 def IncreaseMaxBal, C!vars, chosen, ChosenIn, VotedFor
+(cid:104)2(cid:105)4. assume new v ∈ Value,
+VoteFor(self, b, v)
+prove [C!Next] !vars
+C
+18
+(cid:104)3(cid:105)3. assume new w ∈ chosen
+prove w ∈ chosen(cid:48)
+(cid:104)4(cid:105)1. pick c ∈ Ballot, Q ∈ Quorum :∀a ∈ Q :(cid:104)c, w(cid:105) ∈ votes[a]
+by (cid:104)3(cid:105)3 def chosen, ChosenIn, VotedFor
+(cid:104)4(cid:105)2. suffices assume new a ∈ Q
+prove (cid:104)c, w(cid:105) ∈ votes(cid:48)[a]
+by def chosen, ChosenIn, VotedFor
+(cid:104)4(cid:105)3.case a =self
+by (cid:104)2(cid:105)4, (cid:104)4(cid:105)1, (cid:104)4(cid:105)3 def VoteFor, VInv, TypeOK
+(cid:104)4(cid:105)4.case a (cid:54)=self
+by (cid:104)2(cid:105)4, (cid:104)4(cid:105)1, (cid:104)4(cid:105)4, QA def VoteFor, VInv, TypeOK
+(cid:104)4(cid:105)5. qed
+by (cid:104)4(cid:105)3, (cid:104)4(cid:105)4
+(cid:104)3(cid:105)1. assume new w ∈ chosen,
+v ∈ chosen(cid:48)
+prove w =v
+by (cid:104)3(cid:105)3, (cid:104)3(cid:105)1, VT1Prime def VInv, VInv1, VInv3
+(cid:104)3(cid:105)2. assume new w, w ∈/ chosen, w ∈ chosen(cid:48)
+prove w =v
+(cid:104)4(cid:105)2. pick c ∈ Ballot, Q ∈ Quorum :∀a ∈ Q :(cid:104)c, w(cid:105) ∈ votes(cid:48)[a]
+by (cid:104)3(cid:105)2 def chosen, ChosenIn, VotedFor
+(cid:104)4(cid:105)3. pick a ∈ Q :(cid:104)c, w(cid:105) ∈/ votes[a]
+by (cid:104)3(cid:105)2 def chosen, ChosenIn, VotedFor
+(cid:104)4(cid:105)4.case a =self
+by (cid:104)2(cid:105)4, (cid:104)4(cid:105)4, (cid:104)4(cid:105)2, (cid:104)4(cid:105)3 def VoteFor, VInv, TypeOK
+(cid:104)4(cid:105)5.case a (cid:54)=self
+by (cid:104)2(cid:105)4, (cid:104)4(cid:105)2, (cid:104)4(cid:105)3, (cid:104)4(cid:105)5, QA def VoteFor, VInv, TypeOK
+(cid:104)4(cid:105)6. qed
+by (cid:104)4(cid:105)4, (cid:104)4(cid:105)5
+(cid:104)3(cid:105).qed
+by (cid:104)3(cid:105)3, (cid:104)3(cid:105)1, (cid:104)3(cid:105)2 def C!Next, C!vars
+(cid:104)2(cid:105)5. qed
+by (cid:104)2(cid:105)2, (cid:104)2(cid:105)3, (cid:104)2(cid:105)4 def BallotAction
+(cid:104)1(cid:105)3. qed
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, VT2, PTL def Spec, C!Spec
+Liveness
+We now state the liveness property required of our voting algorithm and prove that it and the
+safetypropertyimplyspecificationLiveSpecofmoduleConsensus underourrefinementmapping.
+Webeginbystatingtwoadditionalassumptionsthatarenecessaryforliveness. Livenessrequires
+that some value eventually be chosen. This cannot hold with an infinite set of acceptors. More
+precisely,livenessrequirestheexistenceofafinitequorum. (Otherwise,itwouldbeimpossiblefor
+allacceptorsofanyquorumevertohavevoted,sonovaluecouldeverbechosen.) Moreover,itis
+impossibletochooseavalueiftherearenovalues. Hence,wemakethefollowingtwoassumptions.
+19
+assume AcceptorFinite =∆ IsFiniteSet(Acceptor)
+assume ValueNonempty =∆ Value (cid:54)={}
+lemma FiniteSetHasMax =∆
+assume new S ∈ subset Int, IsFiniteSet(S), S (cid:54)={}
+prove ∃max ∈ S :∀x ∈ S :max ≥x
+(cid:104)1(cid:105).define P(T) =∆ T ∈ subset Int ∧T (cid:54)={}⇒∃max ∈ T :∀x ∈ T :max ≥x
+(cid:104)1(cid:105)1. P({})
+obvious
+(cid:104)1(cid:105)2. assume new T, new x, P(T), x ∈/ T
+prove P(T ∪{x})
+by (cid:104)1(cid:105)2
+(cid:104)1(cid:105)3. ∀T :IsFiniteSet(T)⇒P(T)
+(cid:104)2(cid:105).hide def P
+(cid:104)2(cid:105).qed by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, FS Induction, IsaM(“blast”)
+(cid:104)1(cid:105).qed by (cid:104)1(cid:105)3, Zenon
+Thefollowingtheoremimpliesthatitisalwayspossibletofindaballotnumberbandavaluevsafe
+atbbychoosingblargeenoughandthenhavingaquorumofacceptorsperformIncreaseMaxBal(b)
+actions. It will be used in the liveness proof. Observe that it is for liveness, not safety, that
+invariantVInv3isrequired.
+theorem VT4 =∆ TypeOK ∧VInv2∧VInv3 ⇒
+∀Q ∈ Quorum, b ∈ Ballot :
+(∀a ∈ Q :(maxBal[a]≥b))⇒∃v ∈ Value :SafeAt(b, v)
+CheckedasaninvariantbyTLC with3acceptors,3ballots,2values
+(cid:104)1(cid:105).use def Ballot
+(cid:104)1(cid:105)1. suffices assume TypeOK, VInv2, VInv3,
+new Q ∈ Quorum, new b ∈ Ballot,
+(∀a ∈ Q :(maxBal[a]≥b))
+prove ∃v ∈ Value :SafeAt(b, v)
+obvious
+(cid:104)1(cid:105)2.case b =0
+by ValueNonempty, (cid:104)1(cid:105)1, SafeAtProp, (cid:104)1(cid:105)2, Zenon
+(cid:104)1(cid:105)4. suffices assume b (cid:54)=0
+prove ∃v ∈ Value :
+∃c ∈ −1..(b−1):
+∧(c (cid:54)= −1)⇒ ∧SafeAt(c, v)
+∧∀a ∈ Q :
+∀w ∈ Value :
+VotedFor(a, c, w)⇒(w =v)
+∧∀d ∈ (c+1)..(b−1), a ∈ Q :DidNotVoteIn(a, d)
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, SafeAtProp
+(cid:104)1(cid:105)5.case ∀a ∈ Q, c ∈ 0..(b−1):DidNotVoteIn(a, c)
+20
+by (cid:104)1(cid:105)5, ValueNonempty
+(cid:104)1(cid:105)6.case ∃a ∈ Q, c ∈ 0..(b−1):¬DidNotVoteIn(a, c)
+(cid:104)2(cid:105)1. pick c ∈ 0..(b−1):
+∧∃a ∈ Q :¬DidNotVoteIn(a, c)
+∧∀d ∈ (c+1)..(b−1), a ∈ Q :DidNotVoteIn(a, d)
+(cid:104)3(cid:105) define S =∆ {c ∈ 0..(b−1):∃a ∈ Q :¬DidNotVoteIn(a, c)}
+(cid:104)3(cid:105)1. S (cid:54)={}
+by (cid:104)1(cid:105)6
+(cid:104)3(cid:105)2. pick c ∈ S :∀d ∈ S :c ≥d
+(cid:104)4(cid:105)2. IsFiniteSet(S)
+by FS Interval, FS Subset, 0 ∈ Int, b−1 ∈ Int, Zenon
+(cid:104)4(cid:105)3. qed
+by (cid:104)3(cid:105)1, (cid:104)4(cid:105)2, FiniteSetHasMax
+(cid:104)3(cid:105).qed
+by (cid:104)3(cid:105)2 def Ballot
+(cid:104)2(cid:105)4. pick a0 ∈ Q, v ∈ Value :VotedFor(a0, c, v)
+by (cid:104)2(cid:105)1 def DidNotVoteIn
+(cid:104)2(cid:105)5. ∀a ∈ Q :∀w ∈ Value :
+VotedFor(a, c, w)⇒(w =v)
+by (cid:104)2(cid:105)4, QA, (cid:104)1(cid:105)1 def VInv3
+(cid:104)2(cid:105)6. SafeAt(c, v)
+by (cid:104)1(cid:105)1, (cid:104)2(cid:105)4, QA def VInv2
+(cid:104)2(cid:105)7. qed
+by (cid:104)2(cid:105)1, (cid:104)2(cid:105)5, (cid:104)2(cid:105)6
+(cid:104)1(cid:105)7. qed
+by (cid:104)1(cid:105)5, (cid:104)1(cid:105)6
+Theprogresspropertywerequireofthealgorithmisthataquorumofacceptors,bythemselves,
+caneventuallychooseavaluev. Thismeansthat,forsomequorumQ andballotb,theacceptors
+a of Q must make SafeAt(b,v) true by executing IncreaseMaxBal(a,b) and then must execute
+VoteFor(a,b,v) to choose v. In order to be able to execute VoteFor(a,b,v), acceptor a must
+notexecuteaBallot(a,c)actionforanyc>b.
+TheseconsiderationsleadtothefollowinglivenessrequirementLiveAssumption. TheWF condi-
+tionensuresthattheacceptorsainQ eventuallyexecutethenecessaryBallotAction(a,b)actions
+iftheyareenabled,andthe(cid:50)[...] vars conditionensuresthattheyneverperform
+BallotAction actionsforhigher-numberedballots,sothenecessary
+BallotAction(a,b)actionsareenabled.
+LiveAssumption =∆
+∃Q ∈ Quorum, b ∈ Ballot :
+∧∀self ∈ Q :WF (BallotAction(self, b))
+vars
+∧(cid:50)[∀self ∈ Q :∀c ∈ Ballot :
+(c >b)⇒¬BallotAction(self, c)]
+vars
+LiveSpec =∆ Spec∧LiveAssumption
+21
+LiveAssumption is stronger than necessary. Instead of requiring that an acceptor in Q never
+executesanactionofahigher-numberedballotthanb,itsufficesthatitdoesn’texecutesuchan
+actionuntilunlessithasvotedinballotb. However,thenaturallivenessrequirementforaPaxos
+consensusalgorithmimpliesconditionLiveAssumption.
+ConditionLiveAssumption isalivenessproperty, constrainingonlywhateventuallyhappens. It
+isstraightforwardtoreplace“eventuallyhappens”by“happenswithinsomelengthoftime”and
+convertLiveAssumption intoareal-timecondition. Wehavenotdonethatforthreereasons:
+1.Thereal-timerequirementand, webelieve, thereal-timereasoningwillbemorecomplicated,
+sincetemporallogicwasdevelopedtoabstractawaymuchofthecomplexityofreasoningabout
+explicittimes.
+2. TLAPS doesnotyetsupportreasoningaboutrealnumbers.
+3.Reasoningaboutreal-timespecificationsconsistsentirelyofsafetyreasoning, whichisalmost
+entirely action reasoning. We want to see how the TLA+ proof language and TLAPS do on
+temporallogicreasoning.
+Herearetwotemporal-logicproofrules. Theirvalidityisobviouswhenyouunderstandwhatthey
+mean.
+theorem AlwaysForall =∆
+assume new constant S, new temporal P( )
+prove (∀s ∈ S :(cid:50)P(s))≡(cid:50)(∀s ∈ S :P(s))
+obvious
+lemma EventuallyAlwaysForall =∆
+assume new constant S, IsFiniteSet(S),
+new temporal P( )
+prove (∀s ∈ S :(cid:51)(cid:50)P(s))⇒(cid:51)(cid:50)(∀s ∈ S :P(s))
+(cid:104)1(cid:105).define A(x) =∆ (cid:51)(cid:50)P(x)
+L(T) =∆ ∀s ∈ T :A(s)
+R(T) =∆ ∀s ∈ T :P(s)
+Q(T) =∆ L(T)⇒(cid:51)(cid:50)R(T)
+(cid:104)1(cid:105)1. Q({})
+(cid:104)2(cid:105)1. R({}) obvious
+(cid:104)2(cid:105)2. (cid:51)(cid:50)R({}) by (cid:104)2(cid:105)1, PTL
+(cid:104)2(cid:105).qed by (cid:104)2(cid:105)2
+(cid:104)1(cid:105)2. assume new T, new x
+prove Q(T)⇒Q(T ∪{x})
+(cid:104)2(cid:105)1. L(T ∪{x})⇒A(x)
+(cid:104)3(cid:105).hide def A
+(cid:104)3(cid:105).qed obvious
+(cid:104)2(cid:105)2. L(T ∪{x})∧Q(T)⇒(cid:51)(cid:50)R(T)
+obvious
+(cid:104)2(cid:105)3. (cid:51)(cid:50)R(T)∧A(x)⇒(cid:51)(cid:50)(R(T)∧P(x))
+by PTL
+(cid:104)2(cid:105)4. R(T)∧P(x)⇒R(T ∪{x})
+obvious
+(cid:104)2(cid:105)5. (cid:51)(cid:50)(R(T)∧P(x))⇒(cid:51)(cid:50)R(T ∪{x})
+22
+by (cid:104)2(cid:105)4, PTL
+(cid:104)2(cid:105).qed
+by (cid:104)2(cid:105)1, (cid:104)2(cid:105)2, (cid:104)2(cid:105)3, (cid:104)2(cid:105)5
+(cid:104)1(cid:105).hide def Q
+(cid:104)1(cid:105)3. ∀T :IsFiniteSet(T)⇒Q(T)
+by (cid:104)1(cid:105)1, (cid:104)1(cid:105)2, FS Induction, IsaM(“blast”)
+(cid:104)1(cid:105)4. Q(S)
+by (cid:104)1(cid:105)3
+(cid:104)1(cid:105).qed
+by (cid:104)1(cid:105)4 def Q
+HereisourproofthatLiveSpecimplementsthespecificationLiveSpecofmoduleConsensusunder
+ourrefinementmapping.
+theorem Liveness =∆ LiveSpec ⇒C!LiveSpec
+(cid:104)1(cid:105) suffices assume new Q ∈ Quorum, new b ∈ Ballot
+prove Spec∧LiveAssumption!(Q, b)⇒C!LiveSpec
+by Isa def LiveSpec, LiveAssumption
+(cid:104)1(cid:105)a. IsFiniteSet(Q)
+by QA, AcceptorFinite, FS Subset
+(cid:104)1(cid:105)1. C!LiveSpec ≡C!Spec∧((cid:50)(cid:51)(cid:104)C!Next(cid:105) !vars ∨(cid:50)(cid:51)(chosen (cid:54)={}))
+C
+by ValueNonempty, C!LiveSpecEquals
+(cid:104)1(cid:105) define LNext =∆ ∃self ∈ Acceptor, c ∈ Ballot :
+∧BallotAction(self, c)
+∧(self ∈ Q)⇒(c ≤b)
+(cid:104)1(cid:105)2. Spec∧LiveAssumption!(Q, b)⇒(cid:50)[LNext]
+vars
+(cid:104)2(cid:105)1.∧TypeOK
+∧[Next]
+vars
+∧[∀self ∈ Q :∀c ∈ Ballot :(c >b)⇒¬BallotAction(self, c)]
+vars
+⇒[LNext]
+vars
+by NextDef def LNext, Ballot
+(cid:104)2(cid:105)2.∧ (cid:50)TypeOK
+∧ (cid:50)[Next]
+vars
+∧ (cid:50)[∀self ∈ Q :∀c ∈ Ballot :(c >b)⇒¬BallotAction(self, c)]
+vars
+⇒(cid:50)[LNext]
+vars
+by (cid:104)2(cid:105)1, PTL
+(cid:104)2(cid:105)3. qed
+by (cid:104)2(cid:105)2, VT2, Isa def Spec, VInv
+(cid:104)1(cid:105) define LNInv1 =∆ ∀a ∈ Q :maxBal[a]≤b
+LInv1 =∆ VInv ∧LNInv1
+(cid:104)1(cid:105)3. LInv1∧[LNext] ⇒LInv1(cid:48)
+vars
+(cid:104)2(cid:105)1. suffices assume LInv1, [LNext]
+vars
+23
+prove LInv1(cid:48)
+obvious
+(cid:104)2(cid:105)2. VInv(cid:48)
+by (cid:104)2(cid:105)1, NextDef, InductiveInvariance def LInv1, VInv
+(cid:104)2(cid:105)3. LNInv1(cid:48)
+by (cid:104)2(cid:105)1, QA def BallotAction, IncreaseMaxBal, VoteFor, VInv, TypeOK, vars
+(cid:104)2(cid:105).qed
+by (cid:104)2(cid:105)2, (cid:104)2(cid:105)3
+(cid:104)1(cid:105)4. ∀a ∈ Q :
+VInv ∧(maxBal[a]=b)∧[LNext] ⇒VInv(cid:48)∧(maxBal(cid:48)[a]=b)
+vars
+(cid:104)2(cid:105)1. suffices assume new a ∈ Q,
+VInv, maxBal[a]=b, [LNext]
+vars
+prove VInv(cid:48)∧(maxBal(cid:48)[a]=b)
+obvious
+(cid:104)2(cid:105)2. VInv(cid:48)
+by (cid:104)2(cid:105)1, NextDef, InductiveInvariance def VInv
+(cid:104)2(cid:105)3. maxBal(cid:48)[a]=b
+by (cid:104)2(cid:105)1, QA def BallotAction, IncreaseMaxBal, VoteFor, VInv, TypeOK, Ballot, vars
+(cid:104)2(cid:105).qed
+by (cid:104)2(cid:105)2, (cid:104)2(cid:105)3
+(cid:104)1(cid:105)5. Spec∧LiveAssumption!(Q, b)⇒
+(cid:51)(cid:50)(∀self ∈ Q :maxBal[self]=b)
+(cid:104)2(cid:105)1. suffices assume new self ∈ Q
+prove Spec∧LiveAssumption!(Q, b)⇒(cid:51)(cid:50)(maxBal[self]=b)
+by (cid:104)1(cid:105)a,EventuallyAlwaysForall\*doesn’tcheck,evenwhenintroducingdefinitions
+proof omitted
+(cid:104)2(cid:105) define P =∆ LInv1 ∧¬(maxBal[self]=b)
+QQ =∆ LInv1∧(maxBal[self]=b)
+A =∆ BallotAction(self, b)
+(cid:104)2(cid:105)2.(cid:50)[LNext] ∧WF (A)⇒(LInv1(cid:59)QQ)
+vars vars
+(cid:104)3(cid:105)1. P ∧[LNext] ⇒(P(cid:48)∨QQ(cid:48))
+vars
+by (cid:104)1(cid:105)3
+(cid:104)3(cid:105)2. P ∧(cid:104)LNext ∧A(cid:105) ⇒QQ(cid:48)
+vars
+(cid:104)4(cid:105)1. suffices assume LInv1, LNext, A
+prove QQ(cid:48)
+obvious
+(cid:104)4(cid:105)2. LInv1(cid:48)
+by (cid:104)4(cid:105)1, (cid:104)1(cid:105)3
+(cid:104)4(cid:105)3.case IncreaseMaxBal(self, b)
+by (cid:104)4(cid:105)1, (cid:104)4(cid:105)2, (cid:104)4(cid:105)3, QA def IncreaseMaxBal, VInv, TypeOK
+(cid:104)4(cid:105)4.case ∃v ∈ Value :VoteFor(self, b, v)
+by (cid:104)4(cid:105)1, (cid:104)4(cid:105)2, (cid:104)4(cid:105)4, QA def VoteFor, VInv, TypeOK
+(cid:104)4(cid:105)5. qed
+24
+by (cid:104)4(cid:105)1, (cid:104)4(cid:105)3, (cid:104)4(cid:105)4 def BallotAction
+(cid:104)3(cid:105)3. P ⇒enabled (cid:104)A(cid:105)
+vars
+(cid:104)4(cid:105)1. (enabled (cid:104)A(cid:105) )≡
+vars
+∃votesp, maxBalp :
+∧ ∨ ∧b >maxBal[self]
+∧maxBalp =[maxBal except ![self]=b]
+∧votesp =votes
+∨∃v ∈ Value :
+∧maxBal[self]≤b
+∧DidNotVoteIn(self, b)
+∧∀p ∈ Acceptor\{self}:
+∀w ∈ Value :VotedFor(p, b, w)⇒(w =v)
+∧SafeAt(b, v)
+∧votesp =[votes except ![self]=votes[self]
+∪{(cid:104)b, v(cid:105)}]
+∧maxBalp =[maxBal except ![self]=b]
+∧(cid:104)votesp, maxBalp(cid:105)=(cid:54) (cid:104)votes, maxBal(cid:105)
+by def BallotAction,IncreaseMaxBal,VoteFor,vars,SafeAt,
+DidNotVoteIn,VotedFor
+proof omitted
+(cid:104)4(cid:105).suffices assume P
+prove ∃votesp, maxBalp :
+∧b >maxBal[self]
+∧maxBalp =[maxBal except ![self]=b]
+∧votesp =votes
+∧(cid:104)votesp, maxBalp(cid:105)=(cid:54) (cid:104)votes, maxBal(cid:105)
+by (cid:104)4(cid:105)1
+(cid:104)4(cid:105) witness votes, [maxBal except ![self]=b]
+(cid:104)4(cid:105).qed by QA def VInv, TypeOK, Ballot
+(cid:104)3(cid:105).qed by (cid:104)3(cid:105)1, (cid:104)3(cid:105)2, (cid:104)3(cid:105)3, PTL
+(cid:104)2(cid:105)3. QQ ∧(cid:50)[LNext] ⇒(cid:50)QQ
+vars
+(cid:104)3(cid:105)1. QQ ∧[LNext] ⇒QQ(cid:48)
+vars
+by (cid:104)1(cid:105)3, (cid:104)1(cid:105)4
+(cid:104)3(cid:105).qed by (cid:104)3(cid:105)1, PTL
+(cid:104)2(cid:105)4.(cid:50)QQ ⇒(cid:50)(maxBal[self]=b)
+by PTL
+(cid:104)2(cid:105)5. LiveAssumption!(Q, b)⇒WF (A)
+vars
+by Isa
+(cid:104)2(cid:105)6. Spec ⇒LInv1
+(cid:104)3(cid:105)1. Init ⇒VInv
+by InitImpliesInv
+(cid:104)3(cid:105)2. Init ⇒LNInv1
+by QA def Init, Ballot
+(cid:104)3(cid:105).qed by (cid:104)3(cid:105)1, (cid:104)3(cid:105)2 def Spec
+(cid:104)2(cid:105).qed
+25
+by (cid:104)2(cid:105)2, (cid:104)2(cid:105)3, (cid:104)2(cid:105)4, (cid:104)2(cid:105)5, (cid:104)2(cid:105)6, (cid:104)1(cid:105)2, PTL
+(cid:104)1(cid:105) define LNInv2 =∆ ∀a ∈ Q :maxBal[a]=b
+LInv2 =∆ VInv ∧LNInv2
+(cid:104)1(cid:105)6. LInv2∧[LNext] ⇒LInv2(cid:48)
+vars
+by (cid:104)1(cid:105)4, QuorumNonEmpty
+(cid:104)1(cid:105)7. Spec∧LiveAssumption!(Q, b)⇒(cid:51)(cid:50)(chosen (cid:54)={})
+(cid:104)2(cid:105) define Voted(a) =∆ ∃v ∈ Value :VotedFor(a, b, v)
+(cid:104)2(cid:105)1. Spec∧LiveAssumption!(Q, b)⇒(cid:51)(cid:50)LInv2
+(cid:104)3(cid:105)1. Spec∧LiveAssumption!(Q, b)⇒(cid:51)(cid:50)LNInv2
+by (cid:104)1(cid:105)5\*doesn’tcheck
+proof omitted
+(cid:104)3(cid:105).qed by (cid:104)3(cid:105)1, VT2, PTL
+(cid:104)2(cid:105)2. LInv2∧(∀a ∈ Q :Voted(a))⇒(chosen (cid:54)={})
+(cid:104)3(cid:105)1. suffices assume LInv2,
+∀a ∈ Q :Voted(a)
+prove chosen (cid:54)={}
+obvious
+(cid:104)3(cid:105)2. ∃v ∈ Value :∀a ∈ Q : VotedFor(a, b, v)
+(cid:104)4(cid:105)2. pick a0 ∈ Q, v ∈ Value :VotedFor(a0, b, v)
+by (cid:104)3(cid:105)1, QuorumNonEmpty
+(cid:104)4(cid:105)3. assume new a ∈ Q
+prove VotedFor(a, b, v)
+by (cid:104)3(cid:105)1, (cid:104)4(cid:105)2, QA def VInv, VInv3
+(cid:104)4(cid:105)4. qed
+by (cid:104)4(cid:105)3
+(cid:104)3(cid:105)3. qed
+by (cid:104)3(cid:105)2 def chosen, ChosenIn
+(cid:104)2(cid:105)3. Spec∧LiveAssumption!(Q, b)⇒(∀a ∈ Q :(cid:51)(cid:50)Voted(a))
+(cid:104)3(cid:105)1. suffices assume new self ∈ Q
+prove Spec∧LiveAssumption!(Q, b)⇒(cid:51)(cid:50)Voted(self)
+obvious \*doesn’tcheck?!
+proof omitted
+(cid:104)3(cid:105)2. Spec∧LiveAssumption!(Q, b)⇒(cid:51)Voted(self)
+(cid:104)4(cid:105)2.(cid:50)[LNext] ∧WF (BallotAction(self, b))
+vars vars
+⇒((LInv2∧¬Voted(self))(cid:59)LInv2∧Voted(self))
+(cid:104)5(cid:105) define P =∆ LInv2∧¬Voted(self)
+QQ =∆ LInv2∧Voted(self)
+A =∆ BallotAction(self, b)
+(cid:104)5(cid:105)1. P ∧[LNext] ⇒(P(cid:48)∨QQ(cid:48))
+vars
+by (cid:104)1(cid:105)6
+(cid:104)5(cid:105)2. P ∧(cid:104)LNext ∧A(cid:105) ⇒QQ(cid:48)
+vars
+(cid:104)6(cid:105)1. suffices assume P,
+LNext,
+26
+A
+prove QQ(cid:48)
+obvious
+(cid:104)6(cid:105)2.case ∃v ∈ Value :VoteFor(self, b, v)
+by (cid:104)6(cid:105)1, (cid:104)6(cid:105)2, (cid:104)5(cid:105)1, QA, Zenon def VoteFor, Voted, VotedFor, LInv2, VInv, TypeOK
+(cid:104)6(cid:105)3.case IncreaseMaxBal(self, b)
+by (cid:104)6(cid:105)1, (cid:104)6(cid:105)3 def IncreaseMaxBal, Ballot
+(cid:104)6(cid:105)4. qed
+by (cid:104)6(cid:105)1, (cid:104)6(cid:105)2, (cid:104)6(cid:105)3 def BallotAction
+(cid:104)5(cid:105)3. P ⇒enabled (cid:104)A(cid:105)
+vars
+(cid:104)6(cid:105)1. suffices assume P
+prove enabled (cid:104)A(cid:105)
+vars
+obvious
+(cid:104)6(cid:105)2. (enabled (cid:104)A(cid:105) )≡
+vars
+∃votesp, maxBalp :
+∧ ∨ ∧b >maxBal[self]
+∧maxBalp =[maxBal except ![self]=b]
+∧votesp =votes
+∨∃v ∈ Value :
+∧maxBal[self]≤b
+∧DidNotVoteIn(self, b)
+∧∀p ∈ Acceptor\{self}:
+∀w ∈ Value :VotedFor(p, b, w)⇒(w =v)
+∧SafeAt(b, v)
+∧votesp =[votes except ![self]=votes[self]
+∪{(cid:104)b, v(cid:105)}]
+∧maxBalp =[maxBal except ![self]=b]
+∧(cid:104)votesp, maxBalp(cid:105)=(cid:54) (cid:104)votes, maxBal(cid:105)
+by def BallotAction,IncreaseMaxBal,VoteFor,vars,SafeAt,
+DidNotVoteIn,VotedFor
+proof omitted
+(cid:104)6(cid:105) suffices
+∃votesp, maxBalp :
+∧∃v ∈ Value :
+∧maxBal[self]≤b
+∧DidNotVoteIn(self, b)
+∧∀p ∈ Acceptor\{self}:
+∀w ∈ Value :VotedFor(p, b, w)⇒(w =v)
+∧SafeAt(b, v)
+∧votesp =[votes except ![self]=votes[self]
+∪{(cid:104)b, v(cid:105)}]
+∧maxBalp =[maxBal except ![self]=b]
+∧(cid:104)votesp, maxBalp(cid:105)=(cid:54) (cid:104)votes, maxBal(cid:105)
+by (cid:104)6(cid:105)2
+(cid:104)6(cid:105) define someVoted =∆ ∃p ∈ Acceptor\{self}:
+27
+∃w ∈ Value :VotedFor(p, b, w)
+vp =∆ choose p ∈ Acceptor\{self}:
+∃w ∈ Value :VotedFor(p, b, w)
+vpval =∆ choose w ∈ Value :VotedFor(vp, b, w)
+(cid:104)6(cid:105)3. someVoted ⇒ ∧vp ∈ Acceptor
+∧vpval ∈ Value
+∧VotedFor(vp, b, vpval)
+by Zenon
+(cid:104)6(cid:105) define v =∆ if someVoted then vpval
+else choose v ∈ Value :SafeAt(b, v)
+(cid:104)6(cid:105)4. (v ∈ Value)∧SafeAt(b, v)
+by (cid:104)6(cid:105)1, (cid:104)6(cid:105)3, VT4 def VInv, VInv2, Ballot
+(cid:104)6(cid:105) define votesp =∆ [votes except ![self]=votes[self]∪{(cid:104)b, v(cid:105)}]
+maxBalp =∆ [maxBal except ![self]=b]
+(cid:104)6(cid:105) witness votesp, maxBalp
+(cid:104)6(cid:105) suffices ∧maxBal[self]≤b
+∧DidNotVoteIn(self, b)
+∧∀p ∈ Acceptor\{self}:
+∀w ∈ Value :VotedFor(p, b, w)⇒(w =v)
+∧votesp (cid:54)=votes
+by (cid:104)6(cid:105)4, Zenon
+(cid:104)6(cid:105)5. maxBal[self]≤b
+by (cid:104)6(cid:105)1 def Ballot
+(cid:104)6(cid:105)6. DidNotVoteIn(self, b)
+by (cid:104)6(cid:105)1 def Voted, DidNotVoteIn
+(cid:104)6(cid:105)7. assume new p ∈ Acceptor\{self},
+new w ∈ Value,
+VotedFor(p, b, w)
+prove w =v
+by (cid:104)6(cid:105)7, (cid:104)6(cid:105)3, (cid:104)6(cid:105)1 def VInv, VInv3
+(cid:104)6(cid:105)8. votesp (cid:54)=votes
+(cid:104)7(cid:105)1. votesp[self]=votes[self]∪{(cid:104)b, v(cid:105)}
+by (cid:104)6(cid:105)1, QA def LInv2, VInv, TypeOK
+(cid:104)7(cid:105)2. ∀w ∈ Value :(cid:104)b, w(cid:105) ∈/ votes[self]
+by (cid:104)6(cid:105)6 def DidNotVoteIn, VotedFor
+(cid:104)7(cid:105)3. qed
+by (cid:104)7(cid:105)1, (cid:104)7(cid:105)2, (cid:104)6(cid:105)4, Zenon
+(cid:104)6(cid:105)9. qed
+by (cid:104)6(cid:105)5, (cid:104)6(cid:105)6, (cid:104)6(cid:105)7, (cid:104)6(cid:105)8, Zenon
+(cid:104)5(cid:105)4. qed
+by (cid:104)5(cid:105)1, (cid:104)5(cid:105)2, (cid:104)5(cid:105)3, PTL
+(cid:104)4(cid:105)3.(cid:50)LInv2∧((LInv2∧¬Voted(self))(cid:59)LInv2∧Voted(self))
+⇒(cid:51)Voted(self)
+by PTL
+(cid:104)4(cid:105)4. LiveAssumption!(Q, b)⇒WF (BallotAction(self, b))
+vars
+28
+by Isa
+(cid:104)4(cid:105).qed
+by (cid:104)1(cid:105)2, (cid:104)2(cid:105)1, (cid:104)4(cid:105)2, (cid:104)4(cid:105)3, (cid:104)4(cid:105)4, PTL
+(cid:104)3(cid:105)3. Spec ⇒(cid:50)(Voted(self)⇒(cid:50)Voted(self))
+(cid:104)4(cid:105)1. (VInv ∧Voted(self))∧[Next] ⇒(VInv ∧Voted(self))(cid:48)
+vars
+(cid:104)5(cid:105) suffices assume VInv, Voted(self), [Next]
+vars
+prove VInv(cid:48)∧Voted(self)(cid:48)
+obvious
+(cid:104)5(cid:105)1. VInv(cid:48)
+by InductiveInvariance
+(cid:104)5(cid:105)2. Voted(self)(cid:48)
+(cid:104)6(cid:105)case vars(cid:48) =vars
+by def vars, Voted, VotedFor
+(cid:104)6(cid:105)case Next
+(cid:104)7(cid:105)2. pick a ∈ Acceptor, c ∈ Ballot :BallotAction(a, c)
+by NextDef def VInv
+(cid:104)7(cid:105)3.case IncreaseMaxBal(a, c)
+by (cid:104)7(cid:105)3 def IncreaseMaxBal, Voted, VotedFor
+(cid:104)7(cid:105)4.case ∃v ∈ Value :VoteFor(a, c, v)
+by (cid:104)7(cid:105)4, QA def VInv, TypeOK, VoteFor, Voted, VotedFor
+(cid:104)7(cid:105)5. qed
+by (cid:104)7(cid:105)2, (cid:104)7(cid:105)3, (cid:104)7(cid:105)4 def BallotAction
+(cid:104)6(cid:105) qed
+obvious
+(cid:104)5(cid:105)3. qed
+by (cid:104)5(cid:105)1, (cid:104)5(cid:105)2
+(cid:104)4(cid:105)3. qed
+by (cid:104)4(cid:105)1, VT2, PTL def Spec
+(cid:104)3(cid:105)4. qed
+by (cid:104)3(cid:105)2, (cid:104)3(cid:105)3, PTL
+(cid:104)2(cid:105)4. (∀a ∈ Q :(cid:51)(cid:50)Voted(a))⇒(cid:51)(cid:50)(∀a ∈ Q :Voted(a))
+by (cid:104)1(cid:105)a,EventuallyAlwaysForall\*doesn’tcheck
+proof omitted
+(cid:104)2(cid:105).qed
+by (cid:104)2(cid:105)1, VT2, (cid:104)2(cid:105)2, (cid:104)2(cid:105)3, (cid:104)2(cid:105)4, PTL
+(cid:104)1(cid:105).qed
+(cid:104)2(cid:105)1. Spec∧LiveAssumption!(Q, b)⇒C!Spec∧(cid:51)(cid:50)(chosen (cid:54)={})
+by VT3, (cid:104)1(cid:105)7, Isa
+(cid:104)2(cid:105)2. Spec∧LiveAssumption!(Q, b)⇒C!Spec∧(cid:50)(cid:51)(chosen (cid:54)={})
+by (cid:104)2(cid:105)1, PTL
+(cid:104)2(cid:105).qed
+by (cid:104)2(cid:105)2, (cid:104)1(cid:105)1, Isa
+29
+\*ModificationHistory
+\*LastmodifiedFri Jul 2418:20:31CEST 2020bymerz
+\*LastmodifiedWed Apr 2912:24:23CEST 2020bymerz
+\*LastmodifiedMon May2808:53:38PDT 2012bylamport
+30

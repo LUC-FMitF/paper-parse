@@ -1,0 +1,141 @@
+Source: ACP_NB.pdf
+================================================================================
+
+module ACP NB
+Time-stamp: <10Jun 2002at14:06:57bycharpovonberlioz.cs.unh.edu >
+NonblockingAtomicCommittment Protocol(ACP-NB)
+ThenonblockingpropertyAC5isobtainedbyusingareliablebroadcast
+implementedasfollows:
+-uponreceptionofabroadcastmessage,thismessageisforwardedtoall
+participantsbeforeit’sdeliveredtothelocalsite;
+-sinceparticipanti doesnotforwardtoitself,forward[i]isusedto
+storethedecisionbeforeit’sdelivered(andbecomes“decision”)
+extends ACP SB
+Participantstypeisextendedwitha“forward”variable.
+Coordinatortypeisunchanged.
+TypeInvParticipantNB =∆ participant ∈ [
+participants →[
+vote :{yes, no},
+alive :boolean ,
+decision :{undecided, commit, abort},
+faulty :boolean ,
+voteSent :boolean ,
+forward :[participants →{notsent, commit, abort}]
+]
+]
+TypeInvNB =∆ TypeInvParticipantNB ∧TypeInvCoordinator
+Initially,participantshavenotforwardedanythingyet
+InitParticipantNB =∆ participant ∈ [
+participants →[
+vote :{yes, no},
+alive :{true},
+decision :{undecided},
+faulty :{false},
+voteSent :{false},
+forward :[participants →{notsent}]
+]
+]
+InitNB =∆ InitParticipantNB ∧InitCoordinator
+Participantstatementsthatrealizeabetterbroadcast
+forward(i,j): forwardingofthepredecisionfromparticipanti toparticipantj
+if
+particpanti isalive
+participanti hasreceivedadecision(storedinforward[i])
+participanti hasnotyetforwardedthisdecisiontoparticipantj
+then
+participanti forwardsthedecisiontoparticipantj
+forward(i, j) =∆ ∧i 6=j
+∧participant[i].alive
+∧participant[i].forward[i] 6=notsent
+∧participant[i].forward[j]=notsent
+∧participant0 =[participant except ![i]=
+1
+[@ except !.forward =
+[@ except ![j]=participant[i].forward[i]]
+]
+]
+∧unchanged hcoordinatori
+preDecideOnForward(i,j): participanti receivesdecisionfromparticipantj
+if
+participanti isalive
+participanti hasyettoreceiveadecision
+participantj hasforwardeditsdecisiontoparticipanti
+then
+participanti (pre)decidesinaccordancewithparticipantj’sdecision
+preDecideOnForward(i, j) =∆ ∧i 6=j
+∧participant[i].alive
+∧participant[i].forward[i] =notsent
+∧participant[j].forward[i]6=notsent
+∧participant0 =[participant except ![i]=
+[@ except !.forward =
+[@ except ![i]=participant[j].forward[i]]
+]
+]
+∧unchanged hcoordinatori
+preDecide(i): participanti receivesdecisionfromcoordinator
+if
+participanti isalive
+participanti hasyettoreceiveadecision
+coordinatorhassentitsdecisiontoparticipanti
+then
+participanti (pre)decidesinaccordancewithcoordinator’sdecision
+preDecide(i) =∆ ∧participant[i].alive
+∧participant[i].forward[i]=notsent
+∧coordinator.broadcast[i]6=notsent
+∧participant0 =[participant except ![i]=
+[@ except !.forward =
+[@ except ![i]=coordinator.broadcast[i]]
+]
+]
+∧unchanged hcoordinatori
+decideNB(i): Actualdecision,afterpredecisionhasbeenforwarded
+if
+participanti isalive
+participanti hasforwardedits(pre)decisiontoallotherparticipants
+then
+participanti decidesinaccordancewithit’spredecision
+decideNB(i) =∆ ∧participant[i].alive
+∧∀j ∈ participants :participant[i].forward[j]6=notsent
+∧participant0 =[participant except ![i]=
+[@ except !.decision =participant[i].forward[i]]
+]
+∧unchanged hcoordinatori
+abortOnTimeout(i): conditionsforatimeoutaresimulated
+if
+participantisaliveandundecidedandcoordinatorisnotalive
+2
+coordinatordiedbeforesendingdecisiontoallparticipantswhoarealive
+alldeadparticipantsdiedbeforeforwardingdecisiontoaparticipantwhoisalive
+then
+decideabort
+abortOnTimeout(i) =∆ ∧participant[i].alive
+∧participant[i].decision =undecided
+∧¬coordinator.alive
+∧∀j ∈ participants :participant[j].alive ⇒coordinator.broadcast[j]=notsent
+∧∀j, k ∈ participants :¬participant[j].alive∧participant[k].alive ⇒participant[j].forward[k]=notsent
+∧participant0 =[participant except ![i]=[@ except !.decision =abort]]
+∧unchanged hcoordinatori
+FORN PARTICIPANTS
+parProgNB(i, j) =∆ ∨sendVote(i)
+∨abortOnVote(i)
+∨abortOnTimeoutRequest(i)
+∨forward(i, j)
+∨preDecideOnForward(i, j)
+∨abortOnTimeout(i)
+∨preDecide(i)
+∨decideNB(i)
+parProgNNB =∆ ∃i, j ∈ participants :parDie(i)∨parProgNB(i, j)
+progNNB =∆ parProgNNB ∨coordProgN
+fairnessNB =∆ ∧∀i ∈ participants :WF (∃j ∈ participants :parProgNB(i, j))
+hcoordinator,participanti
+∧WF (coordProgB)
+hcoordinator,participanti
+SpecNB =∆ InitNB ∧2[progNNB] ∧fairnessNB
+hcoordinator,participanti
+(SOME)INVALIDPROPERTIES
+AllCommit =∆ ∀i ∈ participants :3(participant[i].decision =commit ∨participant[i].faulty)
+AllAbort =∆ ∀i ∈ participants :3(participant[i].decision =abort ∨participant[i].faulty)
+AllCommitYesVotes =∆ ∀i ∈ participants :
+∀j ∈ participants :participant[j].vote =yes
+;participant[i].decision =commit ∨participant[i].faulty ∨coordinator.faulty
+3

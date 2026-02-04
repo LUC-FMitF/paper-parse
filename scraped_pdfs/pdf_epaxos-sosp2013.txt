@@ -1,0 +1,1158 @@
+Source: epaxos-sosp2013.pdf
+================================================================================
+
+There Is More Consensus in Egalitarian Parliaments
+IulianMoraru,DavidG.Andersen,MichaelKaminsky
+CarnegieMellonUniversityandIntelLabs
+Abstract This optimization—termed “Multi-Paxos” for systems
+basedonthePaxosprotocol[16]—isimportanttoachiev-
+Thispaperdescribesthedesignandimplementationof
+inghighthroughputinpracticalsystems[7]. Changing
+EgalitarianPaxos(EPaxos),anewdistributedconsensus
+theleaderrequiresinvokingadditionalconsensusmecha-
+algorithmbasedonPaxos. EPaxosachievesthreegoals:
+nismsthatsubstantiallyreduceperformance.
+(1)optimalcommitlatencyinthewide-areawhentoler-
+Thisalgorithmiclimitationhasseveralimportantcon-
+atingoneandtwofailures,underrealisticconditions;(2)
+sequences. First,itimpairsscalabilitybyplacingadis-
+uniformloadbalancingacrossallreplicas(thusachieving
+proportionatelyhighloadonthemaster,whichmustpro-
+highthroughput);and(3)gracefulperformancedegrada-
+cessmoremessagesthantheotherreplicas[23]. Second,
+tionwhenreplicasaresloworcrash.
+whenperforminggeo-replication,clientsincuradditional
+EgalitarianPaxosistoourknowledgethefirstprotocol
+latencyforcommunicatingwitharemotemaster. Third,
+to achieve the previously stated goals efficiently—that
+asweshowinthispaper,traditionalPaxosvariantsare
+is,requiringonlyasimplemajorityofreplicastobenon-
+sensitivetobothlong-termandtransientloadspikesand
+faulty,usinganumberofmessageslinearinthenumber
+network delays that increase latency at the master. Fi-
+ofreplicastochooseacommand,andcommittingcom-
+nally,thissingle-masteroptimizationcanharmavailabil-
+mandsafterjustonecommunicationround(oneround
+ity: ifthemasterfails,thesystemcannotservicerequests
+trip) in the common case or after at most two rounds
+until a new master is elected. Previously proposed so-
+in any case. We prove Egalitarian Paxos’s properties
+lutions such as partitioning or using proxy servers are
+theoreticallyanddemonstrateitsadvantagesempirically
+undesirablebecausetheyrestrictthetypeofoperations
+throughanimplementationrunningonAmazonEC2.
+theclustercanperform. Forexample,apartitionedclus-
+1 Introduction ter cannot perform atomic operations across partitions
+withoutusingadditionaltechniques.
+Distributedcomputingplacestwomaindemandsonrepli-
+EgalitarianPaxos(EPaxos)hasnodesignatedleader
+cationprotocols: (1)highthroughputforreplicationin-
+process. Instead,clientscanchooseateverystepwhich
+sideacomputingcluster; and(2)lowlatencyforrepli-
+replicatosubmitacommandto,andinmostcasesthe
+cation across data centers. Today’s clusters use fault-
+command is committed without interfering with other
+tolerantcoordinationenginessuchasChubby[4],Box-
+concurrentcommands. Thisallowsthesystemtoevenly
+wood [22], or ZooKeeper [12] for activities including
+distributetheloadtoallreplicas,eliminatingthefirstbot-
+operationsequencing,coordination,leaderelection,and
+tleneckidentifiedabove(i.e.,havingoneserverthatmust
+resource discovery. Many databases are accessed si-
+beonthecriticalpathforallcommunication). EPaxos’s
+multaneously from different continents, requiring geo-
+flexibleloaddistributionbetterhandlespermanentlyor
+replication[2,8].
+transientlyslownodes,aswellasthelatencyheterogene-
+Animportantlimitationonthesesystemsisthatdur-
+itycausedbygeographicaldistributionofreplicas;this
+ingefficient,failure-freeoperation,allclientscommuni-
+substantiallyreducesboththemedianandtailcommitla-
+catewithasinglemaster(orleader)serveratalltimes.
+tency. Finally,thesystemcanprovidehigheravailability
+andhigherperformanceunderfailuresbecausethereis
+Permissiontomakedigitalorhardcopiesofpartorallofthisworkfor
+notransientinterruptioncausedbyleaderelection: there
+personalorclassroomuseisgrantedwithoutfeeprovidedthatcopies
+arenotmadeordistributedforprofitorcommercialadvantageandthat isnoleader,andhence,noneedforleaderelection,as
+copiesbearthisnoticeandthefullcitationonthefirstpage.Copyrights longasmorethanhalfofthereplicasareavailable.
+forthird-partycomponentsofthisworkmustbehonored.Forallother
+uses,contacttheOwner/Author. WebeginbyreviewingthecorePaxosalgorithmand
+theintuitionbehindEgalitarianPaxosinSection2. We
+CopyrightisheldbytheOwner/Author(s). thendescribeseveralPaxosvariantsthatreduceoverhead
+SOSP’13,Nov.3–6,2013,Farmington,Pennsylvania,USA.
+or commitlatencyin Section 3. Throughoutthe paper
+ACM978-1-4503-2388-8/13/11.
+http://dx.doi.org/10.1145/2517349.2517350 wecompareextensivelyagainstMulti-Paxosandtwore-
+cent Paxos derivatives: Mencius [23] and Generalized itwillproceedtoproposeitscommandbysendingittoa
+Paxos[17]. Menciussuccessfullysharesthemasterload majorityofpeersintheformofAcceptmessages;ifthese
+by distributing the master responsibilities round-robin messagesarealsoacknowledgedbyamajority,theleader
+among the replicas. Generalized Paxos introduces the commitsthecommandlocally,andthenasynchronously
+ideathatnon-conflictingwritescanbecommittedinde- notifiesallitspeersandtheclient.
+pendentlyinstatemachinereplicationtoimprovecommit Becausethiscanonicalmodeofoperationrequiresat
+latency. OurresultsinSection7confirmthatMencius least two rounds of communication (two round trips)
+iseffective,butonlywhenthenodesarehomogeneous: to commit a command—and more rounds in the case
+EPaxos achieves higher throughput and better perfor- ofduelingleaders—thewidelyused“Multi-Paxos”op-
+mance stability under a variety of realistic conditions, timization designates a replica to be the stable leader
+such as wide-area replication, failures, and nodes that (ordistinguishedproposer). Areplicabecomesastable
+experienceperformancevariability. GeneralizedPaxos leaderbyrunningthepreparephaseforalarge(possibly
+reliesonasinglemasternode,andthussuffersfromthe infinite)numberofinstancesatthesametime,thustaking
+associatedproblems. ownership of all of them. In steady state, clients send
+commandsonlytothestableleader,whichdirectlypro-
+2 Overview
+posesthemintheinstancesitalreadyowns(i.e.,without
+runningthepreparephase). Whenanon-leaderreplica
+We begin by briefly describing the classic Paxos algo-
+suspectstheleaderhasfailed,ittriestobecomethenew
+rithm,followedbyanoverviewofEgalitarianPaxos.
+leaderbytakingownershipoftheinstancesforwhichit
+2.1 PaxosBackground believescommandshavenotyetbeenchosen.
+Statemachinereplicationaimstomakeasetofpossibly Section3discussesseveralPaxosvariantsthatimprove
+faulty distributed processors (the replicas) execute the uponthisbasicprotocol.
+samecommandsinthesameorder. Becauseeachproces-
+2.2 Egalitarian Paxos: Contributions and
+sorisastatemachinewithnootherinputs,allnon-faulty
+Intuition
+processorswilltransitionthroughthesamesequenceof
+states. Given a particular position in the command se- ThemaingoalswhendesigningEPaxoswere:(1)optimal
+quence,runningthePaxosalgorithmguaranteesthat,if commitlatencyinthewidearea,(2)optimalloadbalanc-
+andwhenterminationisreached,allnon-faultyreplicas ingacrossallreplicas,toachievehighthroughput,and
+agreeonasinglecommandtobeassignedthatposition. (3)gracefulperformancedegradationwhensomereplicas
+Tobeabletomakeprogress, atmostaminorityofthe becomesloworcrash. Toachievethesegoals,EPaxos
+replicascanbefaulty—ifN isthetotalnumberofrepli- mustallowallreplicastoactasproposers(orcommand
+cas, atleast N/2 +1mustbenon-faultyforPaxosto leaders)simultaneously, forclientsnottowasteround
+(cid:98) (cid:99)
+makeprogress. Paxos,EPaxos,andothercommonPaxos trips to remote sites, and functionality to be well bal-
+variants handle only non-Byzantine failures: a replica ancedacrossreplicas. Furthermore,eachproposermust
+may crash, or it may fail to respond to messages from beabletocommitacommandaftercommunicatingwith
+otherreplicasindefinitely;itcannot,however,respondin thesmallestpossiblenumberofremotereplicas(i.e.,quo-
+awaythatdoesnotconformtotheprotocol. rumsmustbeassmallaspossible). Finally,thequorum
+Theexecutionofareplicatedstatemachinethatuses compositionmustbeflexible,sothatcommandleaders
+Paxos proceeds as a series of pre-ordered instances, caneasilyavoidsloworunresponsivereplicas.
+where the outcome of each instance is the agreement EPaxosachievesallthisduetothenovelwayinwhich
+on a single command. The voting process for one in- itorderscommands. Previousalgorithmsorderedcom-
+stancemayhappenconcurrentlywithvotingprocesses mandseitherbyhavingasinglestableleaderchoosethe
+forotherinstances,butdoesnotinterferewiththem. order(asinMulti-PaxosandGeneralizedPaxos),orby
+Upon receiving a command request from a client, a assigning them to instances (i.e., command slots) in a
+replicawilltrytobecometheleader ofanot-yet-used pre-ordered instance space (as in canonical Paxos and
+instancebysendingPreparemessagestoatleastama- Mencius)wherebytheorderofthecommandsisthepre-
+jorityofreplicas(possiblyincludingitself). Areplytoa established order of their respective slots. In contrast,
+Preparecontainsthecommandthatthereplyingreplica EPaxosorderstheinstancesdynamicallyandinadecen-
+believesmayhavealreadybeenchoseninthisinstance tralizedfashion:intheprocessofchoosing(i.e.,voting)a
+(inwhichcasethenewleaderwillhavetousethatcom- commandinaninstance,eachparticipantattachesorder-
+mandinsteadofthenewlyproposedone),andalsocon- ingconstraintstothatcommand. EPaxosguaranteesthat
+stitutes a promise not to acknowledge older messages allnon-faultyreplicaswillcommitthesamecommand
+frompreviousleaders. Iftheaspiringleaderreceivesat withthesameconstraints,soeveryreplicacanusethese
+least N/2 +1acknowledgementsinthispreparephase, constraintstoindependentlyreachthesameordering.
+(cid:98) (cid:99)
+C1: update obj_A ACK C1 C3: update obj_A ACK C3
+R1 R1
+PreAccept C1 OK C1 Commit C1 PreAccept C3 OK C3 Accept C3(→C4) OK C3 Commit C3
+R2 R2
+C3→C4
+R3 R3
+R4 R4
+OK C2 OK C4
+PreAccept C2 Commit C2 PreAccept C4 Commit C4
+R5 R5
+C2: update obj_B ACK C2 C4: update obj_A ACK C4
+Figure1:EPaxosmessageflow.R1,R2,...R5arethefivereplicas.CommandsC1andC2(left)donotinterfere,
+so both can commit on the fast path. C3 and C4 (right) interfere, so one (C3) will be committed on the slow
+path. C3 C4signifiesthatC3acquiredadependencyonC4. Forclarity,weomittheasynccommitmessages.
+→
+This ordering approach is the source of the benefits orders are not necessarily the same, but this does not
+EPaxoshasoverpreviousalgorithms. First,committing affectcorrectness). Toensurethateveryreplicacommits
+acommandiscontingentupontheinputofanymajority the same attributes even if there are failures, a second
+ofreplicas(unlikeinMulti-Paxoswherethestableleader roundofcommunicationbetweenthecommandleader
+must be part of every decision, or in Mencius, where andaclassicquorumofpeers—F+1replicasincluding
+informationfromallreplicasisrequired)—thisbenefits the command leader—may be required (as in Figure 1
+wide-areacommitlatency,availability,andalsoimproves forcommandC3). Wecallthistheslowpath.
+performancerobustness,becauseitdecouplestheperfor-
+mance of the fastest replicas from that of the slowest. 3 Comparison with Related Work
+Second,anyreplicacanproposeacommand,notjusta
+Multi-Paxos[15,16]makesefficientforwardprogressby
+distinguishedproposer, orleader—thisallowsforload
+relyingonastableleaderreplicathatbrokerscommunica-
+balancing,whichincreasesthroughput.
+tionwithclientsandotherreplicas. WithN replicas,for
+Intakingthisorderingapproach,EPaxosmustmain-
+eachcommand,theleaderhandlesΘ(N)messages,and
+tain safety and provide a linearizable ordering of com-
+non-leaderreplicashandleonlyO(1). Thus,theleader
+mands, while minimizing both the number of replicas
+canbecomeabottleneck,aspracticalimplementations
+that must participate in voting for each command and
+ofPaxoshaveobserved[4]. Whentheleaderfails,the
+thenumberofmessagesexchangedbetweenthem. One
+statemachinebecomestemporarilyunavailableuntila
+observationthatmakesthistaskeasier—bysubstantially
+newleaderiselected. Thisproblemisnoteasilysolved:
+reducingthenumberoforderingconstraintsinthecom-
+aggressiveleaderre-electioncancausestallsifmultiple
+moncase—wasmadebygenericbroadcastalgorithms
+replicasbelievetheyaretheleader. Chubby[4]andBox-
+andGeneralizedPaxosbeforeus: itisnotnecessaryto
+wood[22]useMulti-Paxos,whileZooKeeper[12]relies
+enforce a consistent ordering for the common case of
+onastableleaderprotocolsimilartoMulti-Paxos.
+commandsthatdonotinterferewitheachother.
+Mencius [23] distributes load evenly across replicas
+Figure1presentsasimplifiedexampleofhowEgal- byrotatingthePaxosleaderforeverycommand. Thein-
+itarianPaxosworks. Commandscanbesentbyclients stancespaceispre-partitionedamongallreplicas:replica
+toanyreplica—wecallthisreplicathecommandleader R owns every instance i where (imodN)=R . The
+id id
+for that command, not to be confused with the stable drawbackofthisapproachisthateveryreplicamusthear
+leader in Multi-Paxos. In practical workloads, concur- fromallotherreplicasbeforecommittingacommandA,
+rent proposals interfere only rarely (for now, think of becauseotherwiseanothercommandBthatdependson
+thiscommoncaseasconcurrentcommandsthatupdate Amaybecommittedinaninstanceorderedbeforethe
+differentobjects). EPaxoscancommitthesecommands currentinstance(theotherreplicasreplyeitherthatthey
+afteronlyoneroundofcommunicationbetweenthecom- arealsocommittingcommandsfortheirinstances,orthat
+(cid:4) (cid:5)
+mandleaderandafast-pathquorumofpeers—F+ F+1 theyareskippingtheirturn). Thishastwoconsequences:
+2
+replicasintotal,includingthecommandleader,whereF (1)thereplicatedstatemachinerunsatthespeedofthe
+isthenumberoftoleratedfailures(F =2intheexample slowestreplica,and(2)Menciuscanexhibitworseavail-
+fromFigure1). abilitythanMulti-Paxos,becauseifanyreplicafailsto
+Whencommandsinterfere,theyacquiredependencies respond,nootherreplicacanmakeprogressuntilafail-
+oneachother—attributesthatcommandsarecommitted ureissuspectedandanotherreplicacommitsno-opson
+with, used to determine the correct order in which to behalfofthepossiblyfailedreplica.
+execute the commands (the commit and the execution FastPaxos[18]reducesthenumberofmessagedelays
+until commands are committed by having clients send distinctionallowsEPaxostohavesmallerfast-pathquo-
+commandsdirectlytoallreplicas. However,somerepli- rumsandhastheaddedbenefitofnotrequiringclientsto
+casmuststillactascoordinatorandlearnernodes,and broadcasttheirproposalstoasupermajorityofnodes.
+handleΘ(N)messagesforeverycommand. LikeMulti- InS-Paxos[3],theclient-servercommunicationload
+Paxos,FastPaxosreliesonastableleadertostartvoting is shared by all replicas, which batch commands and
+roundsandarbitrateconflicts(i.e.,situationswhenaccep- sendthemtotheleader. Thestableleaderstillhandles
+torsorderclientcommandsdifferently,asaconsequence ordering,soS-PaxossuffersMulti-Paxos’sproblemsin
+ofreceivingthosecommandsindifferentorders). wide-areareplicationandwithsloworfaultyleaders.
+GeneralizedPaxos[17]commitscommandsfasterby Consistently ordering broadcast messages is equiva-
+committing them out of order when they do not inter- lenttostatemachinereplication. EPaxoshassimilarities
+fere. Replicaslearn commandsafter just twomessage togenericbroadcastalgorithms[1,26,29],thatrequire
+delays—which is optimal—as long as they do not in- aconsistentmessagedeliveryorderonlyforconflicting
+terfere. Generalized Paxos requires a stable leader to messages. Thrifty generic broadcast [1] has the same
+ordercommandsthatinterfere,andlearnershandleΘ(N) livenessconditionas(E)Paxos,butrequiresΘ(N2)mes-
+messagesforeverycommand.1 Furthermore,messages sagesforeverybroadcastmessage. Itreliesonatomic
+become larger as new commands are proposed, so the broadcast[27]todeliverconflictingmessages,whichhas
+leader must frequently stop the voting process until it alatencyoffourmessagedelays. , +[26],andop-
+GB GB
+cancommitacheckpoint. MulticoordinatedPaxos[5]ex- timisticgenericbroadcast[29]handlefewermachinefail-
+tendsGeneralizedPaxosbyusingmultiplecoordinators uresthan(E)Paxos,requiringthatmorethantwothirds
+toincreaseavailabilitywhencommandsdonotconflict, ofthenodesremainlive. Theyalsohandleconflictsless
+at the expense of using more messages for each com- efficiently: and +mayseeconflictsevenifmes-
+GB GB
+mand: eachclientsendsitscommandstoaquorumof sagesarriveinthesameorderateveryreplicaandthey
+coordinatorsinsteadofjustone. Ittooreliesonastable useConsensus[6]tosolveconflicts;optimisticgeneric
+leadertoensureconsistentorderingifinterferingclient broadcastusesbothatomicbroadcastandoneConsen-
+commandsarriveatcoordinatorsindifferentorders. sus instance for every pair of conflicting messages. In
+Inthewide-area,EPaxoshasthreeimportantadvan- contrast, EPaxos requires only at most two additional
+tagesoverGeneralizedPaxos: (1)Firstandforemost,the one-waymessagedelaystocommitcommandsthatin-
+EPaxos fast-path quorum size is smaller than the fast- terfere;thecommunicationisperformedinparallelfor
+pathquorumsizeforGeneralizedPaxosbyexactlyone allinterferingcommands; andEPaxosdoesnotneeda
+replica, for any total number of replicas—this reduces stableleadertodecidetheordering.
+latencyandtheoverallnumberofmessagesexchanged, Eve[13]takestheorthogonalapproachofparallelizing
+becauseareplicamustcontactfewerofitsclosestpeers commandexecutiononmulti-coresystems.
+to commit a command. (2) Resolving a conflict (two
+4 Design
+interferingcommandsarrivingatdifferentacceptorsin
+differentorders)requiresonlyoneadditionalroundtrip
+In this section we describe Egalitarian Paxos in detail,
+in EPaxos, but will take at least two additional round
+stateitspropertiesandsketchinformalproofsofthose
+tripsinGeneralizedPaxos. (3)Forthree-sitereplication,
+properties.FormalproofsandaTLA+specificationofthe
+EPaxoscancommitcommandsafteroneroundtriptothe
+protocolcanbefoundinatechnicalreportaccompanying
+replicaclosesttotheproposer’ssiteevenifallcommands
+this paper [25]. We begin by stating assumptions and
+conflict. Wepresenttheempiricalresultsofthiscompar-
+definitions,andbyintroducingournotation.
+ison in Section 7.2. These advantages make EPaxos a
+goodfitforMDCC[14],whichusesGeneralizedPaxos 4.1 Preliminaries
+forwide-areacommits. Messagesexchangedbyprocesses(clientsandreplicas)
+An important distinction between the fast path in are asynchronous. Failures are non-Byzantine (a ma-
+EPaxos and that of Fast and Generalized Paxos is that chine can fail by stopping to respond for an indefinite
+EPaxosincursthreemessagedelaystocommit,whereas amountoftime). Thereplicatedstatemachinecomprises
+FastandGeneralizedPaxosrequireonlytwo. However, N =2F+1 replicas, where F is the maximum number
+in the wide area, the first message delay in EPaxos is oftoleratedfailures. ForeveryreplicaRthereisanun-
+usuallynegligiblyshortbecausetheclientanditsclosest boundedsequenceofnumberedinstancesR.1,R.2,R.3,...
+replicaareco-locatedwithinthesamedatacenter. This thatreplicaRissaidtoown. Thecompletestateofeach
+replicacomprisesalltheinstancesownedbyeveryreplica
+1BasedonourexperiencewithEPaxos,webelieveitmaybepossi-
+inthesystem(i.e.,forNreplicas,thestateofeachreplica
+bletomodifyGeneralizedPaxostorotatelearnersbetweencommands,
+canberegardedasatwo-dimensionalarraywithN rows
+inthesameballot,tobalanceloadiftherearenoconflicts. Evenso,
+GeneralizedPaxoswouldstilldependontheleaderforavailability. and an unbounded number of columns). At most one
+command will be chosen in an instance. The ordering 4.3 TheBasicProtocol
+oftheinstancesisnotpre-determined—itisdetermined
+Forclarity,wefirstdescribethebasicEgalitarianPaxos,
+dynamicallybytheprotocol,ascommandsarechosen.
+andimproveonitinthenextsection. ThisbasicEPaxos
+Itisimportanttounderstandthatcommittingandexe-
+usesasimplifiedproceduretorecoverfromfailures,and
+cutingcommandsaredifferentactions,andthatthecom- as a consequence, its fast-path quorum3 is 2F (out of
+mitandexecutionordersarenotnecessarilythesame.
+the total of N =2F+1 replicas). The fully optimized
+To modify the replicated state, a client sends Re- EPaxosreducesthisquorumtoonlyF+ (cid:4) F+1 (cid:5) replicas.
+2
+quest(command)toareplicaofitschoice. ARequestRe- Theslow-pathquorumsizeisalwaysF+1.
+plyfromthatreplicawillnotifytheclientthatthecom-
+4.3.1 TheCommitProtocol
+mandhasbeencommitted. However,theclienthasno
+informationaboutwhetherthecommandhasbeenexe- As mentioned earlier, committing and executing com-
+cutedornot. Onlywhentheclientreadsthereplicated mandsareseparate. Accordingly,EPaxoscomprises(1)
+stateupdatedbyitspreviouslycommittedcommandsis theprotocolforchoosing(committing)commandsand
+itnecessaryforthesystemtoexecutethosecommands. determining their ordering attributes; and (2) the algo-
+Toread(partof)thestate,clientssendRead(objectIDs) rithmforexecutingcommandsbasedontheseattributes.
+messagesandwaitforReadReplies.Readisano-opcom- Figure2showsthepseudocodeofthebasicprotocol
+mandthatinterfereswithupdatestotheobjectsitisread- for choosing commands. Each replica’s state is repre-
+ing. ClientscanalsouseRequestAndRead(γ,objectIDs) sentedbyitsprivatecmdslogthatrecordsallcommands
+toproposecommandγ andatomicallyreadthemachine seen(butnotnecessarilycommitted)bythereplica.
+stateimmediatelyafterγ isexecuted—Read(objectIDs) Wesplitthedescriptionofthecommitprotocolinto
+isequivalenttoRequestAndRead(no-op,objectIDs). multiplephases. Notallphasesareexecutedforevery
+Before describing EPaxos in detail, we must define command:acommandcommittedafterPhase1andCom-
+commandinterference: Twocommandsγ andδ inter- mitwascommittedonthefastpath. Theslowpathin-
+fereifthereexistsasequenceofcommandsΣsuchthat volvestheadditionalPhase2(thePaxos-Acceptphase).
+the serial execution Σ,γ,δ is not equivalent to Σ,δ,γ ExplicitPrepare(Figure3)isrunonlyonfailurerecovery.
+(i.e.,theyresultindifferentmachinestatesand/ordiffer- Phase1startswhenareplicaLreceivesarequestfora
+entvaluesreturnedbythereadswithinthesesequences). commandγfromaclientandbecomesacommandleader.
+Lbeginstheprocessofchoosingγ inthenextavailable
+4.2 ProtocolGuarantees
+instanceofitsinstancesub-space. Italsoattacheswhatit
+TheformalguaranteesthatEPaxosoffersclientsaresim- believesarethecorrectattributesforthatcommand:
+ilartothoseprovidedbyotherPaxosvariants:
+deps isthelistofallinstancesthatcontaincommands
+Nontriviality: Any command committed by any
+(not necessarily committed) that interfere with γ;
+replicamusthavebeenproposedbyaclient.
+wesaythatγ dependsonthoseinstancesandtheir
+Stability: Foranyreplica,thesetofcommittedcom-
+correspondingcommands;
+mandsatanytimeisasubsetofthecommittedcommands
+seq isasequencenumberusedtobreakdependencycy-
+atanylatertime. Furthermore,ifattimet areplicaR
+1 clesduringtheexecutionalgorithm;seqisupdated
+hascommandγ committedatsomeinstanceQ.i,thenR
+tobelargerthantheseqofallinterferingcommands
+willhaveγ committedinQ.iatanylatertimet >t .
+2 1 indeps.
+Consistency: Two replicas can never have different
+commandscommittedforthesameinstance.
+Thecommandleaderforwardsthecommandandthe
+Executionconsistency: Iftwointerferingcommands
+initialattributestoatleastafast-pathquorumofreplicas
+γandδaresuccessfullycommitted(byanyreplicas)they
+asaPreAcceptmessage. Eachreplica,uponreceivingthe
+willbeexecutedinthesameorderbyeveryreplica.
+PreAccept,updatesγ’sdepsandseqattributesaccording
+Execution linearizability: If two interfering com- to the contents of its cmds log, records γ and the new
+mands γ and δ are serialized by clients (i.e., δ is pro-
+attributesinthelog,andrepliestothecommandleader.
+posed only after γ is committed by any replica), then
+Ifthecommandleaderreceivesrepliesfromenough
+everyreplicawillexecuteγ beforeδ.
+replicastoconstituteafast-pathquorum,andalltheup-
+Liveness(w/highprobability): Commandswilleven- datedattributesarethesame,itcommitsthecommand.
+tuallybecommittedbyeverynon-faultyreplica,aslong Ifitdoesnotreceiveenoughreplies,ortheattributesin
+asfewerthanhalfthereplicasarefaultyandmessages somereplieshavebeenupdateddifferentlythaninothers,
+eventuallygothroughbeforerecipientstimeout.2
+then the command leader updates the attributes based
+2Paxosprovidesthesamelivenessguarantees. ByFLP[9],itis 3Weusequorumtodenotebothasetofreplicaswithaparticular
+impossibletoprovidestrongerguaranteesfordistributedconsensus. cardinality,andthecardinalityofthatset.
+Phase 1: Establish ordering constraints Phase 2: Paxos-Accept
+Phase1 Multi-Paxos ReplicaLonreceivingRequest( )fromaclient becomesthedesignatedleaderforcommand (steps CommandleaderL,for( ,seq   ,deps   )atinstance 2,3and4executedatomically): L.i: 1 2 : : i s l n o e g c q r   e [ m Q ] e [ n 1 j t + ]. i c n m m s a t d a x n ( c { e l   o n g u L m [Q b 0 e ][ r ) j i ] L .s eq i | L +1 1 1 6 7 : : l s o e g n L d [ A L] c [ c i e ] p t(  (  ,s , e s q eq     ,d ,d e e p p s   s   ,L ,a .i c ) c t e o p a t t ed le ) ast b N/2 c L ⇠ }[{ } otherreplicas 3: deps   { (Q,j) | log L [Q][j].cmd ⇠   } 4: log L [L][i L ] ( ,seq   ,deps   ,pre-accepted) AnyreplicaR,onreceiving 5: sendPreAccept( ,seq   ,deps   ,L.i L )toevery Accept( ,seq   ,deps   ,L.i): replicain F\{ L } ,where F isafastquorumthat 18: log R [L][i] ( ,seq   ,deps   ,accepted) includesL 19: replyAcceptOK( ,L.i)toL AnyreplicaR,onreceiving CommandleaderL,onreceivingatleast N/2 PreAccept( ,seq   ,deps   ,L.i)(steps6,7and8 AcceptOK’s: b c executedatomically): 20: runCommitphasefor( ,seq   ,deps   )atL.i 6: updateseq   max( { seq  }[{ 1+log R [Q][j].seq | log [Q][j].cmd   Commit R ⇠ } 7 8 : : u l l o o p g g d R R a [ [ t Q L e ] ] d [ [ i e j ] ] p . s c   m ( d  , ⇠ s d e e   q p   } s ,   d [ ep { s (   Q ,p ,j r ) e- | accepted) C L. o i mmand C le o ad m er m L, i f t or( ,seq   ,deps   )atinstance 9: replyPreAcceptOK( ,seq   ,deps   ,L.i)toL 21: log L [L][i] ( ,seq   ,deps   ,committed) 22: sendcommitnotificationfor toclient ReplicaL(commandleaderfor ),onreceivingat least N/2 PreAcceptOKresponses: 23: sendCommit( ,seq   ,deps   ,L.i)toallother b c then replicas 10: ifreceivedPreAcceptOK’sfromallreplicasin F rep \ l { ie L s } ( , f w or it s h om se e q   fa a st n q d u d o e ru p m s   th ) e th sa e m n eFiansatll C A o n m y m re it p ( l   ic , a se R q   ,o ,d n e r p e s c   e , i L v . i i n ) g : 11: runCommitphasefor( ,seq F   ,deps   P )a a t t L h .i 24: log R [L][i] ( ,seq   ,deps   ,committed) 12: else 13: updatedeps   Union(deps   fromalelrlespelies) 14: updateseq   max( { seq   ofallreplie S s }lo ) w 15: runMulti-Paxosphasefor( ,seq   ,deps   )atL.i Path Figure4:ThebasicEgalitarianPaxosprotocolforchoosingcommands. 500 400
+300 200 100 0 CA VA EU
+]sm[ )%99
+/ naidem( ycnetaL
+Phase1 Multi-Paxos
+ReplicaLonreceivingRequest( )fromaclient
+becomesthedesignatedleaderforcommand (steps
+CommandleaderL,for( ,seq
+ 
+,deps
+ 
+)atinstance
+2,3and4executedatomically): L.i:
+1 2 : : i s s n e .t c q . r   c e m m d e s n 1 t + [ i Q n m s ] a t [ a x j n ]. ( c c { e m c n m d u d m s L b   [ e Q r ] i [ L j ] 0 .se i ) L q + | 1 9 instanceQ.j 1 1 6 7 : : c se m n d d s A L [ c L c ] e [ p i] t(  , ( s   eq ,s   e , q d   e , p d s e   p , s L   .i , ) a t c o ce a p t t l e e d as ) t b N/2 c L ⇠ }[{ } otherreplicas 3: deps   { (Q,j) |9 instanceQ.js.t. cmds [Q][j].cmd   AnyreplicaR,onreceiving L ⇠ } 4: cmds L [L][i L ] ( ,seq   ,deps   ,pre-accepted) Accept( ,seq   ,deps   ,L.i): 5: sendPreAccept( ,seq   ,deps   ,L.i L )toallother 18: cmds R [L][i] ( ,seq   ,deps   ,accepted) replicasin ,where isafastquorumthat 19: replyAcceptOK( ,L.i)toL F F includesL CommandleaderL,onreceivingatleast N/2 AnyreplicaR,onreceiving AcceptOK’s: b c PreAccept( ,seq   ,deps   ,L.i)(steps6,7and8 20: runCommitphasefor( ,seq   ,deps   )atL.i executedatomically): 6: updateseq   max( { seq  }[{ 1+cmds R [Q][j].seq Commit instanceQ.js.t.cmds [Q][j].cmd   ) 7: | u cm p 9 d d a s te [ d Q e ] p [ s j]   .c md dep   s  [ R { (Q,j) |9 ins ⇠ tanc } eQ.js.t. C L. o i: mmandleaderL,for( ,seq   ,deps   )atinstance R ⇠ } 8: cmds R [L][i] ( ,seq   ,deps   ,pre-accepted) 21: cmds L [L][i] ( ,seq   ,deps   ,committed) 9: replyPreAcceptOK( ,seq   ,deps   ,L.i)toL 22: sendcommitnotificationfor toclient ReplicaL(commandleaderfor ),onreceivingat 23: sendCommit( ,seq   ,deps   ,L.i)toallother replicas least N/2 PreAcceptOKresponses: 10: if b recei c vedPreAcceptOK’sfromallreplicasin AnyreplicaR,onreceiving F rep \ l { ie L s } ( , f w or it s h om se e q   fa a st n q d u d o e ru p m s   F th ) e th sa e m n einall C 24 o : m c m m it d ( s   R , [ s L e ] q [   i] , dep (  s   , , s L eq .i   ): ,deps   ,committed) 11: runCommitphasefor( ,seq   ,deps   )atL.i 12: else 13: updatedeps   Union(deps   fromallreplies) 14: updateseq   max( { seq   ofallreplies } ) 15: runMulti-Paxosphasefor( ,seq   ,deps   )atL.i Figure4:ThebasicEgalitarianPaxosprotocolforchoosingcommands. 500 400 300 200 Me M n e c n iu E c s i P u i a m s x b b o a a s l l a a 1 n n 0 c c 0 e e % d d 500 E M P E e a P n x c o a i s x u o s 1 s 0 b 0 0 e % % st 9 la 9 te % n i c le y Multi-Paxos Mencius worst 100 Gen. Paxos 0% 400 Multi-Paxos Gen. Paxos 100% Gen. Paxos 0% Gen. Paxos 100%
+0 300 99%ile CA VA EU latency 200 100 0 VA CA OR JP EU 85ms 90ms 21ms 127ms 278ms 156ms 118ms Figure5:Mediancommitlatency(99%ileindicatedbylinesatopthebars)ateachof3(leftgraph)and5(right graph) wide-area replicas. The Multi- and Generalized Paxos leader is in CA. In Mencius imbalanced, EU
+generatescommandsathalftherateoftheothersites(nootherprotocolisaffectedbyimbalance).InMencius worst,onlyonesitegeneratescommandsatagiventime.Thebottomofthegraphshowsinter-siteRTTs. Incontrast,GeneralizedPaxos’sfastquorumsizewhen checkpointcommits. Furthermore,conflictscausetwo N=3isthree. Itslatencyisthereforedeterminedbya additionalroundtripsinGeneralizedPaxos(foranynum- round-trip to the farthest replica. The high 99%ile la- berofreplicas).Thus,inthisexperiment,EPaxosisnot
+tency experienced by Generalized Paxos is caused by affectedbyconflicts,butGeneralizedPaxosexperiences
+11
+]sm[ )%99 / naidem( ycnetaL
+Phase1 Multi-Paxos
+ReplicaLonreceivingRequest( )fromaclient
+becomesthedesignatedleaderforcommand (steps CommandleaderL,for( ,seq   ,deps   )atinstance 2,3and4executedatomically): L.i: 1 2 : : i s s n e .t c q . r   c e m m d e s n 1 t + [ i Q n m s ] a t [ a x j n ]. ( c c { e m c n m d u d m s L b   [ e Q r ] i [ L j ] 0 .se i ) L q + | 1 9 instanceQ.j 1 1 6 7 : : c se m n d d s A L [ c L c ] e [ p i] t(  , ( s   eq ,s   e , q d   e , p d s e   p , s L   .i , ) a t c o ce a p t t l e e d as ) t b N/2 c L ⇠ }[{ } otherreplicas 3: deps   { (Q,j) |9 instanceQ.js.t. cmds [Q][j].cmd   AnyreplicaR,onreceiving L ⇠ } 4: cmds L [L][i L ] ( ,seq   ,deps   ,pre-accepted) Accept( ,seq   ,deps   ,L.i): 5: sendPreAccept( ,seq   ,deps   ,L.i L )toallother 18: cmds R [L][i] ( ,seq   ,deps   ,accepted) replicasin ,where isafastquorumthat 19: replyAcceptOK( ,L.i)toL F F includesL CommandleaderL,onreceivingatleast N/2 AnyreplicaR,onreceiving AcceptOK’s: b c PreAccept( ,seq   ,deps   ,L.i)(steps6,7and8 20: runCommitphasefor( ,seq   ,deps   )atL.i executedatomically): 6: updateseq   max( { seq  }[{ 1+cmds R [Q][j].seq Commit instanceQ.js.t.cmds [Q][j].cmd   ) 7: | u cm p 9 d d a s te [ d Q e ] p [ s j]   .c md dep   s  [ R { (Q,j) |9 ins ⇠ tanc } eQ.js.t. C L. o i: mmandleaderL,for( ,seq   ,deps   )atinstance R ⇠ } 8: cmds R [L][i] ( ,seq   ,deps   ,pre-accepted) 21: cmds L [L][i] ( ,seq   ,deps   ,committed) 9: replyPreAcceptOK( ,seq   ,deps   ,L.i)toL 22: sendcommitnotificationfor toclient ReplicaL(commandleaderfor ),onreceivingat 23: sendCommit( ,seq   ,deps   ,L.i)toallother replicas least N/2 PreAcceptOKresponses: 10: if b recei c vedPreAcceptOK’sfromallreplicasin AnyreplicaR,onreceiving F rep \ l { ie L s } ( , f w or it s h om se e q   fa a st n q d u d o e ru p m s   F th ) e th sa e m n einall C 24 o : m c m m it d ( s   R , [ s L e ] q [   i] , dep (  s   , , s L eq .i   ): ,deps   ,committed) 11: runCommitphasefor( ,seq   ,deps   )atL.i 12: else 13: updatedeps   Union(deps   fromallreplies) 14: updateseq   max( { seq   ofallreplies } ) 15: runMulti-Paxosphasefor( ,seq   ,deps   )atL.i Me M n e c n iu E c s i P u M i a m s x u b b o lt a a s i- l l P a a 1 n n a 0 c c x 0 e e o % d d s Figure4:ThebasicEgalitaria n 500 Paxo M E s M P e E e n a pP n c x c i r o a u i s x u o s o s 1 w ts 0 b o o 0 0 e r % % c s s t t olforchoosi9 l n a 9 t g e % n i c lce y ommands. Gen. Paxos 0% 400 Multi-Paxos Gen. Paxos 100% Gen. Paxos 0% 500 Gen. Paxos 100% 300 99%ile 400 latency 200 300 100 200
+0 100 85ms 90ms VA CA 21ms OR 127ms JP 278ms EU 156ms 118ms 0 Figure5:MediCaAncommitlVaAtency(99%EUileindicatedbylinesatopthebars)ateachof3(leftgraph)and5(right graph) wide-area replicas. The Multi- and Generalized Paxos leader is in CA. In Mencius imbalanced, EU generatescommandsathalftherateoftheothersites(nootherprotocolisaffectedbyimbalance).InMencius worst,onlyonesitegeneratescommandsatagiventime.Thebottomofthegraphshowsinter-siteRTTs. andmeasurethecommitandexecutelatencyforeachre- Withthreereplicas,anEPaxosreplicacanalwayscom- quest.Figure5showsthemedianand99%ilelatenciesfor mitafteroneroundtriptoitsnearestpeerevenifthat
+EPaxos,Multi-Paxos,MenciusandGeneralizedPaxos. command interferes with other concurrent commands. 11
+]sm[ )%99 / naidem(
+ycnetaL
+Phase1 Multi-Paxos ReplicaLonreceivingRequest( )fromaclient becomesthedesignatedleaderforcommand (steps CommandleaderL,for( ,seq   ,deps   )atinstance 2,3and4executedatomically): L.i: 1 2 : : i s s n e .t c q . r   c e m m d e s n 1 t + [ i Q n m s ] a t [ a x j n ]. ( c c { e m c n m d u d m s L b   [ e Q r ] i [ L j ] 0 .se i ) L q + | 1 9 instanceQ.j 1 1 6 7 : : c se m n d d s A L [ c L c ] e [ p i] t(  , ( s   eq ,s   e , q d   e , p d s e   p , s L   .i , ) a t c o ce a p t t l e e d as ) t b N/2 c L ⇠ }[{ } otherreplicas 3: deps   { (Q,j) |9 instanceQ.js.t. cmds [Q][j].cmd   AnyreplicaR,onreceiving L ⇠ } 4: cmds L [L][i L ] ( ,seq   ,deps   ,pre-accepted) Accept( ,seq   ,deps   ,L.i): 5: sendPreAccept( ,seq   ,deps   ,L.i L )toallother 18: cmds R [L][i] ( ,seq   ,deps   ,accepted) replicasin ,where isafastquorumthat 19: replyAcceptOK( ,L.i)toL F F includesL CommandleaderL,onreceivingatleast N/2 AnyreplicaR,onreceiving AcceptOK’s: b c PreAccept( ,seq   ,deps   ,L.i)(steps6,7and8 20: runCommitphasefor( ,seq   ,deps   )atL.i executedatomically): 6: updateseq   max( { seq  }[{ 1+cmds R [Q][j].seq Commit instanceQ.js.t.cmds [Q][j].cmd   ) 7: | u cm p 9 d d a s te [ d Q e ] p [ s j]   .c md dep   s  [ R { (Q,j) |9 ins ⇠ tanc } eQ.js.t. C L. o i: mmandleaderL,for( ,seq   ,deps   )atinstance R ⇠ } 8: cmds R [L][i] ( ,seq   ,deps   ,pre-accepted) 21: cmds L [L][i] ( ,seq   ,deps   ,committed) 9: replyPreAcceptOK( ,seq   ,deps   ,L.i)toL 22: sendcommitnotificationfor toclient ReplicaL(commandleaderfor ),onreceivingat 23: sendCommit( ,seq   ,deps   ,L.i)toallother replicas least N/2 PreAcceptOKresponses: 10: if b recei c vedPreAcceptOK’sfromallreplicasin AnyreplicaR,onreceiving F rep \ l { ie L s } ( , f w or it s h om se e q   fa a st n q d u d o e ru p m s   F th ) e th sa e m n einall C 24 o : m c m m it d ( s   R , [ s L e ] q [   i] , dep (  s   , , s L eq .i   ): ,deps   ,committed) 11: runCommitphasefor( ,seq   ,deps   )atL.i 12: else 1 1 1 3 4 5 : : : M u u ru e p p G M n ne ed d c G n n iu E a a e . c M s n P i P t t u M i . e e a a m s P ux x u b b o o a l d st l a a s s i x - t e l l o P a ae i1 1 s q n n a -0 0 p c c x P0 0 0   e e o % % % sd d s a   x os m p U a h x n a ( i s { o e s n e f ( q o d   r e ( p o   s f ,   a se l f l r q o r   e m , p d l a i e e l p l s s r } e   ) p ) l a i 4 5e t 0 0s L 0 0) .iGe G n M E e . M P P n e M E e . n a a P P n c x x u c i o o a a l u t i s s i x x u s - o P o s 1 1 w s s a 0 0 b o x 0 0 0 0 e r o % % % % s s s t t 9 la 9 te % n i c le y 300 99%ile Figure4:ThebasicEgalitarianPaxosprotocolforchoosingcommands. latency 200
+100 500 0 400 VA CA OR JP EU 85ms 90ms 21ms 127ms 278ms 156ms 118ms 300 Figure5:Mediancommitlatency(99%ileindicatedbylinesatopthebars)ateachof3(leftgraph)and5(right gra 2p00h) wide-area replicas. The Multi- and Generalized Paxos leader is in CA. In Mencius imbalanced, EU gen 1e00ratescommandsathalftherateoftheothersites(nootherprotocolisaffectedbyimbalance).InMencius worst,onlyonesitegeneratescommandsatagiventime.Thebottomofthegraphshowsinter-siteRTTs. 0
+CA VA EU andmeasurethecommitandexecutelatencyforeachre- Withthreereplicas,anEPaxosreplicacanalwayscom- quest.Figure5showsthemedianand99%ilelatenciesfor mitafteroneroundtriptoitsnearestpeerevenifthat EPaxos,Multi-Paxos,MenciusandGeneralizedPaxos. command interferes with other concurrent commands.
+11
+]sm[ )%99 / naidem( ycnetaL
+Phase1 Multi-Paxos ReplicaLonreceivingRequest( )fromaclient becomesthedesignatedleaderforcommand (steps CommandleaderL,for( ,seq   ,deps   )atinstance 2,3and4executedatomically): L.i: 1 2 : : i s s n e .t c q . r   c e m m d e s n 1 t + [ i Q n m s ] a t [ a x j n ]. ( c c { e m c n m d u d m s L b   [ e Q r ] i [ L j ] 0 .se i ) L q + | 1 9 instanceQ.j 1 1 6 7 : : c se m n d d s A L [ c L c ] e [ p i] t(  , ( s   eq ,s   e , q d   e , p d s e   p , s L   .i , ) a t c o ce a p t t l e e d as ) t b N/2 c L ⇠ }[{ } otherreplicas 3: deps   { (Q,j) |9 instanceQ.js.t. cmds [Q][j].cmd   AnyreplicaR,onreceiving L ⇠ } 4: cmds L [L][i L ] ( ,seq   ,deps   ,pre-accepted) Accept( ,seq   ,deps   ,L.i): 5: sendPreAccept( ,seq   ,deps   ,L.i L )toallother 18: cmds R [L][i] ( ,seq   ,deps   ,accepted) replicasin ,where isafastquorumthat 19: replyAcceptOK( ,L.i)toL F F includesL CommandleaderL,onreceivingatleast N/2 AnyreplicaR,onreceiving AcceptOK’s: b c PreAccept( ,seq   ,deps   ,L.i)(steps6,7and8 20: runCommitphasefor( ,seq   ,deps   )atL.i executedatomically): 6: updateseq   max( { seq  }[{ 1+cmds R [Q][j].seq Commit instanceQ.js.t.cmds [Q][j].cmd   ) 7: | u cm p 9 d d a s te [ d Q e ] p [ s j]   .c md dep   s  [ R { (Q,j) |9 ins ⇠ tanc } eQ.js.t. C L. o i: mmandleaderL,for( ,seq   ,deps   )atinstance R ⇠ } 8: cmds R [L][i] ( ,seq   ,deps   ,pre-accepted) 21: cmds L [L][i] ( ,seq   ,deps   ,committed) 9: replyPreAcceptOK( ,seq   ,deps   ,L.i)toL 22: sendcommitnotificationfor toclient ReplicaL(commandleaderfor ),onreceivingat 23: sendCommit( ,seq   ,deps   ,L.i)toallother replicas least N/2 PreAcceptOKresponses: 10: if b recei c vedPreAcceptOK’sfromallreplicasin AnyreplicaR,onreceiving F rep \ l { ie L s } ( , f w or it s h om se e q   fa a st n q d u d o e ru p m s   F th ) e th sa e m n einall C 24 o : m c m m it d ( s   R , [ s L e ] q [   i] , dep (  s   , , s L eq .i   ): ,deps   ,committed) 11: runCommitphasefor( ,seq   ,deps   )atL.i 12: else 13: updatedeps   Union(deps   fromallreplies) 14: updateseq   max( { seq   ofallreplies } ) 15: runMulti-Paxosphasefor( ,seq   ,deps   )atL.i Figure4:ThebasicEgalitarianPaxosprotocolforchoosingcommands.
+500 Me M n e c G n iu E e c s i n P u M i . a m s P x u b b o a lt a a s i x - l l o P a a 1 s n n a 0 c c x 0 0 e e o % % d d s 4 5 0 0 0 0 M E M P e M E e n a P n c x u c i o a l u t i s i x u s - o P s 1 w s a 0 b o x 0 0 e r o % % s s s t t 9 la 9 te % n i c le y Gen. Paxos 100% Gen. Paxos 0% Gen. Paxos 100% 400 300 99%ile 300 latency 200 200 100 100 0
+VA CA OR JP EU 0 85ms 90ms 21ms 127ms 278ms CA 156mVsA EU 118ms Figure5:Mediancommitlatency(99%ileindicatedbylinesatopthebars)ateachof3(leftgraph)and5(right graph) wide-area replicas. The Multi- and Generalized Paxos leader is in CA. In Mencius imbalanced, EU generatescommandsathalftherateoftheothersites(nootherprotocolisaffectedbyimbalance).InMencius worst,onlyonesitegeneratescommandsatagiventime.Thebottomofthegraphshowsinter-siteRTTs.
+andmeasurethecommitandexecutelatencyforeachre- Withthreereplicas,anEPaxosreplicacanalwayscom-
+quest.Figure5showsthemedianand99%ilelatenciesfor mitafteroneroundtriptoitsnearestpeerevenifthat
+EPaxos,Multi-Paxos,MenciusandGeneralizedPaxos. command interferes with other concurrent commands.
+11
+]sm[ )%99 / naidem( ycnetaL
+Phase1 Paxos-Accept
+ReplicaLonreceivingPRheaqsuees1t( )fromaclient Paxos-Accept
+R be e c p o l m ica es L th o e n d r e e s c i e g i n vi a n t g ed R l e e q a u d e e s r t( f   o ) r f c r o o m m m a a c n li d en   t (steps CommandleaderL,for( ,seq   ,deps   )atinstance
+R b 2 2 , , e 1 e : c 3 3 p o {l i a a i m n Ic n n n c a e d d t r e s e L r 4 4 m t fo h e e e n e x x n e e t d ri c c se i e u u n c s t s t t he i e e g t ie a v d d n n si a n a a e c t t e g t t e o o o dP n R m m f u h e l i m i i ea nq c c as su a a b ed te l l e a l l e s 1 r y n y t r ( ) c i )L   : : f e o s) r fQr c i o. o L jm m + su m 1 ac a hc n lit d ehna   ttt ( h st e eps L C L1 . .6 o i i: : : m c m m a d n s L d [L le ][ a i d ] e rL (  , P f , a o s x e r o q ( s     - , A , d s c e e c q p e   s p   , t d ,a e c p c s e   p ) t a e t d i ) nstance b 2 A A P , e 1 2 3 4 5 1 2 3 4 5 2 3 4 5 r n n : : : : : c 3 : : : : : : : : : e y y o { A { i c s Q d c s r a i c s Q d c s r i c s Q d c s r i m n I e e e n n n I o m r r e e c e e e e n e o o m m n e e . n p c q n . . e e p c c p c c m q n q n p m em d t j p p r d t l j j   d p p r d l d l e e l l   d   d s e e i s u u m 2 e i i s s s m m 2 2 c r s s p l l 4   c c r m P     L m d d t i i f P P L L a f a t a a c c h a a L [ I e e L L e [ r [ I I ( s e r r n s s L a a n , e n n L L n n e , ,   e s s   x e e n     1 d i n t 1 1 ] d d i i A t t ] ] e , n R R A A e t L L d [ n n + e e i t I [ [ + + i s c I I r i r c s r r i n i i , , r r c c s e L i n n e e f u n F L F L c e e m f f n c c s m m t o o t L ] q c t t t L L] ] e c s c e t h i e e s e e , h , n n , ,o   , , a   e g t o o r a a    p e t r r p p e a w f x r d a w w , } n f f x x r r t } } r r n L t t d d s L n L d d ( s h a e e ( ([ , ( h h ( a e c [ [e , ,   ( (   ( ( e c e e e         { e c c   t { { e e   t   e d tt e d d , e p { r e e c, , o { { r r , c c o s , , e d o n s s s i i 0 m e e i s n 0 m 0 m m i i e s s v v f n e e   f n n u e } u e e } } q l F F i i dq q i , q d d m ii e ) n n cq q n m ) )   c c nc L s       a s s m     s g g m m i , L a b s i i , , L L . b s d , t d s , s , i t [d l d d e a [ [ d d d e ) a d d Q l e a Q Q e r a a e e y n s r e n s s r ( e e p L ] ) f c i p p L L s ] ] p f f c i [ p p L a : [ f s [ [ L t e a a [ [ s s e s o Q j   s s e s Q Q j j s   s   s   s ]   t   r ] ] p , t t . ] , , . . ] Q , ] s L , Q , q [ s s s L L q q c[ [ p e p p i e e u j . . oi u u j j . . . 6 L r q i ] L r r q q i ] i ] j o L m o j o e , L L + e e i + r i ) i s | r r - ) n ) | s | 7 - - n n u u m u u a 1 u t a a t 1 t t t t m o c e m a m c o o e c e c c a h r c n h r r c c a f n a a t e f f t t e e d e l t h e e l l t h h p d l h p p r l l h r r a a a e 8 t a o e e t t o a o t   e t t se e t t s s t t t d h d d h h w t (w w t e h ) s e e h ) ) / r t/ e / r r e e       p } } } s C L A A A A C A A A C A 1 1 1 1 1 1 1 2 1 1 1 1 . 6 7 8 9 c 7 8 9 0 6 7 8 9 o n c c c c i n o n o : : : : c : : : : : : : : : c c c c m y m m y y e e e e e c s o c r s o c r r c s o c rp r e m e m m p p r p p e u r em m t e e m m m t t e p h t n e e p h p h t t t t n n n ( a p d d O ( l e O ( a p a dp d d d l e l e d   d y     y n y C s r s l n n r s s r s l l K K i , A L R i , i , A A R dL R A r c d o d A r s c A r c [ s s [ e [ c ’ [ ’ [a e e c e c m a L a c L e e s s L c L l c L p c l l p p c q c e c q : q : ] e e] c c R e l ] ] ] R R m e l e l   a [ e [ i   a   a [ e [ e [ i i p i , c i p , p i , cd i , c i p ] d , d , ] i p p ] ] ] t a o d t a t t ao o d t d e ( t t e e s ( ( n O s s e p n  n O r O e e     r r h p , p K p r , L , K K r r L L ( ( s a s ( ( s (e s s s e e   ,   ( e     ,   ,   s ( ( e e     c c   c f   q   e , , ,o o q q , , e, , , o e e s , s L   s , s , s n L n L   i   f i i r e L e v e L e L e , v . v o , , . . q q i q . i d q r q r i i ( . i d . i d r ) i n ) )     i n i   n e e       : ) e : : ) e ) e ( g , c c, g g ,, , ,   p t p p d t t d e e sd d o d o o s , s s e i i e e e e   e s v v     L q L L p p e p , p p i i , ,   n s ns q L s s L s L   ,         g   g . . . d i , , i i , , , , ) ) a a ) aa ea d a a t c t tc p t t c c c e o o o c c sc l c l c p e e e e   a e e e a a s a a p p t )p p p t t   s s t t l t t a t l l ) t t e e e e e e e e t d a d a b a b d a d d s i t ) N s N) s ) ) ) n t t t L / s / b b b . t 2 2 N i N N a c c n / / / 2 c 2 2 e c c c executedatomFically): F C20o:mrmunanCdomlemaditeprhLa,soenfCorroem(c emi,vs iie tnqg  ,adtelpeas  st)aNtL/.2i A P e R l P e R l R l 1 e 1 1 1 1 e e x 6 7 8 9 0 x r6 7 8 9 0 6 7 8 9 0 1 2 n e a r e a e a e : : : : : e e : : : : : : : : : : : : e p s y p p s s c A c A t i u | u c r i l t t u u | u c r i F r u | u c r i F r e l l u n f i r e c f f i i m e e c b p p Q e ec m m l b b p p p p Q Q t c c e p c c t rs p p c N d d r r p p e a N N \ \ d d d d r e a a e p l d e . e l e e d d e . . l l d u u a a y l l d c a a a a / j y y s { { p l Lc c / / j j i i s s p L L t t n d i e t t t t R e e 2 2 e e t e e L L R R a P2 2 c 2 2e e e e t a P P e i s s ( ( [ c i i ( ( ( C [ [ a t v } } c c   t c s d r v v L s  c c s d r s d r L L I o ( ( I I o e e , , e o Po e e n e e e e e , ] o o P P R f f n n L m e e , ] ] d A m q w w [ d dm s o o A A q q m t [ [ r p m m s t t r r , p p i e   e i i e e e c r r     e ] i P e c s e c i i ] ] i P P o s s r m m q c r r A c t t m m q c   A c A c s s f     r nf f h h a   r r e a R   o o e e c e i R R a c c e e l a a , t , p l m m c , , , A p p r   s s l c c n A A     l d n n( y t m d pe e e ( ( e y t t m m e e } c   O d } } e e c c e     O ) Od d h q q c e p d ) c ) p p d d a : c c ) ) , a ap : e , , a    t K p f f e l e t t K K x s e l e e l e x x O s a s a e s i s O O e e s e p p v ( ( e e a a p p p p   s e s ( ( a ( (   a a { q K   t s { { i q t q t K   K   t t n n s s , d , n O d d f s     O O , s s     L     q q , , d d L o e e g e e s e e r , [ K s s r r , , u u . [ K [ Kr r q . e d r e r q qi e e d d e d e d i o o )   q ’ (s ) I     q e q f ’ ’ s s I I e e f e f e s r r  p n s so }   ( p n p n o o } }     ( p u u p p p p s t f , r s o , t f t f r r o [ o , , s m m e t [ [ r s s s s s e e t dr r n d d   e o n n   r       e  e o o   r   r { e f p s , { { e e m f f p q s s , , F F ) m m R ) ) 1 e p R t R t p , s 1 e 1 e p p p p   , , s , h hs , ,   s r s s ) ) o +    s s a r r , o 6 o + + : a a 6 e e   : : e     e n e d l t t n , n l l c , l - , c c h h l l - , - , s s e 7 m a L m a 7 m a r r L L a a e r e r r r p c e e . c c e e e m e n m n a . . d a i d d s c p i i c c c p p c ) c n s) )   e n s s l e e e e e l l e e R i t R dR p ) i i t t i d p p c o i i [ c c o o v i i [ [ v vt a a Q t t n n a a Q 8Q i e 8 L i i e e t s L L n s s n nd ] d d ] a ] a L g [ i g [ g i [ i ) n l l ) ) n . n j l l j j i a ] a a ] ] . t . . t t s s s e e e q q q A C L A C C C L A C L A 2 2 2 2 2 2 2 2 2 2 2 2 . 0 1 2 3 c . .1 2 3 4 1 2 3 4 o n o o i o n o n i i : : : : c : : : : : : : : : m : : m y m m m y y e r c s s r c s s r c c s s r c m m p r u e m e e m r e r e m m e e e e m m m me p t n n n e e p p n n n n i i O a p d t lt a p a d dp d d d d l l d d d d i C ( ( i n i s l n n c s s K s s l l     c c i C c Li C i C c c L R d o L R a c d d a ac c , o , [ ’ o o [ [ [ s o [ m a s o s o s a L a s s L L m L l L m m l l m : e e em m ] e e R m ] ] ] ] R R q q a [ m a [ a [ m [ m m [ m m i ,   i ,   i , d i i i ] d d ] ] ] ] i t o i i i o , o , i i e t t e e t t t t p n d d n n( r n ( r ( r n n   h e e     o r L o o r r L L a ( , p p ( , ( , ( (e t e e   t , t s s     ,   , i   s s s s c i i c c e fi e f fi , e fi e     f f , , , e, o e eq o s o c q q s s , s c , s f c i i i r e C   a v ro e r e L e L   C e   a v a v q t , q q i q q r t (, t , o . i . i ( i ( o n i   d i i n i   n   d  d o         m ( o o ) ) m g , e   g g , , : n , : , e , e , n , n d md sd d p d ms, s p p f e e f e f s e s e e e e s i s o i o q o e   p t q q   p   p t p p r r   r q s ,     s , s , s s     L ,         L ,   L ,     d , d, d . , , , . , . t i t c t d ei i c c o c e c e ) o o ) ) o o p e o o o p p t c t t m c c m s o m p m m s o s o l   l l  s   i i i m a m e m m a m a )   e e ) ) l n l l n n ) l a i l a l a i i i i t t t t t t t t t o a b t o t o t t t t t t e t i e t e e t e i i h nh h d nL n d d d d e es e ) s s . ) ) ) ) r t i r r t t a a c a n n n c c c e e e 1 1 1 1 1 1 1 1 11 2 1 2 3 4 3 4 5: : : : : : : : : F r e e e l l s s p \ r e r u u u u r e u l u u { p p p pi nn n e L d d d ds C a a a a } P C ( t t t t , ao e e e e o f x w o m m d s d s o r i e e m e e s t m sq q h - p p o iA     i t s s m t s    cp e p c e h q h ea   f a p m m a s s t a s e U U e a a t p n x x f n n f h q d o ( ( o i i a u { { r o o r d s os s n n (e ( e e e r   ( (   uq q f pd d , , o m     s s e e s r   e e p p o o (q F q s s t   f f       h  ) , a a , , e s l f l f d t d l l e r r h s e o o e q r r a e p e e m m   p m np p s s ,  l l   d a a e i i ) e l e l ) e li l s s a n p a r r} } t t s e e ) ) a L   L p p l ). l l . l i i i i a e e t s s ) L ) .i C 24 o : m c m m it d ( s   R , [ s L e ] q [   i] , dep (  s   , , s L eq .i   ): ,deps   ,committed) 1 1 3 5 : : u ru p n da P t a e x d o e s p -A s F   cic geuprt U ep n 2h i :a o s n Te ( h d foe e r p b( s a    s,i f sc r e o Eq m  g,a a dl l ie l tpa re sr p  ia l ) i n e a s tP ) La.xiosprotocolforchoosingcommands. 14: updateseq  F igumraex2( { :sTehq  ebofasailclrEegpalileista } r)ianPaxosprotocolforchoosingcommands. rep1l5i:cacarunnbPearxeogsa-rAdecdceapstaphtwasoe-dfoimr(e n,ssieoqn a,ldaerrpasy  )waitthL.i messagesandwaitforReadReplies.Readisano-opcom- Nrowsandanunboundednumberofcolumns).Atmost mandthatinterfereswithupdatestotheobjectsitisread- replicacanberegardFeidguasrea2tw:To-hdeimbeanssicioEngalalairtraaryiawnitPhaxospmreostsoacgoelsfaonrdcwhoaoitsfionrgRceoamdRmeapnlidess..Readisano-opcom- onecommandwillbechoseninaninstance.Theordering ing.ClientscanalsouseRequestAndRead( ,objectIDs) NrowsandanunboundFeidgnuurmeb2e:rTofhceolbuamsnisc).EAgtamliotastrianPmaanxdosthpatrionttoercfoerlefsowricthhuopodsaitnesgtcoothmemobajencdtss.itisread- oftheinstancesisnotpre-determined—itisdetermined toproposecommand andatomicallyreadthemachine onecommandwillbechoseninaninstance.Theordering ing.ClientscanalsouseRequestAndRead( ,objectIDs) rdeypnliacmaiccaanllybebryegthaerdperdotaoscoalt,waos-cdoimmmenasniodnsaalraercrahyoswenit.h msteastesaigmemsaenddiawtealiytfaofrteRre adisReexpeliceust.eRde—adRiesaad(noob-joepctcIoDms-) oftheinstancesisnotpre-determined—itisdetermined toproposecommand andatomicallyreadthemachine NrIotwissiamnpdoarntaunntbtoouunnddeedrsntaunmdbtehraotfccoomlummitntisn)g.Aantdmeoxset- misaenqdutihvaatleinnttetrofeRreeqsuweistthAunpddRaetaesd(tnoot-hoepo,bojbejcetcstiItDiss)r.ead- udpyonnamaisciamllyplbeymthaejoprroittyoc(olN,a/s2co+m1m=anFds+a1re)ochforseepnl.ies(takst-ateimImDe.diFatuelrythaeftremro ries,eaxencuetwede—r cRoenafid(goubrjeactitIoDns)of the replica
+ocnueticnogmcommanmdawndilslabreecdhioffsee(cid:98)rnenintaanc(cid:99)tiinosntsa,nacned.Tthhaetothrdeecroinmg- ingB.eCfloireentdsecscarnibailnsgoEusgealRiteaqriuaenstPAanxdoRseinadd(e ta,iol,bwjeectmIDuss)t ( i l c o d c c m m q p n e γ a u y f u u l a g n , i i ty n I t t I T e T s t t id t i h t n a t s tn f o o b a a i he e m t gr i g s a n n (e s op ei c m m d d i c i m n cm i s c osm o um o s e e a o o em m nt am x x p l t d d e , p a l h m j i e e o sm y n n i i o mo o a f f c c e ra c r y y r t n b t a u u a t a q e na i a nr y t t n s t s nd o i i e n t t y d d o o h h t t ) p i ) r ft s h s n n s e e u o t l t ta i e o ai o o a n n f n o o c l r r r r p ol un a r r e a r e e u e M d d γ r t e n d i p p n dw o r e e e d n G M p p d ’ ln l e ed i t r r e e i i i s c g i r f e G ol p p n s f s e c c n i l u f e i Ef e . r cc l l r sa a ie s ci n P Pe -a c a si u s n M o i . t t rn , c d a a m a t s r r r l t e e P ex x u a l s e a e e a o a b b ea s o o a l ,d d n tn a a n t s s i x n t s t - n l l o n n a a o P t t e a a i d 1 1t s d s on n f a d s f 0 0 o o s s r na i c c x y a 0 0 0 t t t m e e t t co c t i c % % % c c h a a a t d d s h t tt n n o h s t t i t e a c i P h a i n e e e e m o e t . oc c t e a , , ec c n c ne h m c A x hde e sc o a a sp o o s s — , o i l , a m t i t s s g i m a cs n e a c c a a t h tn m i e n m n dl l r r h h t t i i d e . i i d t o s i e e e l l i i e s tA y y s t n n tt t sa t tt h c h i h e t i t er d n t t n a h a s R e h h a n e g e tt s s a g o t e e e t c d e e q t t t e aq t o h a hh t n n s s h r) n r u o s n a a o e m e d d , ei dee m m d s f b s s a cc s i c e e u n o t n t t e e e o o nR R hRx h e m t x . . d m m .e ee d e e e e i - -s s - - - - - - t t e . r e l i T l x p s h t l r e a i t s i d   s t i d   a o s st o s t t u e e a e i i B p c e fi fi t B n n ⌃ q e h q 4 5 r e n n t t e 0 0 o u u , e e f i 0 0 e e f t p i m o  i r r o vh v o f r, f c c r a G a wme s i e e a e  s e o onl e t r e r l p e G e m n m d e e ee e d M E t e . tn (o M n d e c S P P n h e e i m m M a t E ie . c i s n o . a a mt i s ee f f P n P e c ax x u c l t h c m t c i o o a a l a ao s u . c t t r o i u s s i r t x x s t , u . s e - i o n n h o P oh t i m s b e 1 1b Rw l s b s s i R a t 0 0 d be d e y r . o i ox h t p 0 0 0 0 i e e a i nR r r e o r % % % % n s s a e nq n s ae e r i i q t t g h g , n l n y ef u d ua te e E 4 p w t tee E e e  v e e x r x sx e . g r s g e r r h 7 i i e te t a n a s s s A  a f f A e )c l t e u t e n dl i n. s s s r i n u r i r tl d t e t d s at e d t e aa r a a Ti r R an r n R en i o aii i tc na x he s c s c a n e o nr t ee e a e e e n e a m ed q q c : p :d⌃ d P p 9 l P p a i uu u r i ( 9o ( t f T a T , cr e % n a e l te e n f c n x   e i e aw w x e i os n n c l o c eh o l d c y , o r u- c l c o - o a   es — o ey s o e e l n n p d t iR c c p i i r u n i t R , n o o s o o ee, n m o f f am im m d e no d gn n d b a e bc c e c b o m a m c j t d j t o o b et e a t e c e a r h ( a a m c m ih a e r c io e l en n o l t ,i t l m b q , I m( m I n d l d vm D w ej D u w o e s s e e e a a p i a e st ec s n v n n r     ) c o s ) t a m n. d t d m t . I h c s a a l D a s a s u i u e h t u nnn n oe mn s s ⌃ ⌃ ss ed d st ) n t t o b a l l y r e d e r t e h e r f e x o o p r n m n l a a e t a i , u n t r e s a i o d s l rm q mo u iuat e nna s dd t n ( ,d c h o aae γm fsxtee m bcre a uer n teni γd op ) cnlo t i o oemrs a d9m9fe r %r e irotisl p etme l a i dr c e. a aHn o mo f otaw it nj s oeev c cri h eetr o sy,s ic at(h e riien . lyc A clltuih R ede e ni q tsna u hgm e a s ise t t R .sne e ol - f),thda s ee u nfi c d h3n/o 0e0 r th cd a noi t fmuf t em h mr e ebane s nt e rdv r ba ia ilnu l wet e esh x rer e fene c tr u uter t r i nny o eci n den:g ⌃ bTy , tw   oth , oie   ncri i eot s iamad n tms o e t waa e nit q dnh u sein i w  v t a ha l be e nas n del t lotinExplicit c p ion l m y fToo f rm r m o m a m an otid d t o h inl f a e y t aab r d t e oh e p ue r l t i w c rwe al i a phl wte l le n i i t c c r l h y e a l ep t n erl o d yt t h i tes f o y tact t t oh e h m, e ema c c l la i i c e ne l n di n e t thn t a h at ns a s t dbe t ne h sed e ens n c de o Rx m e Ce-- - omm   is t t o eiqn ⌃ u2t0ee , 0rn   fc , e P   ersr e)e ( . i i p . f e a . t r , h e e t . h re e E y e a x r c e i h s s t u s r l e t a p i s l n i e c q d a u if e i f n s e c r t e e h n e o t f m d c e a o f c m a h u i m n lt e an ( s i d t . s a e t . e ⌃ , s initial)leader q m cuu a et n estd d (co h or a m s nmo b ta e : e nO n d)n c tl o oy m aw m rhe i e t p t nl e i d ctha . eo H cf o lii w tesn e c v th e roe r, iac t de h s. e tAh cl eR ie re n eq t pul h eic a sa s tRt n eed o - s a u n c d h /o t r h d a i t ff t e h r e en s t e v ri a a l l ue e s xe re c t u u t r i n o e n d ⌃ by ,  t , h   er is ea n d o s t w e i q th u i i n va th le e n se t m p i s n lt e ya fs t o fe sr r ma ou g mp ae d tis ta o ht an ead s t ay r b be no yp cu li h i t tcs rw a o p hn wre eo iv t l uh lio se n lr uo y s t t h li t yf eo yc ct ot oh hm me em m c o li t i a t h et n en ed dt rh tc r h a o e a s m p t lb tm i h ece ea an n s cd . o e s x mi e s- - t 4s o e.q2 ⌃ u10 , e0   n , Pc   oerfso ( )i i .tt . s e o . co , ow th ln e G y inu r s e at s ar u na lt cne i t n se,e d ss i o ff t e h re e n b t a m ll a o c t h e i p ne oc s h ta .0 te . s Risimplicitat
+m c it u anA t n e ed d sceh i o sn a r ssa n crb o yla e t: fe son s O ric c n tho l P y omsa w em x h co it e os t n me , d t me . h v e aH en c r od l y w i s e e mt n ov t e eb r r s e e, s a tea d hxg s eee t cc h ul c e ito ee r ndn e t. p ta h li i a c n s a s t n e a o d ballo aT4t nh.d2e/o 0rfodPr t im h frf e oearlt b eong e cV tu g Aova in laral n Gun i et n ues g earser o tuaC f thA rn e na v etted e Ee r b y gsya i tl n hit s e Oa t Rrr a iea n an c d e sPw R axi . t i oh . sJ i P nothffeesres EU n i s i n tu t f a nm oT t e e ro cb m u e r e e p a sr a s t d i a d ( a o rf t (n yo e p d r a f a o rb b s t r o i y o mt u h f i t) t op s wt s h l p ei he c r c e e s io t v t tha ym i et o , er m u w ,t s c a h l e l n y ei d e r c cn se 8o ot 5 pt s mm m or s s e m m b e s n1e i a 5e d t 6e n t nm e x Rd st d e eh ic a c tu a9 d o0 et s( mm ex o sb d b m p e . j l ee a i nc n c t d i eI t D s x ly e i s s -) inou s T c r el h qie e unet f ns o ca r 4e m rse.3) a .s. l i2m g i u l a aT r r a ht n oe te tEh e o s xsee th cp a ur t ot 2 i 1 v E o m i g s dn a e l dA i 1 t 1b a l8gy r m i os a or n thi 1 te 2 P h 7 r a m mP x s a o x s os of v 2 f 7 a e 8 r r m i s - s cutedornot:FOignulryew5:heMnetdhieancliceonmtrmeaitdlsattheencryep(l9i9ca%teidleindicatedbylinesatopthebars)ateachof3(leftgraph)and5(right p st s a e t T e uod u ro p e d acd a o t d( e p d e g a r r b ot ay no p f i l ht )y s) th p w w e re h i s dv eta ei n o t - e au d, rs ce ley l a siec c n r r oe ti m sb p si lmi en c n i g at d tse t . R d hee Tc a o d h E m ( e ox m bp M j a lei un cc ld ti t I s t i D -i Ps sa )r n e d pa G r4ce e l. n i2e e n r t a sP l a i T z rr e eoo d steio P mxc a eiol x cal o ur s Gttoe l u e t a cha d oor e smae r nmp is traeo i nve n isdd C eγd A b . cy I o n omt M hme e ri n tPt c ae i x u do s si i n m va b irni a - l s a t n an ce c d e , E R U .i, a pithnaesceesisnarFyigfgoe urn rte ehro3 as) tee . scToc hmo e mmb maana ldl nso d ttson abu tem hea bxlee fcr tuh eteends r.u at r e es of m th e e ss o a t g hT e ehresitfeosrrm( e nap olli ogc t auhae wrrainp lltref oeo tso ll cto ohw latis thEa egff sae elcitt sae trd eiap bns y :Pimaxboaslaonfcfeer)s.InMencius
+freTsohnreeasds:(praw ero ptrol s ifc t), atohs ned lsy itsao rtn ee,g eca slr iited enmtgse esnes ens rda a gRt e ees sacdw o(om itbh mjeacatnIbDd a ssll)a o t t a th g aciv tlieennttsimaree.sTimhielabrottotothmosoefpthroevgidreadphbyshoothwesriPnatxeors-svitaeriR-TTs.
+is smaller than the largest they have seen for a certain 1. WaitforR.itobecommitted(orrunExplicitPrepare
+andmeasurethecommitandexecutelatencyforeachre- Withthreereplicas,anEPaxosreplicacanalwayscom-
+instance. Forcorrectness,ballotnumbersusedbydiffer- toforceit);
+quest.Figure5showsthemedianand99%ilelatenciesfor mitafteroneroundtriptoitsnearestpeerevenifthat
+ent replicas must be distinct, so they include a replica 2. Buildγ’sdependencygraphbyaddingγ andallcom-
+EPaxos,Multi-Paxos,MenciusandGeneralizedPaxos. command interferes with other concurrent commands.
+11
+Toprovestabilityandconsistency,wefirstprove:
+ExplicitPrepare
+ReplicaQforinstanceL.iofpotentiallyfailedreplicaL Proposition1. IfreplicaRcommitscommandγ atin-
+stanceQ.i(withRandQnotnecessarilydistinct),then
+25: incrementballotnumbertoepoch.(b+1).Q,(where
+foranyreplicaR(cid:48)thatcommitscommandγ(cid:48)atQ.iitmust
+epoch.b.RisthehighestballotnumberQisawareofin
+holdthatγ andγ(cid:48)arethesamecommand.
+instanceL.i)
+26: sendPrepare(epoch.(b+1).Q,L.i)toallreplicas Proofsketch.CommandγiscommittedatinstanceQ.i
+(includingself)andwaitforatleast(cid:98)N/2(cid:99)+1replies
+onlyifreplicaQhasstartedPhase1forγ atinstanceQ.i.
+27: letRbethesetofrepliesw/thehighestballotnumber QcannotstartPhase1fordifferentcommandsatthesame
+28: ifRcontainsa(γ,seqγ,depsγ,committed)then instance,because(1)Qincrementsitsinstancenumber
+29: runCommitphasefor(γ,seqγ,depsγ)atL.i foreverynewcommand,and(2)ifQfailsandrestarts,it
+30: elseifRcontainsan(γ,seqγ,depsγ,accepted)then willbegivenanew,unusedidentifier(Section4.7).
+31: runPaxos-Acceptphasefor(γ,seqγ,depsγ)atL.i Proposition1impliesconsistency. Furthermore,be-
+32: elseifRcontainsatleast(cid:98)N/2(cid:99)identicalreplies cause commands can be forgotten only if a replica
+(γ,seqγ,depsγ,pre-accepted)forthedefaultballot
+crashes, this also implies stability if the cmds log is
+epoch.0.LofinstanceL.i,andnoneofthoserepliesis
+maintainedonpersistentstorage. Executionconsistency
+fromLthen
+alsorequiresstabilityandconsistencyforthecommand
+33: runPaxos-Acceptphasefor(γ,seqγ,depsγ)atL.i attributes.
+34: elseifRcontainsatleastone
+(γ,seqγ,depsγ,pre-accepted)then Definition. Ifγ isacommandwithattributesseq γ and
+deps , we say that the tuple (γ,seq ,deps ) is safe at
+35: startPhase1(atline2)forγatL.i,avoidfastpath γ γ γ
+instanceQ.iif(γ,seq ,deps )istheonlytuplethatisor
+36: else γ γ
+willbecommittedatQ.ibyanyreplica.
+37: startPhase1(atline2)forno-opatL.i,avoidfast
+path
+Proposition2. Replicascommitonlysafetuples.
+ReplicaR,onreceivingPrepare(epoch.b.Q,L.i)fromQ
+Proof sketch. A tuple (γ,seq ,deps ) can only be
+38: ifepoch.b.Qislargerthanthemostrecentballot γ γ
+committedatacertaininstanceQ.i(1)afterthePaxos-
+numberepoch.x.Y acceptedforinstanceL.ithen
+Acceptphase,or(2)directlyafterPhase1.
+39: replyPrepareOK(cmds R [L][i],epoch.x.Y,L.i) Case1: AtupleiscommittedafterthePaxos-Accept
+40: else
+phaseifmorethanhalfofthereplicashaveloggedthe
+41: replyNACK
+tupleasaccepted(line20inFigure2). Thetupleissafe
+viatheclassicPaxosalgorithmguarantees.
+Figure3: TheEPaxossimplifiedrecoveryprocedure.
+Case 2: A tuple is committed directly after Phase 1
+onlyifitscommandleaderreceivesidenticalresponses
+mandsininstancesfromγ’sdependencylistasnodes,
+fromN−2otherreplicas(line11). Thetupleisnowsafe:
+withdirectededgesfromγ tothesenodes,repeating
+Ifanotherreplicatriestotakeovertheinstance(because
+this process recursively for all of γ’s dependencies
+itsuspectstheinitialleaderhasfailed),itmustexecute
+(startingwithstep1);
+thePreparephaseanditwillseeatleast N/2 identical
+3. Find the strongly connected components, sort them (cid:98) (cid:99)
+repliescontaining(γ,seq ,deps ),sothenewleaderwill
+γ γ
+topologically;
+identifythistupleaspotentiallycommittedandwilluse
+4. In inverse topological order, for each strongly con-
+itinthePaxos-Acceptphase.
+nectedcomponent,do:
+Sofar,wehaveshownthattuples,includingtheirat-
+4.1 Sortallcommandsinthestronglyconnectedcom- tributes,arecommittedconsistentlyacrossreplicas. They
+ponentbytheirsequencenumber; arealsostable,ifrecordedonpersistentstorage.
+4.2 Executeeveryun-executedcommandinincreasing Wenextshowthattheseconsistent,stablecommitted
+sequencenumberorder,markingthemexecuted. attributes guarantee that all interfering commands are
+executedinthesameorderoneveryreplica:
+4.3.3 InformalProofofProperties
+Lemma1(Executionconsistency). Ifinterferingcom-
+Together,thecommitprotocolandexecutionalgorithm
+mandsγ andδaresuccessfullycommitted(notnecessar-
+guaranteethepropertiesstatedinSection4.2. Weprove
+ilybythesamereplica),theywillbeexecutedinthesame
+thisformallyinatechnicalreport[25],butgiveinformal
+orderbyeveryreplica.
+proofsheretoconveytheintuitionofourdesignchoices.
+Nontrivialityisstraightforward: Phase1isonlyexe- Proofsketch. Iftwocommandsinterfere,atleastone
+cutedforcommandsproposedbyclients. willhavetheotherinitsdependencysetbythetimethey
+arecommitted:Phase1endsafterthecommandhasbeen 4.4 OptimizedEgalitarianPaxos
+pre-acceptedbyatleastasimplemajorityofthereplicas,
+Wehavedescribedthecoreconceptsofourprotocolin
+anditsfinalsetofdependenciesistheunionofatleast
+theprevioussection. Wenowdescribemodificationsthat
+thesetofdependenciesupdatedatamajorityofreplicas.
+allowEPaxostouseasmallerfast-pathquorum—only
+Thisalsoholdsforrecovery(line 32inthepseudocode) F+ (cid:4) F+1 (cid:5) replicas,includingthecommandleader. This
+becausealldependenciesarebasedonthosesetinitially 2
+isanimportantoptimizationbecause,bydecreasingthe
+bythepossiblyfailedleader. Thus,atleastonereplica
+numberofreplicasthatmustbecontacted,EPaxoshas
+pre-acceptsbothγ andδ,anditsPreAcceptRepliesare
+lower latency (especially in the wide area) and higher
+takenintoaccountwhenestablishingthefinaldependen-
+throughput,becausereplicasprocessfewermessagesfor
+ciessetsforbothcommands.
+eachcommand. Forthreeandfivereplicas,thisfastpath
+Bytheexecutionalgorithm, acommandisexecuted
+quorumisoptimal(twoandthreereplicasrespectively).
+onlyafterallthecommandsinitsdependencygraphhave
+The recovery procedure (i.e., the Explicit Prepare
+beencommitted. Therearethreepossiblescenarios:
+Phase)changessubstantially,startingwithline32inour
+Case 1: Both commands are in each other’s depen-
+pseudocode description. The new command leader Q
+dencygraph. Bythewaythegraphsareconstructed,this looks for only (cid:4) F+1 (cid:5) replicas that have pre-accepted a
+implies: (1) the dependency graphs are identical; and 2
+tuple (γ,deps ,seq ) in the current instance with iden-
+(2)γ andδ areinthesamestronglyconnectedcompo- γ γ
+ticalattributes. Upondiscoveringthem, ittriestocon-
+nent. Therefore,whenexecutingonecommand,theother
+vinceotherreplicastopre-acceptthistuplebysending
+is also executed, and they are executed in the order of
+TryPreAcceptmessages. AreplicareceivingaTryPreAc-
+theirsequencenumbers(witharbitrarycriteriatobreak
+ceptwillpre-acceptthetupleonlyifitdoesnotconflict
+ties). By Proposition 2 the attributes of all committed
+withothercommandsinthereplica’slog—i.e.,aninter-
+commandsarestableandconsistentacrossreplicas,so
+feringcommandthatisnotindeps anddoesnothave
+γ
+allreplicasbuildthesamedependencygraphandexecute
+γ initsdepseither,oronethatisindeps buthasaseq
+γ andδinthesameorder. γ
+attributeatleastaslargeasseq .Ifthetupledoesconflict
+Case2: γ isinδ’sdependencygraphbutδ isnotin γ
+withsuchacommand,andthatcommandiscommitted,
+γ’s. Thereisapathfromδtoγ inδ’sdependencygraph,
+Q will know γ could not have been committed on the
+but there is no path from γ to δ. Therefore, γ and δ
+fastpath. Ifaun-committedconflictexists,Qdefersre-
+areindifferentstronglyconnectedcomponents,andγ’s
+coveryuntilthatcommandiscommitted. Finally, ifQ
+componentwillcomebeforeδ’sininversetopological
+convincesF+1replicas(countingthefailedcommand
+order. By the execution algorithm, γ will be executed
+leaderandtheremaindersofthefast-pathquorum)topre-
+beforeδ. Thisisconsistentwiththesituationwhenγhad
+accept(γ,deps ,seq ),itcommitsthistuplebyrunning
+beenexecutedonsomereplicasbeforeδwascommitted γ γ
+thePaxos-Acceptphaseforit.
+(whichispossible,becauseγ doesnotdependonδ).
+One corner case of recovery is the situation where
+Case3: Justlikecase2,withγ andδreversed.
+a dependency has changed its seq attribute to a value
+higherthanthatofthecommandbeingrecovered. We
+Lemma2(Executionlinearizability). Iftwointerfering
+canprecludethissituationbyallowingcommandleaders
+commands γ and δ are serialized by clients (i.e., δ is
+tocommitcommandγ onthefastpathonlyifforeach
+proposedonlyafterγ iscommittedbyanyreplica),then
+commandindeps atleastoneacceptorhasrecordedit
+everyreplicawillexecuteγ beforeδ. γ
+ascommitted. ForN 7,amoreefficientsolutionisto
+≤
+Proofsketch. Becauseδisproposedafterγ wascom- attachupdateddepsattributestoAcceptandAcceptReply
+mitted,γ’ssequencenumberisstableandconsistentby messages, and ensure that the recipients of these mes-
+the time any replica receives PreAccept messages for sagesrecordthem. Thisinformationwillbeusedonlyto
+δ. Because a tuple containing γ and its final sequence aidrecovery.
+numberisloggedbyatleastamajorityofreplicas,δ’s Theassociatedtechnicalreport[25]containsdetailed
+sequencenumberwillbeupdatedtobelargerthanγ’s, proofsthatrecoverycanalwaysmakeprogressifama-
+andδwillcontainγinitsdependencies.Therefore,when jorityofreplicasarealive—thenewsizeofthefast-path
+executingδ,δ’sgraphmustcontainγ eitherinthesame quorumisnecessaryandsufficientforthistohold—and
+strongly connected component as δ (but δ’s sequence thatoptimizedEPaxosprovidestheguaranteesenumer-
+numberwillbehigher), orinacomponentorderedbe- atedinSection4.2.
+foreδ’sininversetopologicalorder. Regardless,bythe Beforeconcludingthissubsection, itisimportantto
+executionalgorithm,γ willbeexecutedbeforeδ. pointoutanotherimplicationofthenewfast-pathquo-
+(cid:4) (cid:5)
+Finally, liveness is ensured as long as a majority of rumssize. AfterF failures,theremaybeasfewas F+1
+2
+replicas are non-faulty. A client keeps retrying a com- survivingmembersofafastquorum,whichwillnotcon-
+manduntilareplicagetsamajoritytoacceptit. stituteamajorityamongtheremainingreplicas. There-
+fore,ifthecommandleadersendsPreAcceptmessagesto epochprefixenablesasolutionthatresemblesVertical
+everyreplica(insteadofsendingPreAcceptstoonlythe Paxos[19]withmajorityreadquorums:Anewreplica,or
+replicasinafastquorum),therecoveryproceduremay onethatrecoverswithoutitsmemory,mustreceiveanew
+notbeabletocorrectlyidentifywhichreplicas’repliesthe IDandanew(higher)epochnumber,e.g.,fromaconfig-
+failedcommandleadertookintoconsiderationifitcom- urationserviceorahuman. ItthensendsJoinmessages
+mittedtheinstance. Still,suchredundancyissometimes toatleastF+1livereplicasthatarenotthemselvesinthe
+desirablebecausethecommandleadermaynotknowin processofjoining. UponreceivingaJoin,alivereplica
+advancewhichreplicasarestillliveorwhichreplicaswill updatesitsmembershipinformationandtheepochpartof
+replyfaster. Whenthisisthecase,wechangethefast- eachballotnumberitusesorexpectstoreceivefornew
+pathconditionasfollows:acommandleaderwillcommit instances. Itwillthusnolongeracknowledgemessages
+(cid:4) (cid:5)
+onthefastpathonlyifitreceivesF+ F+1 −1PreAccep- forinstancesinitiatedinolderepochs(instancesthatit
+2
+tRepliesthatmatchitsinitialorderingattributes—and was not already aware of). The live replica will then
+everyreplicathatreplieswithoutupdatingtheseattributes sendthejoiningreplicathelistofcommittedorongoing
+marksthisinitslogsotherecoveryprocedurecantake instances that the live replica is aware of. The joining
+onlythesereplicasintoconsideration. replicabecomeslive(i.e.,itproposescommandsandpar-
+When not sending redundant PreAccepts, a three- ticipatesinvotingtheproposalsofotherreplicas)only
+replicasystemwillalwaysbeabletocommitonthefast afterreceivingcommitsforallinstancesincludedinthe
+path—there can be no disagreement in a set with only repliestoatleastF+1Joinmessages. Productionimple-
+oneacceptor. mentationsoptimizethisprocessusingsnapshots[7].
+4.5 KeepingtheDependencyListSmall 4.8 ReadLeases
+Insteadofincludingallinterferinginstances,weinclude Asinanyotherstatemachinereplicationprotocol,aRead
+onlyNdependenciesineachlist:theinstancenumberR.i must be committed as a command that interferes with
+withthehighestiforwhichthecurrentreplicahasseen updatestotheobjectsitisreadingtoavoidreadingstale
+aninterferingcommand(notnecessarilycommitted). If data. However,Paxos-basedsystemsareoftenoptimized
+interferenceistransitive(usuallythecaseinpractice)the forread-heavyscenariosinoneoftwoways: assumethe
+most recent interfering command suffices, because its clientscanhandlestaledataandperformreadslocally
+dependencygraphwillcontainallinterferinginstances at any replica, as in ZooKeeper [12]; or grant a read
+R.j, with j<i. Otherwise, everyreplicamustassume leasetothestableleadersothatitcanrespondwithout
+that any unexecuted commands in previous instances committinganoperation[7]. EPaxoscanusereadleases
+R.j(j<i)arepossibledependenciesandindependently justaseasily,withtheunderstandingthata(infrequent)
+checkthematexecutetime. Thisisafastoperationwhen write to the leased object must be channeled through
+commandsareexecutedsoonaftercommit. thenodeholdingthelease. Inwide-areareplication,the
+leaderlessdesignofEPaxosandMenciusallowsdifferent
+4.6 RecoveringfromFailures
+sitestoholdleasesfordifferentobjectssimultaneously
+Areplicamayneedtolearnthedecisionforaninstance (e.g.,basedontheobserveddemandforeachobject).
+becauseithastoexecutecommandsthatdependonthat
+4.9 AvoidingExecutionLivelock
+instance. Ifareplicatimesoutwaitingforthecommit
+foraninstance,thereplicawilltrytotakeownershipof With a fast stream of interfering proposals, command
+thatinstancebyrunningExplicitPrepare,attheendof executioncouldlivelock: commandγwillacquiredepen-
+whichitwilleitherlearnwhatcommandwasproposed denciesonnewercommandsproposedbetweensending
+inthisprobleminstance(andthenfinalizecommittingit), andreceivingthePreAccept(γ). Thesenewcommands
+or,ifnootherreplicahasseenacommand,willcommit inturngaindependenciesonevennewercommands. To
+ano-optofinalizetheinstance. prevent this, we prioritize completing old commands
+If clients are allowed to time-out and re-issue com- over proposing new commands. Even without this op-
+mandstoadifferentreplica,thereplicasmustbeableto timization, however, long dependency chains increase
+recognizeduplicatesandexecutethecommandonlyonce. onlyexecutionlatency, notcommitlatency. Theyalso
+Thissituationaffectsanyreplicationprotocol,andstan- negligiblyaffectthroughput,becauseexecutingabatch
+dardsolutionsareapplicable,suchasuniquecommand ofninter-dependentcommandsatonceaddsonlymodest
+IDsorensuringthatcommandsareidempotent. computationaloverhead: findingthestronglyconnected
+componentshaslineartimecomplexity(thenumberof
+4.7 ReconfiguringtheReplicaSet
+dependencies for each command is usually constant—
+Reconfiguringareplicatedstatemachineisanextensive Section4.5),andsortingthecommandsbytheirsequence
+topic[19,20,21]. InEPaxos,orderingballotsbytheir attributeaddsonlyanO(logn)factor.
+5 Practical Considerations arereleasingourimplementationsforotherstoperform
+comparisonsorfurtheroptimization[24].
+Command interference. For EPaxos to function ef-
+Gopresentedtwochallenges: First,thegarbagecollec-
+ficiently, the implementation must be able to decide
+tionthateasedimplementationoffourcompletePaxos
+whethertwocommandsinterferebeforeexecutingthem
+variants adds performance variability; and second, its
+(itcan,however,conservativelyassumeinterferenceifun-
+RPC implementation is slow. We solved the latter by
+certain). Althoughtherearemanyapproachesthatcould
+implementing our own RPC stub generator. We have
+work,onethatseemslikelyistouseexplicitly-specified
+notfullymitigatedtheGCpenalty,butEPaxosismore
+dependencykeysasinGoogle’sHighReplicationDatas-
+affected than the other protocols because its attribute-
+tore[10]andMegastore[2]. Interferencecaneasilybe
+containingmessagesarelarger,soourresultsarefairto
+inferredforNoSQLkey-valuestoreswhereall(ormost)
+theotherprotocols.
+operationsidentifythekeystheyaretargeting. Evenfor
+relational databases, the transactions that usually con- 6.2 ThriftyOperation
+stitute the bulk of the workload are simple and can be
+ForallprotocolsexceptMencius,weusedanoptimiza-
+examinedbeforeexecutiontodeterminewhichrowsthey
+tionthatwecallthrifty. Inthrifty,areplicainchargeofa
+willupdate(e.g. theNew-OrdertransactionintheTPC-C
+command(thecommandleaderinEPaxos,orthestable
+benchmark[28]). Forothertransactionsitwillbediffi-
+leaderinMulti-Paxos)sendsAcceptandPreAcceptmes-
+culttopredictwhatexactstatetheywillmodify,butitis
+sagestoonlyaquorumofreplicas,includingitself,not
+safetoassumetheyinterferewithanyothertransaction.
+thefullset. Thisreducesmessagetrafficandimproves
+Consistencyguarantees. EPaxosguaranteesper-object throughput. The drawback is that if an acceptor fails
+linearizability. AsshownbyHerlihyandWing[11],lin- to reply quickly, there is no quick fall-back to another
+earizabilityisalocalproperty,meaningthat“asystem reply. However,thriftycanaggressivelysendmessages
+islinearizableifeachindividualobjectislinearizable”. toadditionalacceptorswhenareplyisnotreceivedafter
+Thisonlyappliestooperationsthattargetsingleobjects, ashortwaittime;doingsodoesnotaffectsafetyandonly
+ormoregenerally,tooperationsforwhichinterference slightlyreducesthroughput.Menciuscannotbethriftybe-
+is transitive. The equivalent property for multi-object causetherepliestoAcceptmessagescontaininformation
+operationsisstrictserializability. Ifinterferenceisnot necessarytocommitthecurrentinstance(i.e.,whether
+transitive, EPaxos maintains per-object linearizability, previousinstanceswereskippedornot).4
+butdoesnotguaranteestrictserializabilitywithoutasim-
+7 Evaluation
+plemodification: thecommitnotificationforacommand
+is sent to clients only after every instance in the com-
+We evaluated Egalitarian Paxos on Amazon EC2, us-
+mand’sgraphofdependencieshasbeencommitted(the inglargeinstances5forbothstatemachinereplicasand
+proofisintheassociatedtechreport[25]). Thishasthe
+clients,runningUbuntuLinux11.10.
+addedbenefitthatitsimplifiestheprotocol: approximate
+sequencenumbersarenolongernecessary(commands 7.1 TypicalWorkloads
+withinthesamestronglyconnectedcomponentaresorted Weevaluatetheseprotocolsusingareplicatedkey-value
+byanarbitrarycriterion),whichmakesforasimplified store where client requests are updates (puts). This is
+recovery procedure. The drawback of this version of sufficienttocaptureawiderangeofpracticalworkloads:
+EPaxos is increased perceived latency at the client for From the point of view of replication protocols, reads
+operationsthatconflictwithotherconcurrentoperations— and writes are typically handled the same way (reads
+for the common case of non-interfering operations the might be serviced locally in certain situations, as dis-
+latencyremainsthesameasincanonicalEPaxos. cussedinSection4.8). Nevertheless,writesarethemore
+difficultcasebecausereadsdonotinterferewithother
+6 Implementation
+reads. Ourtestsalsocaptureconflicts,animportantwork-
+We implemented EPaxos, Multi-Paxos, Mencius, and load characteristic—a conflict is a situation when po-
+GeneralizedPaxosinGo,version1.0.2. tentiallyinterferingcommandsreachreplicasindiffer-
+entorders. ConflictsaffectEPaxos,GeneralizedPaxos,
+6.1 Language-specificdetails
+4AMenciusreplicamustreceiveAcceptrepliesfromtheownersof
+BehindourchoiceofGowasthegoalofcomparingthe
+allinstancesithasnotreceivedmessagesfor.WetriedMencius-thrifty,
+performanceofthefourPaxosvariantswithinacommon inwhichthecurrentleadersendsAcceptsfirsttothereplicasitmust
+framework in which the protocols share as much code hearfrom,andtoothersonlyifquorumhasnotyetbeenreached.Itdid
+notimprovethroughput,however:undermediumandhighload,only
+aspossibletoreduceimplementation-relateddifferences.
+rarelyareallpreviousinstances“filled”whenacommandisproposed.
+Whilesubjective,webelieveweachievedthis,applying 5Two64-bitvirtualcoreswith2EC2ComputeUnitseachand
+roughlyequalimplementationoptimizationtoeach;we 7.5GBofmemory.ThetypicalRTTinanEC2clusteris0.4ms
+and, to a lesser extent, Mencius. One example of con- interferingcommandscauseoneextraroundtriptothe
+flictsarethoseexperiencedbyalockservice,wherecon- closesttworeplicasforEPaxos,butuptotwoadditional
+flictsareequivalenttowrite-writeconflictsfrommultiple roundtripsforGeneralizedPaxos.
+clientsupdatingthesamekey. Aread-heavyworkload Menciusperformsrelativelywellwithmultipleclients
+iswhereconcurrentupdatesrarelytargetthesamekey, ateverylocationandalllocationsgeneratingcommands
+correspondingto low conflictrates. Importantly, lease atthesameaggregaterate. ImbalancesforceMenciusto
+renewal traffic—constituting over 90% of the requests waitformorerepliestoAcceptmessages. Intheworst
+handledbyChubby[4]—generatesnoconflicts,because case, with active clients at only one location at a time,
+onlyoneclientcanrenewaparticularlease. Menciusexperienceslatencycorrespondingtotheround
+Fromtheavailableevidence,webelievethat0%and trip time to the replica that is farthest away from the
+2%commandinterferenceratesarethemostrealistic.For client,foranynumberofreplicas.
+completeness,wealsoevaluate25%and100%command Multi-Paxoshashighlatencybecausethelocalreplica
+interference(for25%, 1 ofcommandstargetthesame mustforwardallcommandstothestableleader.
+4
+keywhile 3 targetdifferentkeys). InChubby,fewerthan TheresultsinFigure4refertocommitlatency. For
+4
+1%ofallcommands(observedinaten-minuteperiod[4]) EPaxos,executionlatencydiffersfromcommitlatency
+couldpossiblygenerateconflicts.InGoogle’sadvertising onlyforhighconflictratesbecauseareplicamustdelay
+back-end,F1,whichusesthegeo-replicatedtablestore executing a command until it receives commit confir-
+Spanner(which,inturn,usesPaxos)fewerthan0.3%of mations for the command’s dependencies. With 100%
+all operations may generate conflicts, since more than interferencerate(i.e.,worstcase),three-replicasEPaxos
+99.7%ofoperationsarereads[8]. experiences median execution latencies of 125 ms to
+Weindicatethepercentageofinterferingcommandsas 139 ms (depending on the site), whereas for five repli-
+anumberfollowingtheexperiment(e.g.,“EPaxos0%”’). cas, median execution latencies range from 304 ms to
+319ms(comparedto274msto296msforMencius,and
+7.2 LatencyInWideAreaReplication unchanged latencies for Multi-Paxos and Generalized
+WevalidateempiricallythatEPaxoshasoptimalmedian Paxos100%). Asexplainedintheprevioussection,this
+commitlatencyinthewideareawiththreereplicas(tol- worstcasescenarioishighlyunlikelytooccurinprac-
+eratingonefailure)andfivereplicas(toleratingtwofail- tice. Furthermore, commitlatencyistheonlyonethat
+ures). ThereplicasarelocatedinAmazonEC2datacen-
+mattersforwrites6,whileforreads,whichhavealower
+tersinCalifornia(CA),Virginia(VA)andIreland(EU), chanceofgeneratingconflicts,thereisahighlikelihood
+plus Oregon (OR) and Japan (JP) for the five-replica that commit and execution latency are the same. Fur-
+experiment. Ateachlocationtherearealsotenclients thermore,readswillalsobenefitfromreadleases,which
+co-located with each replica (fifty in total). They gen- allowreadstobeservicedlocally.
+eraterequestssimultaneously,andmeasurethecommit However, ifhighcommandinterferenceiscommon,
+and execute latency for each request. Figure 4 shows there is a wide range of techniques that we can use to
+themedianand99%ilelatencyforEPaxos,Multi-Paxos, reduce latency, but we leave for future work: e.g., for-
+MenciusandGeneralizedPaxos. wardingPreAcceptsamongfastquorummemberstore-
+duce slow-path commit latency by one message delay,
+Withthreereplicas,anEPaxosreplicacanalwayscom-
+or reverting to a partitioned Multi-Paxos mode, where
+mit after one round trip to its nearest peer even if that
+thesamesiteactsascommandleaderforallcommands
+command interferes with other concurrent commands.
+inacertaingroup(thuseliminatingconflictsamongthe
+Incontrast,GeneralizedPaxos’sfastquorumsizewhen
+commandswithinthatgroup).
+N =3isthree. Itslatencyisthereforedeterminedbya
+round-trip to the farthest replica. The high 99%ile la- 7.3 ThroughputinaCluster
+tency experienced by Generalized Paxos is caused by
+WecomparethethroughputachievedbyEPaxos,Multi-
+checkpointcommits. Furthermore,conflictscausetwo
+Paxos, and Mencius, within a single EC2 cluster. We
+additionalroundtripsinGeneralizedPaxos(foranynum-
+omitGeneralizedPaxosfromtheseexperimentsbecause
+ber of replicas). Thus, in this experiment, EPaxos is
+itwasnotdesignedforhighthroughput: Itrunsatless
+notaffectedbyconflicts,butGeneralizedPaxosexperi-
+than 1 thespeedofEPaxos,anditsavailabilityistiedto
+encesmedianlatenciesof341mswith100%command 4
+thatoftheleader,asforMulti-Paxos.7
+interference.
+Withfivereplicas,EPaxosavoidsthetwomostdistant 6Fromtheclient’sperspective,thereisnodifferencebetweenacom-
+replicas,whileGeneralizedPaxosavoidsonlythemost mittedbutnot-yet-executedwrite,andawritethathasbeenexecuted
+(itis,however,guaranteedthatexecutionwilloccurbeforesubsequent
+distantone. Thus,EPaxoshasoptimalcommitlatency
+interferingreads).
+forthecommoncaseofnon-interferingconcurrentcom- 7LearnershandleΘ(N)messagespercommandandtheleadermust
+mands,withboththreeandfivereplicas.Forfivereplicas, frequentlycommitcheckpoints—seeSection3.
+500
+400
+300
+200
+100
+0
+CA VA EU
+]sm[
+)%99
+/
+naidem(
+ycnetaL
+Me M n e c n iu E c s i P u i a m s x b b o a a s l l a a 1 n n 0 c c 0 e e % d d 500 EP E E a P P xo a a s x x o o 1 s s 0 0 0 2 % % % 9 la 9 te % n i c le y
+Multi-Paxos Mencius best Gen. Paxos 0% 400 Mencius worst Gen. Paxos 100% Multi-Paxos
+Gen. Paxos 0%
+300 Gen. Paxos 100%
+99%ile
+latency
+200
+100
+0
+VA CA OR JP EU
+85ms 90ms 21ms 127ms 278ms
+156ms 118ms
+Figure4: Mediancommitlatency(99%ileindicatedbylinesatopthebars)ateachof3(leftgraph)and5(right
+graph) wide-area replicas. The Multi- and Generalized Paxos leader is in CA. In Mencius imbalanced, EU
+generatescommandsathalftherateoftheothersites(nootherprotocolisaffectedbyimbalance). InMencius
+worst,onlyonesitegeneratescommandsatagiventime. Thebottomofthegraphshowsinter-siteRTTs.
+3 Replicas 5 Replicas
+EPaxos,0%
+EPaxos,2%
+EPaxos,25%
+EPaxos,100%
+Mencius
+Multi−Paxos
+(cid:4)
+EPaxos,slow−acc,0%
+EPaxos,slow−acc,100%
+Mencius,slow−acc
+Multi−Paxos,slow−leader
+0 10000 20000 30000 40000 50000 0 10000 20000 30000 40000 50000
+Throughput [reqs / sec] Throughput [reqs / sec]
+Figure5: Throughputforsmall(16B)commands(errorbarsshow95%CI).
+3 Replicas 5 Replicas
+EPaxos,0% 1800
+EPaxos,2% 1600
+EPaxos,25% 1400
+EPaxos,100% 1200 Mencius 1000
+Multi−Paxos
+(cid:4) 800
+EPaxos,slow−acc,0% 600
+Mencius,slow−acc,0% 400
+200
+0 5000 10000 15000 20000 25000 0 5000 10000 15000 20000 25000 0
+Throughput [reqs / sec] Throughput [reqs / sec] Multi- Mencius Mencius EPaxos,
+Paxos min-log 100%
+Figure6: Throughputforlarge(1KB)commands(with95%CI).
+]ces
+/ sqer[
+tuphguorhT
+Figure7:Tputfor3replicas,16Bcom-
+mands,sync. logtoFlash(w/95%CI).
+AclientonaseparateEC2instancesendsbatchedre- thrifty(Section6.2),EPaxosprocessesfewermessages
+questsinanopenloop8(onlyclientrequestsarebatched; percommandthanMencius,soitsthroughputisgener-
+messagesbetweenreplicasarenot),andmeasurestherate allyhigher—withthenotableexceptionofmanyconflicts
+atwhichitreceivesreplies. ForEPaxosandMencius,the formorethanthreereplicas,whenEPaxosexecutesan
+clientsendseachrequesttoareplicachosenuniformlyat extraroundpercommand(Menciusisnotsignificantly
+random. Replicasreplytotheclientonlyafterexecuting influencedbycommandinterference—therewasnoin-
+therequest. Althoughitisoften sufficienttoacknowl- terferenceintheMenciustests). EPaxosmessagesare
+edgeaftercommit,wewishedtoalsoassesstheeffects slightly larger because they carry attributes, hence our
+ofEPaxos’smorecomplexexecutioncomponent. EPaxosimplementationincursmoreGCoverhead.
+Figure 5 shows the throughput achieved by 3 and 5 Processinglargecommandsnarrowsthegapbetween
+replicaswhenthecommandsaresmall(16B).Figure6 protocols: All replicas spend more time sending and
+showsthethroughputachievedwith1KBrequests. receivingcommands(eitherfromtheclientorfromthe
+EPaxosoutperformsMulti-PaxosbecausetheMulti- leader), but Mencius and EPaxos exhibit significantly
+PaxosleaderbecomesbottleneckedbyitsCPU. Bybeing higherthroughputthanleader-bottleneckedMulti-Paxos.
+Figures5and6alsoshowthroughputwhenonenodeis
+8Inpractice,aclientneedinglinearizabilitymustwaitforcommit
+slow(forMulti-Paxosthatnodeistheleader—otherwise
+notificationsbeforeissuingmorecommands;theopenloopmimicsan
+unboundednumberofclientstomeasuremaximumthroughput. its throughout is mostly unaffected). In these experi-
+ments, two infinite loop programs contend for the two 22
+virtualcoresontheslownode. EPaxoshandlesaslow 20
+18
+replicabetterthanMenciusorMulti-Paxosbecausethe 16
+other replicas can avoid it: Each replica monitors the 14
+12
+speedwithwhichitspeersprocesspingsovertime,and 10
+8 excludes the slowest from its quorums. Mencius, by
+6
+contrast, fundamentally runs at the speed of the slow- 4
+2
+est replica because its instances are pre-ordered and a
+0
+replicacannotcommitaninstancebeforelearningabout 2000 4000 6000 8000 10000 12000 14000 16000 18000
+instancesorderedbeforeit—and1/N ofthoseinstances
+belongtotheslowreplica.
+7.4 LoggingMessagesPersistently
+Toresumeimmediatelyafteracrash,areplicamustpre-
+servethecontentsofitsmemoryintact,otherwiseitmay
+breaksafety(foralloftheprotocolsweevaluate). This
+implies persistently logging every state change before
+actinguponorreplyingtoanymessage. Thepreceding
+experimentsdidnotincludethisoverhead,becauseitis
+avoidableinsomecircumstances: ifpowerfailureofall
+replicasisnotathreat,replicascanrecoverfromfailures
+aspresentedinSection4.7;inaddition,persistentmem-
+ory technologies keep improving, and battery-backed
+memoryissometimesfeasible. Weneverthelesswanted
+toevaluatewhetherEPaxosisfundamentallymoreI/O
+intensivethanMulti-PaxosorMencius.
+FortheexperimentsinthissectionweusedAmazon
+EC2High-I/Oinstancesequippedwithhigh-performance
+solid state drives. Every replica logs its state changes
+synchronouslytoanSSD-backedfile,forallprotocols.
+Here(Figure7),allprotocolsareI/Obound,butMulti-
+PaxosplacesahigherI/Oloadonthestableleaderthan
+onnon-leaderreplicas,makingitslower. EPaxosoutper-
+formsMenciusduetothethriftyoptimization:inEPaxos,
+unlike in Mencius, it is sufficient to send (pre-)accept
+messages to only a quorum of replicas, and therefore
+EPaxosrequiresfewerloggingoperationspercommand
+than Mencius. However, we make the (novel, to our
+knowledge)observationthatwhileeveryMenciusaccep-
+tormustreplytoacceptmessages,notallacceptorsmust
+logtheirrepliessynchronously—itissufficientthataquo-
+rumofacceptorslogsynchronouslybeforeresponding,
+and the command leader commits only after receiving
+theirreplies.“Menciusmin-log”(inFigure7),needsonly
+slightlymoresynchronousloggingthanEPaxos(every
+min-logreplicamuststilllogitsownskippedinstances
+synchronously).
+7.5 ExecutionLatencyinaCluster
+Thissectionexaminesclient-perceivedexecutionlatency
+usingthreereplicas. Despiteitsmorecomplexexecution
+algorithm,EPaxoshaslowerexecutionlatencythaneither
+Multi-PaxosorMencius,regardlessofinterferingcom-
+mands. Inaddition,ourstrategyforavoidinglivelockin
+]sm[
+ycnetaL
+naideM
+Multi-Paxos
+Mencius 100% Mencius 0%
+EPaxos 100%
+EPaxos 25%
+EPaxos 0%
+Throughput [requests/second]
+90
+80
+70
+60
+50
+40
+30
+20
+10
+2000 4000 6000 8000 10000 12000 14000 16000 18000
+]sm[
+ycnetaL
+eli%99
+Multi-Paxos Mencius 100%
+Mencius 0%
+EPaxos 100%
+EPaxos 25%
+EPaxos 0%
+Throughput [requests/second]
+Figure8: Latencyvs. throughputfor3replicas.
+10000
+1000
+100
+10
+1
+0 100000 200000 300000 400000 500000
+]sm[
+ycnetaL
+naideM
+Multi-Paxos
+EPaxos 100%
+EPaxos 0%
+Throughput [requests/second]
+Figure9:Latencyvs. throughputfor5replicaswhen
+batchingsmall(16B)commandsevery5ms.
+EPaxos’sexecutionalgorithm(Section4.9)iseffective.
+Figure8showsmedian(topgraph)and99%ilelatency
+under increasing load in EPaxos, Mencius and Multi-
+Paxos. Weincreasethroughputbyincreasingthenumber
+ofconcurrentclientssendingcommandsinaclosedloop
+(eachclientsendsacommandandwaitsuntilithasbeen
+executed before sending the next) from 8 to 300. The
+maximum throughput is lower than in the throughput
+experiments because here, replicas bear the additional
+overheadofhundredsofsimultaneousTCPconnections.
+7.6 Batching
+Batching increases the maximum throughput of Multi-
+Paxosby5xandofEPaxosby9x(Figure9). Commands
+aregeneratedopenloopfromaseparatemachineinthe
+cluster. Every5ms,eachproposerbatchesallrequestsin
+itsqueue,uptoapresetmaximumbatchsize: 1000for
+EPaxos,5000forMulti-Paxos. Commandleadersissue
+notificationstoclientsonlyafterexecution. Eachpointis
+theaverageovertenruns.
+EPaxos’sadvantageherestillarisesfromsharingthe
+10000
+0
+10000
+0
+]ces
+/
+sqer[
+tuphguorhT
+EPaxos doesnotaffecttheavailabilityofthesystem.
+In contrast, any replica failure disrupts Mencius: a
+Multi-Paxos
+replica cannot finalize an instance before knowing the
+30000 replica failure outcomeof(oratleastwhichcommandsarebeingpro-
+delayed commits
+20000 Mencius posedin)allinstancesthatprecedeit,andinstancesare
+10000
+0 pre-assigned to replicas round-robin. Unlike in Multi-
+0 5 10 15 20 25 30 35
+Time [seconds] Paxos,clientscancontinuetosendrequeststotheremain-
+Figure 10: Commit throughput when one of three ingreplicas;theywillbeprocesseduptothepointwhere
+replicasfails. ForMulti-Paxos,theleaderfails. theyarereadytobecommitted. Eventually,alivereplica
+willtimeoutandcommitno-opsonbehalfofthefailed
+loadmoreevenlyacrossreplicas,whereasMulti-Paxos replica,thusfreeingtheinstanceswaitingonthem. At
+placesitallonthestableleader. Underthesameclient thispoint,thedelayedcommandsarecommittedandac-
+throughput,MenciusandEPaxoswillsendupto5xmore knowledged,whichcausesthethroughputspikedepicted
+messages: eachleaderwillsendbatches,insteadofhav- inFigure10. Livereplicascommitno-opsperiodically
+ing one leader aggregate the commands into a single untilthefailedreplicarecovers,oruntilareconfiguration.
+largerbatch. However,thecostoftheseextramessages BothinMulti-PaxosandMencius,thetimeoutduration
+isamortizedrapidlyacrosslargebatches,becomingneg- isatrade-offbetweentheavailabilityoftheserviceand
+ligibleversusprocessingandexecutingthecommands. theimpactthatactingtoofrequentlyonfalsepositiveshas
+Importantly,andperhapscounter-intuitively,batching onthroughputandlatency. EPaxosavoidsthisdilemma
+diminishesthenegativeeffectsofcommandinterference because it can operate uninterrupted by the crash of a
+inEPaxos. Thisisbecause(1)thecostoftheextraround minorityofreplicas. Clientswithcommandsoutstanding
+of communication for handling a conflict is amortized atafailedreplicawilltimeoutandretrythoserequests
+across multiple commands, and becomes insignificant at another replica. Although live replicas will commit
+forlargebatchsizes(secondphasemessagesareshort, commands unhindered, some of these commands may
+becausecommandleaderssendonlythenewattributesto haveacquireddependenciesoncommandsproposedby
+replicasthathavealreadyreceivedthebatchinthefirst thefailedreplica. Executingtheformer(asopposedto
+phase);and(2)atlowthroughputs,evenifallcommands committingthem)willthereforebedelayeduntilanother
+interfere,conflictsarelessfrequentbecausethepossibil- replicafinalizescommittingthelatter.UnlikeinMencius,
+ityoftherebeingmultiplebatchesinflightatthesame thisoccursonlyonce:aninactivereplicacannotcontinue
+time(andarrivingatdifferentreplicasindifferentorders) togeneratedependencies. Moreover,itoccursrarelyfor
+diminishes. Asaresult,EPaxoswith100%interference workloadswithlowconflictrates.
+iseffectivelyasfastasEPaxoswithnointerference.
+8 Conclusion
+AlthoughwehavenottestedMenciuswithbatching,
+aslongasreplicasdonotexperienceperformancevari- We have presented the design and implementation of
+ability, we expect it to be as fast as EPaxos, since the EgalitarianPaxos,anewstatemachinereplicationproto-
+differenceinmessagingpatternshasadiminishedeffect colbasedonPaxos. Wehaveshownthatitsdecentralized
+withbatching. anduncoordinateddesignhasimportanttheoreticaland
+practical benefits for the availability, performance and
+7.7 ServiceAvailabilityunderFailures
+performancestabilityofbothlocalandwideareareplica-
+Figure10showstheevolutionofthecommitthroughput tion.
+in a three-replica setup that experiences the failure of
+onereplica. Aclientsendsrequestsinanopenloop,at Acknowledgements: We thank our shepherd Nickolai
+thesamerateforeverysystem—approximately10,000 Zeldovich,theanonymousSOSPandOSDIreviewers;
+requestspersecond(arateatwhichnoneofthesystems MiguelCastroforhisinsightfulfeedback;JohnWilkes,
+isclosetosaturation,hencethesteadythroughput). MichaelAbd-El-MalekandGarthGibsonforhelpingus
+WithMulti-Paxos,oranyvariantthatreliesonastable understand real-world applications of Paxos; Bin Fan,
+leader,aleaderfailurepreventsthesystemfromprocess- HyeontaekLim,AndyPavlo,GregGangerandJonHow-
+ingclientrequestsuntilanewleaderiselected. Although ellfortheirusefulcomments. Thisresearchwasfunded
+clientscoulddirecttheirrequeststoanotherreplica(after inpartbyIntelviatheIntelScienceandTechnologyCen-
+theytimeout),areplicawillusuallynottrytobecomethe ter for Cloud Computing (ISTC-CC), by the National
+newleaderimmediately. Falsesuspicionscandegrade ScienceFoundationunderawardCCF-0964474,andby
+performancebycausingstalls,sothefail-overtimewill agiftfromGoogle. WethankAmazonfordonatingpart
+usuallybeontheorderofseconds[4,22]. Thefailureof oftheEC2timeusedfortheexperimentsreportedinthis
+anon-leaderreplica(asituationnotdepictedinFigure10) paper.
+References A. Fekete. MDCC: Multi-data center consistency. In
+Proc.8thACMEuropeanConferenceonComputerSys-
+[1] M.K.Aguilera,C.Delporte-Gallet,H.Fauconnier,and tems(EuroSys),Apr.2013.
+S.Toueg.Thriftygenericbroadcast.InProc.14thInterna-
+[15] L.Lamport.Thepart-timeparliament.ACMTransactions
+tionalConferenceonDistributedComputing,DISC’00,
+onComputerSystems,16(2):133–169,1998. ISSN0734-
+pages268–282,London,UK,UK,2000.Springer-Verlag.
+2071.
+[2] J.Baker,C.Bond,J.C.Corbett,J.Furman,A.Khorlin,
+[16] L.Lamport. Paxosmadesimple. ACMSIGACTNews,32
+J.Larson,J.-M.Leon,Y.Li,A.Lloyd,andV.Yushprakh.
+(4),Dec.2001.
+Megastore:Providingscalable,highlyavailablestorage
+[17] L. Lamport. Generalized consensus and Paxos.
+forinteractiveservices. InProc.oftheConferenceon
+http://research.microsoft.com/apps/
+InnovativeDatasystemResearch(CIDR),pages223–234,
+pubs/default.aspx?id=64631,2005.
+2011.
+[18] L. Lamport. Fast Paxos. http://research.
+[3] M. Biely, Z. Milosevic, N. Santos, and A. Schiper. S-
+microsoft.com/apps/pubs/default.aspx?
+paxos:Offloadingtheleaderforhighthroughputstatema-
+id=64624,2006.
+chinereplication.InReliableDistributedSystems(SRDS),
+[19] L.Lamport,D.Malkhi,andL.Zhou. VerticalPaxosand
+2012IEEE31stSymposiumon,2012.
+primary-backupreplication. Technicalreport,Microsoft
+[4] M.Burrows.TheChubbylockserviceforloosely-coupled
+Research,2009.
+distributedsystems. InProc.7thUSENIXOSDI,Seattle,
+[20] L.Lamport,D.Malkhi,andL.Zhou. Reconfiguringa
+WA,Nov.2006.
+statemachine. SIGACTNews,41(1),Mar.2010.
+[5] L.J.Camargos,R.M.Schmidt,andF.Pedone. Multico-
+[21] B.LiskovandJ.Cowling. Viewstampedreplicationrevis-
+ordinatedpaxos. InProc.26thannualACMsymposium
+ited. TechnicalReportMIT-CSAIL-TR-2012-021,MIT
+onPrinciplesofdistributedcomputing,PODC’07,pages
+ComputerScienceandArtificialIntelligenceLaboratory,
+316–317,NewYork,NY,USA,2007.ACM.
+2012.
+[6] T.D.ChandraandS.Toueg. Unreliablefailuredetectors
+[22] J.MacCormick,N.Murphy,M.Najork,C.A.Thekkath,
+forreliabledistributedsystems. JournaloftheACM,43:
+andL.Zhou.Boxwood:abstractionsasthefoundationfor
+225–267,Mar.1996.
+storageinfrastructure. InProc.6thUSENIXOSDI,San
+[7] T. D. Chandra, R. Griesemer, and J. Redstone. Paxos
+Francisco,CA,Dec.2004.
+madelive:anengineeringperspective.InProc.26thACM
+[23] Y.Mao,F.P.Junqueira,andK.Marzullo. Mencius:build-
+SOSP,PODC’07,pages398–407,NewYork,NY,USA,
+ingefficientreplicatedstatemachinesforWANs. InProc.
+2007.ACM.
+8thUSENIXOSDI,pages369–384,SanDiego,CA,Dec.
+[8] J. C. Corbett, J. Dean, M. Epstein, A. Fikes, C. Frost,
+2008.
+J. Furman, S. Ghemawat, A. Gubarev, C. Heiser,
+[24] I.Moraru,D.G.Andersen,andM.Kaminsky. Epaxos
+P.Hochschild,W.Hsieh,S.Kanthak,E.Kogan,H.Li,
+code base. https://github.com/efficient/
+A. Lloyd, S. Melnik, D. Mwaura, D. Nagle, S. Quin-
+epaxos,Aug.2013.
+lan,R.Rao,L.Rolig,Y.Saito,M.Szymaniak,C.Tay-
+lor, R. Wang, and D. Woodford. Spanner: Google’s [25] I.Moraru,D.G.Andersen,andM.Kaminsky. Aproofof
+globally-distributed database. In Proc. 10th USENIX correctnessforEgalitarianPaxos. Technicalreport,Paral-
+OSDI.USENIX,2012. lel Data Laboratory, Carnegie Mellon University, Aug.
+2013. http://www.pdl.cmu.edu/PDL-FTP/
+[9] M.J.Fischer,N.A.Lynch,andM.S.Paterson. Impossi-
+associated/CMU-PDL-13-111.pdf.
+bilityofdistributedconsensuswithonefaultyprocess. J.
+ACM,32(2):374–382,Apr.1985. ISSN0004-5411. [26] F.PedoneandA.Schiper. Handlingmessagesemantics
+withgenericbroadcastprotocols. DistributedComputing,
+[10] Google AppEngine. High replication datas-
+tore, 2012. https://developers.google. 15:97–107,Apr.2002.
+com/appengine/docs/java/datastore/ [27] F.PedoneandA.Schiper. Optimisticatomicbroadcast:a
+overview. pragmaticviewpoint. TheoreticalComputerScience,291:
+79–101,Jan.2003.
+[11] M. P. Herlihy and J. M. Wing. Linearizability: a cor-
+rectness condition for concurrent objects. ACM Trans. [28] tpc-c. TPCbenchmarkC. http://www.tpc.org/
+Program.Lang.Syst.,12(3),July1990. tpcc/spec/tpcc_current.pdf,2010.
+[12] P. Hunt, M. Konar, F. P. Junqueira, and B. Reed. [29] P. Zielin´ski. Optimistic generic broadcast. In Proc.
+ZooKeeper:wait-freecoordinationforinternet-scalesys- 19thInternationalSymposiumonDistributedComputing
+tems. InProc.USENIXATC,USENIXATC’10,Berkeley, (DISC),pages369–383,Kraków,Poland,Sept.2005.
+CA,USA,2010.USENIXAssociation.
+[13] M.Kaptritsos,Y.Wang,V.Quema,A.Clement,L.Alvisi,
+andM.Dahlin. Eve:Execute-verifyreplicationformulti-
+coreservers. InProc.10thUSENIXOSDI,Hollywood,
+CA,Oct.2012.
+[14] T. Kraska, G. Pang, M. J. Franklin, S. Madden, and

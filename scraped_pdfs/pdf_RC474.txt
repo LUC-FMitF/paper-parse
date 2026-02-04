@@ -1,0 +1,1176 @@
+Source: RC474.pdf
+================================================================================
+
+Chameneos, a Concurrency Game for Java, Ada and
+Others
+Claude Kaiser, Jean-Franc¸ois Pradat-Peyre
+CEDRIC - CNAM Paris
+292, rue St Martin, 75003 Paris
+(cid:0) kaiser, peyre
+(cid:1)
+@cnam.fr
+I. INTRODUCTION little modification in a part of the code can produce a major
+transformation of the application behavior.
+Thispaperpresentsapeer-to-peercooperationparadigmand
+In high level languages, such as Java and Ada which
+severalimplementations.Theparadigmisexpressedasagame.
+allow concurrent programming, concurrency control of asyn-
+The implementations are done in three different languages
+chronous processes, named “threads” in Java, “tasks” in Ada,
+largely available to-day (Ada, Java and C with the Posix
+relies on the concept of a monitor as introduced by Brinch
+standard).Thisallowscomparingtheirprogrammingstyleand
+Hansen[3]andHoare[4].Ageneralpresentationofconcurrent
+theirabilitytoprovidesecureprograms.JavaandAdaarehigh
+programmingisavailablein[5]andaclassificationofdifferent
+level languages which allow concurrent programming. Both
+monitor implementations is given in [6].
+use the concept of monitor, but their implementation choices
+The state variables are encapsulated in the monitor and
+make them differ greatly. Posix offers low level system API
+monitor procedures execute in mutual exclusion. The mutual
+for concurrent programming.
+exclusion is always guaranteed by a lock. The language im-
+Asprolegomenaofthegame,wefirstpresenttheapplication
+plementationchoices differbythe wayof providingcondition
+contexts in which this concurrency paradigm may be useful.
+synchronization and treating queuing rules.
+Thenwesummerizetheconcurrentprogrammingstructuresof
+The Java policy uses explicit self-blocking and signaling
+Java, Ada and Posix, and the coloured Petri nets formalism.
+instructions. It provides “wait()” and “notify()” clauses with
+This presentation may be skipped by the user aware of it.
+a uniquewaiting queue per encapsulatedobject (termed “syn-
+II. THECONTEXT chronized”).
+A self-blocking thread joins the waiting queue and releases
+A. Applications requiring concurrent and symmetrical coop-
+the object mutual exclusion lock. A notifying thread wakes
+eration
+up one or all waiting threads (which join the ready threads
+Moreandmoreapplicationsrequirethatcooperationdonot queue), but it does not release the lock immediately. It keeps
+rely only onthe client serverrelationship.Theyrather specify it until it reaches the end of the synchronized “method” (or
+some form of symmetrical relationship between users. This “block”);thisisthe“signalandcontinue”monitordiscipline.
+relationship appears as a symmetrical rendez-vous or peer to Hence the awaken threads must still wait and contend for the
+peer cooperation. Let us give some examples. lock when it becomes available.
+1) In e-commerce, two consumers may decide to join However,as the lock is released, and not directly passed to
+for better condition and to set up internal rules. Their an awaken thread, another thread contending for the monitor
+negotiation may start at a meeting infrastructure which may take precedence over awaken threads. More precisely, as
+can be seen as a virtual marketplace [1]. the awaken threads share the ready queue with other threads,
+2) In the internet, peer to peer exchange of data (im- one of the latters may take precedence overthe formers when
+ages, music) starts finding a partner, then agreeing to contendingfor theprocessor;if thiselectedthread callsalsoa
+use a common protocol for data transmission (Napster, synchronized method (or enters a synchronized block) of the
+Gnutella, Freenet, JXTA). object, it will acquire the lock before the awaken threads and
+3) In artificial intelligence multi agent applications, coop- then access the object before them. This may contravene the
+eration between agents need some form of negotiation problem specification and may require the use of defensive
+to specialize or modify the agent behaviours [2]. programming.
+Ada provides protected object types and has no low level
+B. Concurrent programming (Java, Ada, others)
+clausesfor blocking andawakeningtasks. Conditionsynchro-
+Concurrency introduces in the same time design facilities nization relies on programmed guards (a boolean expression
+and reliability problems. Indeed, the interleaving of tasks termed “barrier”). Access is providedby calling entries, func-
+execution leads to a high degree of combinatory and may tionsandprocedures,butonlyoneofthesecanbeexecutedat
+be the source of subtle mistakes that are difficult to detect atimeinmutualexclusion.Theentrieshavebarrierconditions
+by simple simulations or human reasoning. Furthermore, a which must be true before the corresponding entry body can
+be executed. If the barrier condition is false, then the call
+is queued and the mutual exclusion is released. At the end
+of the execution of an entry or a procedure body of the
+protected object, all barriers which have queued tasks are re-
+evaluatedand one waiting call which barrier condition is now
+true is executed. The mutual exclusion is released only when
+there is no more waiting task with a true barrier condition.
+Thus existing waiting calls with true barrier condition take
+precedence over new calls. This is the eggshell model for
+monitors.
+The “requeue” statement enables a request to be processed
+in two or more steps, each associated with an entry call. The
+effect is to return the current caller back to an entry queue.
+The caller is neither aware of the number of steps nor of the
+requeuing of its call. This sequence of steps corresponds to a
+sequential automaton. According to the eggshell model, any
+entry call of such a sequence which guard has become true
+has precedence over a new call contending for the protected
+object.
+The third concurrency programming tool has been intro-
+duced to show how, in the absence of an adequate high level
+language, a reliable software engineering technique can be
+implementedbyhand,whenthe underlyingoperatingsystems
+providesthestandardPosixinterface.Ourimplementationuses
+threadsthathaveaccesstoasharedaddressspace(forexample
+a Posix process) and semaphores.
+The lock is explicitely implemented with a mutual exclu-
+sionsemaphoreandconditionsynchronizationisimplemented
+with the private semaphore scheme. Recall that the mutual
+exclusion and private semaphore schemes were introduced
+by Dijkstra in his seminal paper [Dijkstra 1968] and that
+the monitor concept is derived from them. The Posix thread
+and semaphore types use “pthread t” and “sem t” struc-
+tures and “pthread create()”, “pthread join()”, “sem wait()”,
+“sem post()”, “sem init()” functions (other Posix types, such
+as“pthread mutex”or“pthread cond t”couldalsobeusedfor
+implementing a monitor like structure; refer to [7]). Another
+reason for presenting this programming style is that real-time
+Posix standard are included in Real-Time Java proposals [8].
+C. Petri nets and coloured Petri nets
+APetri net[9],[10]is a4-tuple
+(cid:0)(cid:2) (cid:1)(cid:4) (cid:3)(cid:6) (cid:5)(cid:7) (cid:3)(cid:9) (cid:8)(cid:11) (cid:10)(cid:12) (cid:3)(cid:13) (cid:8)(cid:15) (cid:14)(cid:17) (cid:16)
+where
+(cid:1)
+isthesetofplaces,
+(cid:5)
+isthesetoftransitions,
+(cid:8) (cid:14)
+(resp.
+(cid:8) (cid:10)
+)
+isthethebackward(resp.forward)incidenceapplicationfrom
+(cid:1)(cid:19) (cid:18)(cid:20) (cid:5)
+to
+(cid:21)
+.
+APetrinetcanbeviewedasastatetransitionsystemwhere
+the places denote states or resources of the system and where
+thetransitionsdenotetheactionsthatmodelstateevolutionand
+resourcesmodification.Amarking
+(cid:22)
+ofanetisanapplication
+from
+(cid:1)
+to
+(cid:21)
+thatdefinesforanyplace
+(cid:23)
+thenumberoftokens
+contained in
+(cid:23)
+for
+(cid:22)
+. The backward incidence application
+(
+(cid:8)(cid:15) (cid:14)
+) reflects for a a place
+(cid:23)
+and a transition
+(cid:24)
+how many
+instances (
+(cid:8)(cid:15) (cid:14)(cid:12) (cid:0)(cid:25)(cid:23)(cid:27) (cid:26)(cid:28) (cid:24)(cid:6) (cid:16)
+) of token are needed to fire transition
+(cid:24)
+. In the same way, the forward incidence application (
+(cid:8)(cid:19) (cid:10)
+)
+defines howmany tokens are produced in place
+(cid:23)
+when firing
+transition
+(cid:24)
+(
+(cid:8)(cid:11) (cid:10)(cid:29) (cid:0)(cid:25)(cid:23)(cid:17) (cid:26)(cid:6) (cid:24)(cid:6) (cid:16)
+). A transition
+(cid:24)
+is fireable at a marking
+(cid:30) if and only if (cid:30)
+(cid:0)(cid:25)(cid:23)(cid:31) (cid:16)! " (cid:8) (cid:14) (cid:0)(cid:25)(cid:23)(cid:17) (cid:26)(cid:6) (cid:24)(cid:6) (cid:16)
+for all places
+(cid:23)
+; the
+reached marking (cid:30)(cid:11) # is defined by
+(cid:8)(cid:15) (cid:14). (cid:0))(cid:23)(cid:27) (cid:26)(cid:6) (cid:24)(cid:6) (cid:16)0 /1 (cid:8)2 (cid:10)( (cid:0)(cid:25)(cid:23)(cid:17) (cid:26)(cid:6) (cid:24)(cid:6) (cid:16)
+$% (cid:23)’ &’ (cid:1)( (cid:26)
+(cid:30)(cid:11) #
+(cid:0))(cid:23)* (cid:16), +
+(cid:30)
+(cid:0)(cid:25)(cid:23)(cid:31) (cid:16)(cid:27) -
+. The set of all reachable markings from
+the initial marking (cid:30)! 3 is denoted by
+46 57 58 (cid:0)9 (cid:21): (cid:26)
+(cid:30)! 3
+(cid:16)
+.
+APetri netiscommonlyrepresentedbyabipartitevaluated
+graph where nodes are items of
+(cid:1)< ;= (cid:5)
+, and arcs are defined
+by
+(cid:8)2 (cid:10)
+and
+(cid:8)(cid:15) (cid:14)
+inthefollowingway:anarcvaluedby
+>@ ?B A
+exists from a place
+(cid:23)
+to a transition
+(cid:24)
+(resp. from
+(cid:24)
+to
+(cid:23)
+) if
+and only if
+(cid:8)C (cid:14). (cid:0))(cid:23)(cid:27) (cid:26)(cid:6) (cid:24)(cid:6) (cid:16), +D >
+(resp.
+(cid:8)2 (cid:10)(cid:29) (cid:0)(cid:25)(cid:23)(cid:17) (cid:26)(cid:6) (cid:24)(cid:6) (cid:16), +D >
+).
+Colourednetsallowthemodelingofmorecomplexsystems
+thanordinarynetsbecauseoftheabbreviationprovidedbythis
+model. In a coloured net, a place containstyped (or coloured)
+tokens instead of anonymous tokens in Petri nets, and a
+transition may be fired in multiple ways (i.e. instantiated). To
+each place and each transition is attached a type (or a colour)
+domain.Anarcfromatransitiontoaplace(resp.fromaplace
+to a transition) is labeled by a linear function called a colour
+function. This function determines the number and the type
+(or the colour) of tokens that have to be added to or removed
+from the place upon firing the transition with respect to a
+colour instantiation.
+TherearethreepropertiesthatarefundamentalinPetrinets
+theory : the liveness, the weakly-liveness and the deadlock-
+ability.Anetissaidtobelivewhen,whateverthestatereached
+by the net, all transitions remain fireable in future. A net is
+said to be deadlockablewhen itcan reacha marking atwhich
+notransitionisfireable.Thismarkingiscalledadeadmarking
+and one says that the net has a deadlock. Sometimes, we are
+sure that the net has no deadlock but we are not sure that the
+net is live. In this case, we say that the net is weakly-live or
+deadlockfree:ateachreachablemarking,thereisatleastone
+fireable transition.
+III. CONCURRENCY PARADIGM AS AGAME
+A. The mutating chameneos
+The chameneos existence has been revealed last century in
+the Solu Khumbu region and figures now in all up-to-date
+fauna handbooks. Let us quote from one of them [11]:
+Chameneos
+>
+[ME.camenious
+E
+MFr. cameneon
+E
+L. Chameneus
+E
+Gr chamaineos
+E
+chamai on
+the ground + neos new] 1. any of various Old
+World lizards (family Chamaeoneostidae) which eat
+honeysuckle leaves, play pall mall, may have blue,
+yellow or red skin colour, with the property while
+playing pall mall with a chameneos of a differ-
+ent colour to change its skin colour as well as
+its partner’s one into the third possible colour. 2.
+any of various superficially similar reptile that can
+similarly change colour of their skin, as the Inou¨ıt
+Chameneos(glacialischamaeneusreptilis)described
+by J. Malaurie. 3. a changeable or fickle person-
+chameneonic adj.
+The chameneos game is the following: Consider a population
+of N chameneos that have a cyclic behaviour. A chameneos
+usuallyliveslonelyeatinghoneysuckleleavesintheforestand
+2
+training. After a while when feeling ready for competition,
+it enters a mall where a nice spring babbles and where it
+occasionally plays pall mall with another chameneos and
+possibly mutates before leaving the mall and returning in
+the forest. Given an initial population, examine its evolution
+towards a final state in which all chameneos have the same
+colour, and therefore in which no one can mutate anymore.
+The mutating chameneos is thus a good paradigm for peer-
+to-peer cooperation of concurrent processes and symmetrical
+rendez-vous synchronization.
+B. Concurrent behaviour specification
+Each chameneos should respect the following behaviour
+specification:
+1) Asynchronous action before rendez-vous (no interac-
+tions).
+2) Symmetrical rendez-vous request (at the request the
+caller does not know whether another chameneos is
+already present or not, neither if there will be one in
+somefuture).Thisrequestissenttoarendez-vousobject
+which acts as a server.
+3) Waiting for peer-to-peer rendez-vous.
+4) Notification of rendez-vous by the server (a mate is
+present and its name and colour are known).
+5) Cooperative actions which in the chameneos paradigm
+may lead to colour mutation and to registration of the
+colourchanges.Thecollaborationmaybesuchthatboth
+matestaketheirpartofthework.Itmaybesuchthatone
+partner does the job while the other waits for using the
+results. Any form of cooperation is possible. However
+theendofthiscooperationisasignificanteventforboth
+partners.Theendoccurswheneachpartnerhasfinished
+andknowsthat the other hasfinished,i.e., itis sure that
+the other does not need any more its cooperation. Both
+partners may have to wait for it before proceeding.
+6) End of synchronous cooperation.
+The server, or rendez-vous object, has the following specifi-
+cation:
+1) The server must wait until it has received two requests
+before giving notification.
+2) Alltherequestsmustberegisteredandmultiplerequests
+shall not disturb the server.
+3) Notifications must be sent as soon as possible.
+4) When the server notifies A and B, A must known that
+it mutes with B and B must known that it mutes with
+A.
+The notification pre and post conditions are then:
+(cid:0) the request of A is registered and the request of B is registered
+(cid:1)
+notification
+(cid:0) AknowsB’snameandcolourandBknowsA’snameandcolour
+(cid:1)
+C. Concurrent behaviour analysis
+Modeling the server needs to introduce some data that are
+used to memorize:
+Additional warnings are joined to the server specification: the
+server may be called by more than two chameneos at a time
+without disturbance.
+(cid:2)
+whether the call is the first call of a pair,
+(cid:2)
+the name and colour of a waiting chameneos,
+(cid:2)
+the name and colour of the second chameneos.
+A possible server behaviour, respecting mutual exclusion, is:
+(cid:2)
+at first call: register name and colour of the first caller
+and that the next call will be a second one; wait the end
+of second call before reading the name and colour of the
+mate and notifying the rendez-vous to the first caller.
+(cid:2)
+at second call: register name and colour of the second
+caller and that the next call will be a first one; read the
+name and colour of the mate and notify the rendez-vous
+to the second caller; notice the first caller that its mate
+name and colour are available.
+The corresponding coloured Petri Net is given figure 1. Its
+Mess < X >
+te
+< X >
+Claiming
+< X >
+First_Call < Y >
+True False
+True
+te1 te2
+False True
+< X > < X > Waiting_Id < Y >
+Internal_Waiting
+Internal_Claiming
+< X >
+Current_Id
+< Y > < Y >
+< X >
+ts1 < Y > ts2
+Ack
+< X, Y > < Y, X >
+Fig.1. ColouredPetrinetmodeloftheserver
+analysis shows that there is an inconsistency when the server
+is late to notify the rendez-vous to the waiting chameneos.
+For example there is a possible sequence leading to a state
+where chameneos A expects a rendez-vous with chameneos
+B, while chameneos B expects a rendez-vous with chame-
+neos C. For instance, A enters the mall, and goes to state
+Internal_Waiting by firing transitions
+(cid:24) (cid:4) (cid:3)
+and
+(cid:24) (cid:4) (cid:3)(cid:6) (cid:5)
+for
+(cid:7)
++ 4
+(and putting a token A in place Waiting_Id);
+then B comes into the mall and fires
+(cid:24)
+(cid:4) (cid:3)
+and
+(cid:24)
+(cid:4) (cid:3)(cid:9) (cid:8)
+; it’s then
+instate(place)Internal_Claiming.Supposethat,before
+A fires
+(cid:24)
+(cid:11) (cid:10)(cid:12) (cid:5)
+and leaves the mall, C comes into the mall and
+fires
+(cid:24) (cid:4) (cid:3)
+and
+(cid:24) (cid:4) (cid:3)(cid:6) (cid:5)
+(it puts a token of its value C in places
+Internal_WaitingandWaiting_Id).ThenBcanleave
+the mall with C (by firing transition
+(cid:24)
+(cid:11) (cid:10)(cid:13) (cid:8)
+for
+(cid:14)
++
+(cid:16) (cid:15)
+and
+(cid:7)
++
+(cid:18) (cid:17)
+) while A can leave the mall with B (by firing
+(cid:24)
+(cid:11) (cid:10)(cid:19) (cid:5)
+for (cid:7)
++C 4
+and
+(cid:14)
++
+(cid:20) (cid:15)
+). However there is no deadlock nor
+3
+starvationasitcanbeautomaticallydemonstratedusingatool
+like Quasar [12], [13].
+Previous inconsistency leads to complete the specification
+andtostatethatthefirstcallisonlypossiblewhenthesecond
+call is finished (three states are then necessary: a: “first part
+of first call”, b: “second call”, c: “last part of first call”; and
+three transitions only are possible:
+(cid:0)(cid:2) (cid:1)
+(cid:3)
+(cid:26)
+(cid:3)
+(cid:1)
+58 (cid:26)(cid:28) 5
+(cid:4) (cid:1)(cid:5) (cid:0)
+block momentarily additional requesting chameneos. This de-
+fensivecodingforbidsanyinconsistencyduetoathirdpartner.
+Then the cooperation uses traditionally a mutual exclusion
+semaphore(initializedatthevalue1)andaprivatesemaphore
+(initialized at the value 0). The latter is used to block the
+first calling chameneos until the condition of its notification
+). holds. When the second chameneos calls the server, it can
+be notified immediately since the required data of the first
+IV. SOLUTIONS chameneosarealreadyavailable.Beforeleavingtheserver,the
+chameneospassesthelocktothefirstchameneos;thisusesthe
+A. Using Java objects
+synchronization technique called “passing the baˆton” [5]. The
+In Java, each chameneos is an object which has some
+awaken chameneos, i.e. the first calling chameneos, can now
+behaviour described by a Java thread, and which has some
+be notified; it is also in charge, before leaving the server, of
+properties such a colour. The mutation is performed individu-
+resetting the server initial state, that is releasing the lock and
+ally by each chameneos after it has received a message with
+allowing a new couple of chameneos to start a symmetrical
+thecolourofitscompanion.Thismutationcanbedoneoutside
+rendez-vous.
+the mall and is independent of the companion mutation. Thus
+a chameneos can leave the mall as soon as it receives the V. COMPARING THECONCURRENT PROGRAMMING STYLES
+messageandhasnottowaititscompanion.Thecorresponding WHENUSINGSEMAPHORES, JAVAORADA
+Java objects are given in Annex A. This case study gives some insights for comparing the
+Synchronized methods are executed in mutual exclusion. concurrent programming style. We add some other aspects
+However, due to the Java choices of locking and notifying deduced from our experience. More general comparison are
+semantic,theentranceofa thirdchameneosinthe mallhas to given in [15]. The three approaches are compared for code
+beexplicitelyforbiddenintheprogram.Otherwise,asdemon- simplicity, clarity and reliability and for ease of correctness
+strated previously with Petri nets models, an inconsistency formal proving.
+may be observed.
+A. Java strong points (advantages )
+B. Using Ada protected objects The full class and object orientation provides high level
+language abstractions for the expression of programs and
+The Ada program uses protected objects and requeue state-
+therefore of concurrent objects. The strong typing is a factor
+ments. Each chameneos manages also its own colour modifi-
+of safety.
+cation. The Ada program is presented in Annex B. The exe-
+The existence of a Java virtual machine gives portability,
+cutions of protected object operations are mutually exclusive.
+although the language is not standardized. The coexistence of
+Moreover the protected object semantic, called the eggshell
+synchronized and not synchronized methods and the possibil-
+modelformonitors,givesprecedencetoalreadyqueuedentries
+ity of requiring mutual exclusion for a small portion of code
+which have true barriers over other calls contending for the
+only (synchronized block) provide great flexibility.
+protected object. There is no need to program the interdiction
+of a third chameneos into the mall. B. Java weak points (disadvantages)
+The choice of having only objects obscures the represen-
+C. Using semaphores with Posix standards
+tation of concurrence and the observation of thread cooper-
+Using Posix needs a communication between the operat- ation behaviour. Since Java allows simple inheritance only,
+ing system and the user program. The program text must a runnable interface has to be implemented by another class
+incorporate library calls performing the correct system calls (for other Java aspects too, such as graphic interactions or
+and must declare data structures for thread and semaphore components frameworks, interfaces have to be implemented
+representations. On the other end, the call parameters must in order to define environmental supports). When defining
+pass the references of these data structures and of the threads subclasses for concurrent objects some impossibility, called
+codes to allow the system to use them. This communication inheritance anomaly, can arise [16].
+uses libraries, called Posix binding in Ada (IEEE standard The condition variable with wait, notify, notifyAll is a low
+1003.5) or direct C API. Both are presented in Annex C and level synchronization mechanisms.
+D, showing how to use Posix with Ada (using the Florist Threadschedulingiscompletelyimplementationdependant.
+implementation [14]) and allowing a comparison with the This imposes to reevaluate the waiting conditions, and to
+corresponding C code. In principle, a binding with Java may program a waiting loop, thus leading to some form of busy
+bedonesimilarly.However,wedidnotfindastandardpackage waiting. The barriers (boolean conditions preceeding wait()
+for doing this. clauses) are disseminated in the code, allowing to call an
+The cooperation between threads starts by using one already synchronized code in a synchronized code; these mu-
+semaphore (initialized at the value 2) which aim is to limit tual monitors calls are susceptible of the well known “nested
+to at most two the number of cooperating partners and to monitor” deadlock problem .
+4
+Last but not least, Java is not standardized and a Java (starting and ending a thread execution must be explicitely
+program is not necessarily portable form a version of the programmed), no synchronization bracketing (the beginning
+language to a new one. and the end of mutual exclusion needs to be explicitely
+marked in the code; leaving a critical section while forgetting
+C. Ada strong points (advantages)
+a V operation, entering a critical section while omitting a P
+Ada provides a high level structural approach for the ex- operation, are omissions that break the mutual exclusion and
+pression of concurrency, based on explicitly defined active makes the code unreliable).
+objects. This allows a good visibility of tasks, even in nested Concurrent programs are difficult to debug since the code
+scopes, as well as a clear comprehension and observation of and the synchronization are in two different universes with
+the interaction between tasks. The language is standardized, interferences on each others by parameter modifications and
+programs are fully portable and the Posix Ada binding is also passingwithouttypecontrol.Theactionsrequiredarenotclear
+a standard (IEEE 1003.5). since many options and parameters are present. Many oppor-
+Highlevelconcurrencyisprovidedbybarriers,locatedonly tunities for undetected errors are present, the communications
+at the beginning of an entry code and reevaluated at the end betweentheoperatingsystemandtheprogramhavemanyim-
+of a subprogram execution. This evaluation and reevaluation plementation dependencies (for example: exception reporting
+is safely done under the protection of the mutual exclusion from operating system to program, exception handling).
+lock. This leads to simple and readable code. The eggshell
+model semantic of the protected object is well defined and
+VI. CONCLUSION
+givespriority to the tasks which are the foremost advanced in
+theresourceusage.Withtheceiling-lockingschedulingpolicy, A. Game termination
+provided with the language real-time annex implementation,
+Given an initial population of
+mutual calls across protected objects will not deadlock when
+running on a uniprocessor machine.
+D. Ada weak points (disadvantages)
+A barrier cannot use the entry call parameters; this com-
+plicates the programming of preference control, leading to
+complicated structures when the requeue statement is used
+withnoassumptionaboutqueuingpolicies.Toomanydifferent
+constructions are available for concurrency: tasks used as
+servers with a rendez-vous between tasks, protected objects
+with functions, procedures or entries, low level mechanisms
+when needed for real-time applications and provided by the
+language real-time annex.
+E. Posix strong points (advantages)
+Posix allows a direct action on the underlying operating
+system; this is supposed to be useful and more efficient
+for real-time or embedded applications when associated with
+the control of scheduling policies. This is true with simple
+hardware architectures (optimization by hand may then be
+efficient); however this is no longer the case for sophisticated
+architecturesinwhichcachesandpipelinesareassociatedwith
+look-ahead of instruction execution and hardware optimiza-
+tion.
+Posix threads (and Posix synchronization mechanisms) are
+standardized and are implemented in numerous operating
+systemsorreal-timeexecutives,andarelanguageindependent
+(in principle).
+F. Posix weak points (disadvantages)
+Posix provides only low level mechanisms (however Java
+is not higher level). There is no special linguistic feature
+for expressing and representing threads; the notion of thread
+is just a pointer to a supposed sequential code. There is
+no data encapsulation mechanism, no thread code bracketing
+(cid:21)
+Chameneos, the game
+does not always reaches a final state in which all chameneos
+have the same colour, and therefore in which no one can
+mutate anymore.As a matter of fact, according to their initial
+valueandtothepopulationsize,the
+(cid:21)
+chameneospopulation
+may belong to one of three possible connected components
+and therefore cannot move from one connected component
+to another one. Thus the evolution may end only when the
+initial state is in the same connected components as one final
+state, else it never stops. For example, if
+(cid:21)
+is a multiple of
+(cid:0) ( (cid:21) + (cid:0)(cid:2) (cid:1) ) then the initial state ( (cid:5) (cid:26)(cid:28) (cid:21) - (cid:8) (cid:26) (cid:5) ) may lead to
+termination whilst ( (cid:8) (cid:26)(cid:28) (cid:21) - (cid:0) (cid:26) (cid:5) ) doesn’t.
+B. Real-life considerations
+Thechameneosparadigmprovidesasimpleexample.How-
+ever it is significant enough to point out the semantic dif-
+ferences and the necessity of defensive code in Java and
+Posix. Additional comparison of the complete languages may
+be found in [15]. Providing reliable Posix concurrent pro-
+gramming style may be useful in the future since low-level
+Posix-like synchronization primitives are included in Real-
+Time Java proposals [8], aimed for real-time, mobile and
+embedded applications. Note that high level abstractions like
+protected objects are also included in these proposals.
+We provide also an amusing and interesting paradigm for
+peer-to-peer communication, which may be extended to peer
+groups and to real-time considerations.
+Acknowledgments
+We are grateful to the Ada designers and to the Petri
+nets community, the efforts of which allow designing better
+concurrent programs and providing thus more secure real-life
+computer applications, whatever they are developed in Java,
+Posix or Ada.
+5
+Note
+Year 1953, Tensing Norgay and sir Edmund Hillary were
+the firstto succeedin the ascent ofmount Everest,also called
+Chomolungma in Thibetan and Sagarmatha in Nepalese.
+REFERENCES
+[1] Z.Mamaar,E.Dorion,andC.Daigle,“Towardvirtualmarketplacesfor
+e-commercesupport,”CommunicationsoftheACM,vol.44,no.12,pp.
+35–38,2001.
+[2] F. Wolinsky and F. Vichot, “Des multi-agents pour de´velopper des
+applicationsdecontenuenligne,”TSI,pp.213–232,2001(French).
+[3] P.BrinchHansen,OperatingSystemsPrinciples. PrenticeHall,1973.
+[4] C. A. R. Hoare, “Monitors:an operating system structuring concept,”
+CommunicationsoftheACM,vol.17,no.10,pp.549–557,1974.
+[5] G.Andrews,ConcurrentProgramming:PrinciplesandPractice. Ben-
+jamin/Cummings,1991.
+[6] P. A. Buhr, M. Fortier, and M. H. Coffin, “Monitorclassification,”
+ACM Computing Surveys, vol. 27, no. 1, pp. 63–107, 1995. [Online].
+Available:citeseer.nj.nec.com/buhr95monitor.html
+[7] A. Burns and A. Wellings,Real-Time Systemsand Programming Lan-
+guages(ThirdEdition)Ada95,Real-TimeJavaandReal-TimePOSIX.
+Hardback,2001.
+[8] B.BrosgolandB.Dobbing,“Real-timeconvergenceofAdaandJava,”in
+Proceedingsofthe2001annualACMSIGAdainternationalconference
+onAda. ACMPress,2001,pp.11–26.
+[9] W.Reisig,EATCS-AnIntroductiontoPetriNets. Springer-Verlag,1983.
+[10] “Lesre´seauxdePetri:Mode`lesfondamentaux,”M.Diaz,Ed. Herme`s,
+2001(French),no.ISBN:2-7462-0250-6.
+[11] T. N., Tensing’s New World Fauna Handbook, Third Edition. Teng-
+boche,1987.
+[12] S.Evangelista,C.Kaiser,J.F.Pradat-Peyre,andP.Rousseau,“Quasar:
+a new tool for analysing concurrent programs,”in Ada-Europe 2003,
+ser.LNCS. Springer-Verlag,2003.
+[13] “Quasarwebsite,”http://quasar.cnam.fr, 2002.
+[14] “The fsu implementaton of ieee standard 1003.5b,” http://libre.act-
+europe.fr/GNAT/,1996.
+[15] B. Brosgol, “A comparison of Ada and Java as a foundation teaching
+language,”ADALTRS:AdaLetters,ABimonthlyPublicationofSIGAda,
+theACMSpecialInterestGrouponAda,vol.18,1998.
+[16] D. Lea, Concurrent Programming in Java: Design Principles and
+Patterns. Addison-Wesley, 1999.
+APPENDIX
+ANNEXA:JAVASOLUTION
+//=========================================================
+// class IdChameneos
+//=========================================================
+public class IdChameneos (cid:0) private final int value;
+public IdChameneos(intval)
+(cid:0)
+value = val;
+(cid:1) public String toString()
+(cid:0)
+return value +””;
+(cid:1)
+(cid:1)
+//=========================================================
+// class Colour
+//=========================================================
+public class Colour
+(cid:0) public int internalColour;
+private static final int blueInt =0;
+private static final int redInt =1;
+private static final int yellowInt =2;
+public static final ColourBLUE =newColour(blueInt);
+public static final ColourRED =newColour(redInt);
+public static final ColourYELLOW=newColour(yellowInt);
+private Colour(int value)
+(cid:0)
+internalColour = value%3;
+(cid:1)
+public ColourComplementaryColour(ColourC)
+(cid:0)
+returnnewColour(3
+if ( internalColour ==C.internalColour)
+returnnewColour(internalColour);
+else
+(cid:14)
+internalColour
+(cid:14)
+C.internalColour);
+(cid:1) public String toString()
+(cid:0) if ( internalColour == blueInt)
+return”blue”;
+else if ( internalColour == redInt)
+return”red”;
+else
+return”yellow”;
+(cid:1)
+(cid:1)
+//=========================================================
+// class Mall
+//=========================================================
+public class Mall
+(cid:0) private ColourAColour,BColour;
+private boolean FirstCall =true;
+private booleanMustWait=false;
+public synchronizedColourCooperation(IdChameneosx,ColourC)
+(cid:0) Colour result;
+while (MustWait)
+(cid:0) try
+(cid:0)
+wait();
+(cid:1)
+catch(InterruptedException e)
+(cid:1)
+(cid:0)(cid:2) (cid:1)
+if (FirstCall)
+(cid:0) AColour=C;
+FirstCall = false;
+while (! FirstCall )
+(cid:0) try
+(cid:0)
+wait();
+(cid:1)
+catch(InterruptedException e)
+(cid:1)
+(cid:0)(cid:3) (cid:1)
+MustWait=false;
+result =BColour;
+notifyAll();
+(cid:1) else
+(cid:0) BColour=C;
+result =AColour;
+FirstCall =true;
+MustWait=true;
+notifyAll();
+(cid:1) return result;
+(cid:1)
+(cid:1)
+//=========================================================
+// class Chameneos
+//=========================================================
+public class ChameneosextendsThread
+(cid:0) private Mallmall;
+private IdChameneosid;
+private ColourmyColour,otherColour;
+public Chameneos(Mallm,IdChameneosid,Colourc)
+(cid:0) this.mall=m; this.id = id; this.myColour=c;
+(cid:1) private voidMessage(String Mess) (cid:0) System.out.println( ”(”+ id.toString()+ ”) I am ”+
+myColour.toString()+ ”and ”+Mess);
+(cid:1) private voidEatingHoneysuckleAndTraining()
+(cid:0) Message(”I am Eating Honey suckle and Training”);
+(cid:1) private voidGoingToTheMall()
+(cid:0) Message(”I am going to the mall”);
+(cid:1) private voidMutating()
+(cid:0) Message(”I am going to mute”);
+otherColour =mall.Cooperation(id, myColour);
+myColour=myColour.ComplementaryColour(otherColour);
+Message(”I have done a mutation”);
+(cid:1)
+public void run()
+(cid:0) while(true)
+(cid:0) EatingHoneysuckleAndTraining();
+GoingToTheMall();
+Mutating();
+(cid:1)
+(cid:1)
+(cid:1)
+6
+//=========================================================
+// class Simulation (the main class)
+//=========================================================
+public class Simulation
+(cid:0)
+static Colour[] TheColours=
+(cid:0)
+Colour.YELLOW,
+Colour.BLUE,
+Colour.RED,
+Colour.BLUE,
+Colour.YELLOW,
+Colour.BLUE
+(cid:1)
+;
+static Chameneos[]TheChameneos=newChameneos[TheColours.length];
+public static voidmain(String args[])
+(cid:0) MallmyMall=newMall();
+for (int i=0; i
+(cid:0)
+TheColours.length;i++)
+(cid:0) TheChameneos[i]=
+newChameneos(myMall,newIdChameneos(i),TheColours[i]);
+(cid:1) for (int i=0; i
+(cid:0)
+TheColours.length;i++)
+(cid:0) TheChameneos[i].start();
+(cid:1)
+(cid:1)
+(cid:1)
+ANNEXB:ADASOLUTION
+(cid:14)(cid:27) (cid:14)
+========================================================
+(cid:14)(cid:27) (cid:14)
+packagePIdChameneos
+(cid:14)(cid:27) (cid:14)
+========================================================
+packagePIdChameneosis
+subtypeIdChameneosisNatural;
+endPIdChameneos;
+(cid:14)(cid:27) (cid:14)
+========================================================
+(cid:14)(cid:27) (cid:14)
+packagePColour
+(cid:14)(cid:27) (cid:14)
+========================================================
+packagePColouris
+typeColour is (Blue, Red,Yellow);
+function ComplementaryColour(C1,C2:Colour)returnColour;
+endPColour;
+packagebodyPColouris
+function ComplementaryColour(C1,C2:Colour)returnColouris
+begin
+if (C1=C2)then
+returnC1;
+else
+returnColour’Val(3
+(cid:14)
+Colour’Pos(C1)
+(cid:14)
+Colour’Pos(C2));
+end if;
+endComplementaryColour;
+endPColour;
+(cid:14)(cid:27) (cid:14)
+========================================================
+(cid:14)(cid:27) (cid:14)
+packageMall
+(cid:14)(cid:27) (cid:14)
+BColour:=C;COther:=AColour;
+FirstCall := True;
+end if;
+endCooperate;
+entryWaiting(X:in IdChameneos;C:inColour; COther:outColour)
+when FirstCall is
+begin
+COther:=BColour;
+end;
+endCooperationSynchro;
+function Cooperation(X:IdChameneos;C:Colour)returnColour is
+OtherColour : Colour;
+begin
+CooperationSynchro.Cooperate(X,C,OtherColour);
+returnOtherColour;
+endCooperation;
+endMall;
+========================================================
+withPIdChameneos,PColour;usePIdChameneos,PColour;
+packageMallis
+function Cooperation(X:IdChameneos;C:Colour)returnColour;
+endMall;
+packagebodyMallis
+protected CooperationSynchro is
+entryCooperate(X:in IdChameneos;C:inColour; COther:outColour);
+private
+entryWaiting(X:in IdChameneos;C:inColour; COther:outColour);
+FirstCall : Boolean:=True;
+AColour : Colour;
+BColour : Colour;
+endCooperationSynchro;
+protected bodyCooperationSynchrois
+entryCooperate(X:in IdChameneos;C:inColour; COther:outColour)
+whenTrueis
+begin
+if ( FirstCall ) then
+AColour:=C; FirstCall := False;
+requeueWaiting;
+else
+(cid:14)(cid:27) (cid:14)
+========================================================
+(cid:14)(cid:27) (cid:14)
+packagePChameneos
+(cid:14)(cid:27) (cid:14)
+========================================================
+withPIdChameneos,PColour;usePIdChameneos,PColour;
+packagePChameneosis
+task typeChameneosis
+entry Start(Id: in IdChameneos;C:inColour);
+endChameneos;
+endPChameneos;
+withTextIO, Mall; useTextIO, Mall;
+packagebodyPChameneosis
+task bodyChameneosis
+MyId : IdChameneos;
+MyColour,OtherColour : Colour;
+procedureMessage(Mess:inString) is
+begin
+PutLine(”(”&IdChameneos’Image(MyId)&”) I am ”&
+Colour’Image(MyColour)&”and ”&Mess);
+end;
+procedureEatingHoneySuckleAndTrainingis
+begin
+Message(”Iam eating honey suckle and training”);
+end;
+procedureGoingToTheMallis
+begin
+Message(”Iam going to the mall”);
+end;
+procedureMutatingis
+begin
+Message(”Iam ready to mute”);
+OtherColour := Cooperation(MyId,MyColour);
+MyColour:=ComplementaryColour(MyColour,OtherColour);
+Message(”Ihave performed a mutation”);
+end;
+begin
+accept Start(Id: in IdChameneos;C:inColour)do
+MyId:=Id; MyColour:=C;
+end Start;
+loop
+EatingHoneySuckleAndTraining;
+GoingToTheMall;
+Mutating;
+endloop;
+endChameneos;
+endPChameneos;
+(cid:14)(cid:27) (cid:14)
+========================================================
+(cid:14)(cid:27) (cid:14)
+procedureSimulation(mainprocedure)
+(cid:14)(cid:27) (cid:14)
+========================================================
+withPIdChameneos,PColour,Mall, PChameneos;
+use PIdChameneos,PColour,Mall, PChameneos;
+procedureSimulation is
+TheColours : array(Natural range
+(cid:0)(cid:2) (cid:1)
+)ofColour:=
+(Yellow, Blue, Red,Blue, Yellow, Blue);
+TheChaemenos:array(TheColours’Range)ofChameneos;
+begin
+for I in TheChaemenos’Rangeloop
+TheChaemenos(I).Start( IdChameneos(I), TheColours(I));
+endloop;
+endSimulation;
+7
+ANNEXC: POSIXSTYLESOLUTIONWITHTHEFLORIST
+POSIX/ADA BINDING
+withPosix, Posix.Semaphores;usePosix, Posix.Semaphores;
+packagebodyMallPosixis
+AtMostTwo:Semaphore;
+Mutex : Semaphore;
+(cid:14)(cid:17) (cid:14)
+mutualexclusionsemaphoreorlock
+SemPriv : Semaphore;
+(cid:14)(cid:17) (cid:14)
+privatesemaphoreusedtopassthe baton
+FirstCall : Boolean:=True;
+AColour : Colour;
+BColour : Colour;
+procedureP(S:in Semaphore)is beginPost( DescriptorOf(S)); endP;
+procedureV(S:inSemaphore)isbeginWait( DescriptorOf(S)); endV;
+function Cooperation(X:IdChameneos;C:Colour)returnColour is
+OtherColour : Colour;
+begin
+P(AtMostTwo);
+(cid:14)(cid:27) (cid:14)
+limitsthenumberofpartners
+P(Mutex);
+(cid:14)(cid:27) (cid:14)
+userprogrammedmutualexclusion=settingthe lock
+if FirstCall then
+AColour:=C; FirstCall := False;
+(cid:14)(cid:27) (cid:14)
+thenextcall will be considered as a secondone
+V(Mutex);P(SemPriv);
+(cid:14)(cid:27) (cid:14)
+waitingforthelock
+OtherColour := BColour;
+V(Mutex);
+(cid:14)(cid:27) (cid:14)
+releasesthelock since the rendez
+(cid:14)
+vousends
+V(AtMostTwo);V(AtMostTwo);
+(cid:14)(cid:27) (cid:14)
+allowsanewpair
+else
+(cid:14)(cid:27) (cid:14)
+thisisthe secondchameneosofthe pair
+FirstCall := True;
+BColour:=C;
+OtherColour := AColour;
+(cid:14)(cid:27) (cid:14)
+thenextcall will start a newmeeting
+V(SemPriv);
+(cid:14)(cid:17) (cid:14)
+passesthelockto its mate
+end if;
+returnOtherColour;
+endCooperation;
+begin
+Initialize (AtMostTwo,2);
+Initialize (Mutex,1);
+Initialize (SemPriv,0);
+endMallPosix;
+ANNEXD:PURE POSIX SOLUTION
+/
+(cid:0)
+===========================================================
+(cid:0)
+/
+/
+(cid:0)
+file types.h
+(cid:0)
+/
+/
+(cid:0)
+===========================================================
+(cid:0)
+/
+#define NBCHAMENEOS4
+typedef int idChameneos;
+typedefenum
+(cid:0)
+Blue,Red,Yellow
+(cid:1)
+colour;
+/
+(cid:0)
+===========================================================
+(cid:0)
+/
+/
+(cid:0)
+file cooperation.c
+(cid:0)
+/
+/
+(cid:0)
+===========================================================
+(cid:0)
+/
+#include
+(cid:0)
+semaphore.h
+(cid:1) #include ”types.h”
+semt AtMostTwo;
+semt Mutex;
+semt SemPriv;
+int FirstCall =1;
+colour AColour;
+colour BColour;
+/ (cid:0) =========================================================== (cid:0) / colour Cooperation(idChameneosid, colour c)
+(cid:0) colour otherColour;
+int val;
+semwait(&AtMostTwo);// limits the numberof partners
+semwait(&Mutex);
+// user programmedmutualexclusion= setting the lock
+if (FirstCall) (cid:0)
+otherColour =BColour;
+sempost(&Mutex);// releases the lock since the rendez
+AColour=c; FirstCall =0;
+// the next call will be considered as a secondone
+sempost(&Mutex);semwait(&SemPriv);// waiting for the lock
+(cid:14) vousends sempost(&AtMostTwo);sempost(&AtMostTwo);//allowsanewpair
+(cid:1) else
+(cid:0)
+//this is the secondchameneosofthe pair
+FirstCall =1;
+BColour=c;
+otherColour =AColour;
+// the next call will start a newmeeting
+sempost(&SemPriv);// passes the lock to its mate
+(cid:1) return otherColour;
+(cid:1)
+/
+(cid:0)
+===========================================================
+(cid:0)
+/
+void initCooperation(void)
+(cid:0) seminit(&AtMostTwo,0,2);
+seminit(&Mutex,0,1);
+seminit(&SemPriv,0,0);
+(cid:1)
+/
+(cid:0)
+===========================================================
+(cid:0)
+/
+/
+(cid:0)
+file simulation.c
+(cid:0)
+/
+/
+(cid:0)
+===========================================================
+(cid:0)
+/
+#include
+(cid:0)
+stdio.h
+(cid:1) #include
+(cid:0)
+pthread.h
+(cid:1) #include”types.h”
+/
+(cid:0)
+===========================================================
+(cid:0)
+/
+colour complementaryColour(colourc1, colour c2)
+(cid:0) if ( c1==c2)
+returnc1;
+else
+return(3
+(cid:14)
+c1
+(cid:14)
+c2);
+(cid:1)
+/
+(cid:0)
+===========================================================
+(cid:0)
+/
+extern colour Cooperation(idChameneosid, colour c);
+extern void initCooperation(void);
+/
+(cid:0)
+===========================================================
+(cid:0)
+/
+void chameneosCode(void
+(cid:0)
+args)
+(cid:0) idChameneosmyId;
+colour myColour,oldColour, otherColour;
+sscanf((char
+(cid:0)
+) args, ”%d%d”,&myId,&myColour);
+printf(”(%d) I am (%d) and I am running (cid:1) n”,myId,myColour);
+while(1)
+(cid:0) printf(”(%d)I am (%d) and I am eating honey suckle and training (cid:1) n”,
+myId,myColour);
+printf(”(%d)I am (%d) and I am going to the mall (cid:1) n”,
+myId,myColour);
+otherColour =Cooperation( myId,myColour);
+oldColour=myColour;
+myColour=complementaryColour(myColour,otherColour);
+printf(”(%d)I am (%d) and I was %d before (cid:1) n”,
+myId,myColour,oldColour);
+(cid:1)
+(cid:1)
+/
+(cid:0)
+===========================================================
+(cid:0)
+/
+int main(void)
+(cid:0) colour tabColour[NBCHAMENEOS]=
+(cid:0)
+Yellow,Blue,Red,Blue
+(cid:1)
+;
+chartheArgs[255][NBCHAMENEOS];
+pthreadt tabPid[NBCHAMENEOS];
+int i;
+initCooperation();
+for (i=0; i
+(cid:0)
+NBCHAMENEOS;i++)
+(cid:0) sprintf( theArgs[i], ”%d%d”,i,tabColour[i]);
+pthreadcreate(&tabPid[i], NULL,(void
+(cid:0)
+(
+(cid:0)
+)())chameneosCode,theArgs[i]);
+(cid:1) // waiting the endof children (that will never come)
+for (i=0; i
+(cid:0)
+NBCHAMENEOS;i++)
+(cid:0) pthreadjoin(tabPid[i], NULL);
+(cid:1) return 0;
+(cid:1)
+8

@@ -1,0 +1,307 @@
+Source: ACP_SB.pdf
+================================================================================
+
+module ACP SB
+Time-stamp: <10Jun 2002at12:39:50bycharpovonberlioz.cs.unh.edu >
+AtomicCommittmentProtocolwithSimpleBroadcastprimitive(ACP-SB)
+From:
+SapeMullender,editor. DistributedSystems.
+Chapter6: Non-BlockingAtomicCommitment,byO¨.Babao˘gluandS.Toueg.
+1993.
+Synchronouscommunicationhasbeenreplacedwith(implicit)asynchronouscommunication. Failuresaredetected“magically”insteadorrelyingon
+timeouts.
+This version of the protocol uses a “simple broadcast” where a broadcast is simply a series of messages sent, possibly interrupted by a failure.
+Consequently,thisalgorithmis“nonterminating”andpropertyAC5doesnothold.
+constants
+participants, setofparticipants
+yes, no, vote
+undecided, commit, abort, decision
+waiting, coordinatorstatewrtaparticipant
+notsent broadcaststatewrtaparticipant
+variables
+participant, participants(N)
+coordinator coordinator(1)
+TypeInvParticipant =∆ participant ∈ [
+participants →[
+vote :{yes, no},
+alive :boolean ,
+decision :{undecided, commit, abort},
+faulty :boolean ,
+voteSent :boolean
+]
+]
+TypeInvCoordinator =∆ coordinator ∈ [
+request :[participants →boolean ],
+vote :[participants →{waiting, yes, no}],
+broadcast :[participants →{commit, abort, notsent}],
+decision :{commit, abort, undecided},
+alive :boolean ,
+faulty :boolean
+]
+TypeInv =∆ TypeInvParticipant ∧TypeInvCoordinator
+Initially:
+Alltheparticipants:
+haveayes/novote
+arealiveandnotfaulty
+havenotsentintheirvotesyet
+areundecidedaboutfinaldecision
+Thecoordinator:
+hasnotsentvoterequestsyet
+hasnotrecievedvotesfromanyparticipant
+isaliveandnotfaulty
+hasnotsentbroadcastmessagestoanyparticipant
+isundecidedaboutfinaldecision
+1
+InitParticipant =∆ participant ∈ [
+participants →[
+vote :{yes, no},
+alive :{true},
+decision :{undecided},
+faulty :{false},
+voteSent :{false}
+]
+]
+InitCoordinator =∆ coordinator ∈ [
+request :[participants →{false}],
+vote :[participants →{waiting}],
+alive :{true},
+broadcast :[participants →{notsent}],
+decision :{undecided},
+faulty :{false}
+]
+Init =∆ InitParticipant ∧InitCoordinator
+COORDINATORSTATEMENTS
+request(i):
+if
+coordinatorisalive
+requestforvotehasnotbeensenttoparticipanti
+then
+requestforvoteissenttoparticipanti
+request(i) =∆ ∧coordinator.alive
+∧¬coordinator.request[i]
+∧coordinator0 =[coordinator except !.request =
+[@ except ![i]=true]
+]
+∧unchanged hparticipanti
+getVote(i):
+if
+coordinatorisalive
+coordinatorisstillundecided
+coordinatorhassentrequestforvotestoallparticipants
+coordinatoriswaitingtoreceiveavotefromparticipanti
+participanti hassentthevotemessage
+then
+thecoordinatorcanrecordthevoteofparticipanti
+getVote(i) =∆ ∧coordinator.alive
+∧coordinator.decision =undecided
+∧∀j ∈ participants :coordinator.request[j]
+∧coordinator.vote[i]=waiting
+∧participant[i].voteSent
+∧coordinator0 =[coordinator except !.vote =
+[@ except ![i]=participant[i].vote]
+]
+∧unchanged hparticipanti
+detectFault(i):
+if
+coordinatorisalive
+2
+coordinatorisstillundecided
+coordinatorhassentrequestforvotestoallparticipants
+coordinatoriswaitingforvotefromparticipanti
+participanti hasdiedwithoutsendingitsvote
+then
+coordinatortimesoutonparticipanti anddecidestoabort
+detectFault(i) =∆ ∧coordinator.alive
+∧coordinator.decision =undecided
+∧∀j ∈ participants :coordinator.request[j]
+∧coordinator.vote[i]=waiting
+∧¬participant[i].alive
+∧¬participant[i].voteSent
+∧coordinator0 =[coordinator except !.decision =abort]
+∧unchanged hparticipanti
+makeDecision:
+if
+coordinatorisalive
+coordinatorisundecided
+coordinatorhasreceivedvotesfromallparticipants
+then
+if
+allvotesareyes
+then
+coordinatordecidescommit
+else
+coordinatordecidesabort
+makeDecision =∆ ∧coordinator.alive
+∧coordinator.decision =undecided
+∧∀j ∈ participants :coordinator.vote[j] ∈ {yes, no}
+∧ ∨ ∧∀j ∈ participants :coordinator.vote[j]=yes
+∧coordinator0 =[coordinator except !.decision =commit]
+∨ ∧∃j ∈ participants :coordinator.vote[j]=no
+∧coordinator0 =[coordinator except !.decision =abort]
+∧unchanged hparticipanti
+coordBroadcast(i)(simplebroadcast):
+if
+coordinatorisalive
+coordinatorhasmadeadecision
+coordinatorhasnotsentthedecisiontoparticipanti
+then
+coordinatorsendsitsdecisiontoparticipanti
+coordBroadcast(i) =∆ ∧coordinator.alive
+∧coordinator.decision 6=undecided
+∧coordinator.broadcast[i]=notsent
+∧coordinator0 =[coordinator except !.broadcast =
+[@ except ![i]=coordinator.decision]
+]
+∧unchanged hparticipanti
+coordDie:
+if
+coordinatorisalive
+then
+coordinatordies
+coordinatorisnowfaulty
+3
+coordDie =∆ ∧coordinator.alive
+∧coordinator0 =[coordinator except !.alive =false, !.faulty =true]
+∧unchanged hparticipanti
+PARTICIPANTSTATEMENTS
+sendVote(i):
+if
+participantisalive
+participanthasreceivedarequestforvote
+then
+participantsendsvote
+sendVote(i) =∆ ∧participant[i].alive
+∧coordinator.request[i]
+∧participant0 =[participant except ![i]=
+[@ except !.voteSent =true]
+]
+∧unchanged hcoordinatori
+abortOnVote(i):
+if
+participantisalive
+participantisundecided
+participanthassentitsvotetothecoordinator
+participant’svoteisno
+then
+participantdecides(unilaterally)toabort
+abortOnVote(i) =∆ ∧participant[i].alive
+∧participant[i].decision =undecided
+∧participant[i].voteSent
+∧participant[i].vote =no
+∧participant0 =[participant except ![i]=
+[@ except !.decision =abort]
+]
+∧unchanged hcoordinatori
+abortOnTimeoutRequest(i):
+if
+participantisalive
+participantisstillundecided
+coordinatorhasdiedwithoutsendingrequestforvote
+then
+participantdecides(unilaterally)toabort
+abortOnTimeoutRequest(i) =∆ ∧participant[i].alive
+∧participant[i].decision =undecided
+∧¬coordinator.alive
+∧¬coordinator.request[i]
+∧participant0 =[participant except ![i]=
+[@ except !.decision =abort]
+]
+∧unchanged hcoordinatori
+decide(i):
+if
+participantisalive
+participantisundecided
+4
+participanthasrecieveddecisionfromthecoordinator
+then
+participantdecidesaccordingtodecisionfromcoordinator
+decide(i) =∆ ∧participant[i].alive
+∧participant[i].decision =undecided
+∧coordinator.broadcast[i]6=notsent
+∧participant0 =[participant except ![i]=
+[@ except !.decision =coordinator.broadcast[i]]
+]
+∧unchanged hcoordinatori
+parDie(i):
+if
+participantisalive
+then
+participantdiesandisnowfaulty
+parDie(i) =∆ ∧participant[i].alive
+∧participant0 =[participant except ![i]=
+[@ except !.alive =false, !.faulty =true]
+]
+∧unchanged hcoordinatori
+FORN PARTICIPANTS
+parProg(i) =∆ sendVote(i)∨abortOnVote(i)∨abortOnTimeoutRequest(i)∨decide(i)
+parProgN =∆ ∃i ∈ participants :parDie(i)∨parProg(i)
+coordProgA(i) =∆ request(i)∨getVote(i)∨detectFault(i)∨coordBroadcast(i)
+coordProgB =∆ makeDecision∨∃i ∈ participants :coordProgA(i)
+coordProgN =∆ coordDie∨coordProgB
+progN =∆ parProgN ∨coordProgN
+Deathtransitionsareleftoutsideoffairness
+fairness =∆ ∧∀i ∈ participants :WF (parProg(i))
+hcoordinator,participanti
+∧WF (coordProgB)
+hcoordinator,participanti
+Spec =∆ Init ∧2[progN] ∧fairness
+hcoordinator,participanti
+CORRECTNESSSPECIFICATION
+Thisspecificationfollowstheoriginalpaper,exceptthatAC3isstronger: ItforcesparticipantstoabortifonevoteatleastisNO(intheabsenceof
+failure).
+Thespecificationissplitbetweensafetyandliveness.
+SAFETY
+Allparticipantsthatdecidereachthesamedecision
+AC1 =∆ 2∀i, j ∈ participants :
+∨participant[i].decision 6=commit
+∨participant[j].decision 6=abort
+5
+Ifanyparticipantdecidescommit,thenallparticipantsmusthavevotesYES
+AC2 =∆ 2( (∃i ∈ participants :participant[i].decision =commit)
+⇒(∀j ∈ participants :participant[j].vote =yes))
+Ifanyparticipantdecidesabort,then:
+atleastoneparticipantvotedNO,or
+atleastoneparticipantisfaulty,or
+coordinatorisfaulty
+AC3 1 =∆ 2( (∃i ∈ participants :participant[i].decision =abort)
+⇒ ∨(∃j ∈ participants :participant[j].vote =no)
+∨(∃j ∈ participants :participant[j].faulty)
+∨coordinator.faulty)
+Eachparticipantdecidesatmostonce
+AC4 =∆ 2∧(∀i ∈ participants :participant[i].decision =commit
+⇒2(participant[i].decision =commit))
+∧(∀j ∈ participants :participant[j].decision =abort
+⇒2(participant[j].decision =abort))
+LIVENESS
+(strongerforAC3thanintheoriginalpaper)
+AC3 2 =∆ 3∨∀i ∈ participants :participant[i].decision ∈ {abort, commit}
+∨∃j ∈ participants :participant[j].faulty
+∨coordinator.faulty
+(SOME)INTERMEDIATEPROPERTIESUSEDINPROOFS
+FaultyStable =∆ ∧∀i ∈ participants :2(participant[i].faulty ⇒2participant[i].faulty)
+∧2(coordinator.faulty ⇒2coordinator.faulty)
+VoteStable =∆ ∀i ∈ participants :
+∨2(participant[i].vote =yes)
+∨2(participant[i].vote =no)
+StrongerAC2 =∆ 2( (∃i ∈ participants :participant[i].decision =commit)
+⇒ ∧(∀j ∈ participants :participant[j].vote =yes)
+∧coordinator.decision =commit)
+StrongerAC3 1 =∆ 2( (∃i ∈ participants :participant[i].decision =abort)
+⇒ ∨(∃j ∈ participants :participant[j].vote =no)
+∨ ∧∃j ∈ participants :participant[j].faulty
+∧coordinator.decision =abort
+∨ ∧coordinator.faulty
+∧coordinator.decision =undecided)
+(AC1followsfromStrongerAC2∧StrongerAC3 1)
+NoRecovery =∆ 2∧∀i ∈ participants :participant[i].alive ≡¬participant[i].faulty
+∧coordinator.alive ≡¬coordinator.faulty
+(SOME)INVALIDPROPERTIES
+DecisionReachedNoFault =∆ (∀i ∈ participants :participant[i].alive)
+;(∀k ∈ participants :participant[k].decision 6=undecided)
+AbortImpliesNoVote =∆ 2( (∃i ∈ participants :participant[i].decision =abort)
+⇒(∃j ∈ participants :participant[j].vote =no))
+ThefollowingistheterminationpropertythatthisSB algorithmdoesn’thave
+6
+AC5 =∆ 3∀i ∈ participants : ∨participant[i].decision ∈ {abort, commit}
+∨participant[i].faulty
+7

@@ -1,0 +1,1930 @@
+Source: disk-paxos.pdf
+================================================================================
+
+Disk Paxos
+Eli Gafni Leslie Lamport
+Computer Science Department Microsoft Research
+UCLA
+14 May 2002
+Abstract
+We present an algorithm, called Disk Paxos, for implementing a reli-
+able distributed system with a network of processors and disks. Like
+the original Paxos algorithm, Disk Paxos maintains consistency in the
+presenceofarbitrarynon-Byzantinefaults. Progresscanbeguaranteed
+as long as a majority of the disks are available, even if all processors
+but one have failed.
+Contents
+1 Introduction 1
+2 The State-Machine Approach 2
+3 An Informal Description of Disk Synod 3
+3.1 The Algorithm . . . . . . . . . . . . . . . . . . . . . . . . . . 3
+3.2 Why the Algorithm Works . . . . . . . . . . . . . . . . . . . . 5
+3.3 Deriving Classic Paxos from Disk Paxos . . . . . . . . . . . . 9
+4 Conclusion 10
+4.1 Implementation Considerations . . . . . . . . . . . . . . . . . 10
+4.2 Concluding Remarks . . . . . . . . . . . . . . . . . . . . . . . 11
+Bibliography 12
+Appendix 14
+A.1 The Specification of Consensus . . . . . . . . . . . . . . . . . 14
+A.2 The Disk Synod Algorithm . . . . . . . . . . . . . . . . . . . 18
+A.3 An Assertional Proof . . . . . . . . . . . . . . . . . . . . . . . 23
+A.4 Proofs . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 31
+A.4.1 Lemma I2c . . . . . . . . . . . . . . . . . . . . . . . . 32
+A.4.2 Lemma BksOf . . . . . . . . . . . . . . . . . . . . . . 33
+A.4.3 Lemma I2d . . . . . . . . . . . . . . . . . . . . . . . . 33
+A.4.4 Lemma I2e . . . . . . . . . . . . . . . . . . . . . . . . 39
+A.4.5 Lemma I2f . . . . . . . . . . . . . . . . . . . . . . . . 42
+A.4.6 Theorem R2b . . . . . . . . . . . . . . . . . . . . . . . 49
+1 Introduction
+Fault tolerance requires redundant components. Maintaining consistency in
+the event of a system partition makes it impossible for a two-component
+system to make progress if either component fails. There are innumerable
+fault-tolerant algorithms for implementing distributed systems, but all that
+we know of equate component with processor. But there are other types of
+components that one might replicate instead. In particular, modern net-
+works can now include disk drives as independent components. Because
+commodity disks are cheaper than computers, it is attractive to use them as
+the replicated components for achieving fault tolerance. Commodity disks
+differ from processors in that they are not programmable, so we can’t just
+substitute disks for processors in existing algorithms.
+We present here an algorithm called Disk Paxos for implementing an
+arbitrary fault-tolerant system with a network of processors and disks. It
+maintains consistency in the event of any number of non-Byzantine failures.
+That is, a processor may pause for arbitrarily long periods, may fail com-
+pletely, and may restart after failure, remembering only that it has failed; a
+disk may become inaccessible to some or all processors, but it may not be
+corrupted. Disk Paxos guarantees progress if the system is stable and there
+is at least one nonfaulty processor that can read and write a majority of the
+disks. Stability means that each processor is either nonfaulty or has failed
+completely, and nonfaulty processors can access nonfaulty disks. For exam-
+ple, it allows a system of two processors and three disks to make progress
+after the failure of any one processor and any one disk.
+DiskPaxosisavariantoftheclassicPaxosalgorithm[3,12,14],asimple,
+efficient algorithm that has been used in practical distributed systems [15,
+18]. Classic Paxos can be viewed as an implementation of Disk Paxos in
+which there is one disk per processor, and a disk can be accessed directly
+only by its processor.
+Inthenextsection, werecallhowtoreducetheproblemofimplementing
+an arbitrary distributed system to the consensus problem. Section 3 infor-
+mally describes Disk Synod, the consensus algorithm used by Disk Paxos.
+Itincludesasketchofanincompletecorrectnessproofandexplainstherela-
+tion between Disk Synod and the Synod protocol of classic Paxos. Section 4
+briefly discusses some implementation details and contains the conventional
+concluding remarks. An appendix gives formal specifications of the consen-
+sus problem and the Disk Synod algorithm, and sketches a rigorous correct-
+ness proof.
+An earlier version of this work, with an abridged version of the appendix
+1
+lacking any proof, appeared earlier [5].
+2 The State-Machine Approach
+The state-machine approach [7, 16] is a general method for implementing an
+arbitrarydistributedsystem. Thesystemisdesignedasadeterministicstate
+machine that executes a sequence of commands, and a consensus algorithm
+ensures that, for each n, all processors agree on the nth command. This
+reducestheproblemofbuildinganarbitrarysystemtosolvingtheconsensus
+problem. In the consensus problem, each processor p starts with an input
+value input[p], and it may output a value. A solution should be:
+Nontrivial Any value output should have been the value of input[p] at
+some time, for some processor p. (The value of input[p] may change
+if p fails and restarts.)
+Consistent All values output are the same.
+Nonblocking If the system is stable and a nonfaulty processor can com-
+municate with a majority of disks, then the processor will eventually
+output a value.
+Ithaslongbeenknownthataconsistent, nonblockingconsensususingasyn-
+chronous message passing always requires at least two message delays [6].
+Nonblocking algorithms that use fewer message delays don’t guarantee con-
+sistency. Forexample,thegroupcommunicationalgorithmsofIsis[2]permit
+twoprocessors belonging to the currentgroup to disagree on whether a mes-
+sagewasbroadcastinapreviousgrouptowhichtheybothbelonged. Thisal-
+gorithmcannot,byitself,guaranteeconsistencybecausedisagreementabout
+whether a message had been broadcast can result in disagreement about the
+output value.
+The classic Paxos algorithm [3, 12, 14] uses a three-phase consensus pro-
+tocol, calledtheSynod algorithm,whereeachofthefirsttwophasesrequires
+two message delays and the third phase just broadcasts the output value.
+However, the value to be output is not chosen until the second phase. When
+a new leader is elected, it executes the first phase just once for the entire
+sequence of consensus algorithms performed for all later system commands.
+Only the last two phases are performed separately for each individual com-
+mand.
+In the Disk Synod algorithm, the consensus algorithm used by Disk
+Paxos, each processor has an assigned block on each disk. The algorithm
+2
+has two phases. In each phase, a processor writes to its own block and reads
+each other processor’s block on a majority of the disks.1 Only the last phase
+needs to be executed anew for each command. So, in the normal steady-
+state case, a leader chooses a state-machine command by executing a single
+writetoeachofitsblocksandasinglereadofeveryotherprocessor’sblocks.
+Disk Paxos, like classic Paxos, makes no timing assumptions; processes
+may be completely asynchronous. The classic result of Fischer, Lynch, and
+Paterson [4] implies that a purely asynchronous nonblocking consensus al-
+gorithm is impossible. So, clocks and real-time assumptions must be intro-
+duced. The typical industry approach is to use an ad hoc algorithm based
+on timeouts to elect a leader, and then have the leader choose the out-
+put [17, 19]. It is easy to devise a leader-election algorithm that works when
+the system is stable, which means that it works most of the time. It is very
+hard to make one that always works correctly even when the system is un-
+stable. BothclassicPaxosandDiskPaxosalsoassumeareal-timealgorithm
+for electing a leader. However, the leader is used only to ensure progress.
+Consistency is maintained even if there are multiple leaders. Thus, if the
+leader-election algorithm fails because the network is unstable, the system
+can fail to make progress; it cannot become inconsistent. The system will
+again make progress when it becomes stable and a single leader is elected.
+3 An Informal Description of Disk Synod
+We now informally describe the Disk Synod algorithm and explain why
+it works. We also discuss its relation to classic Paxos’s Synod Protocol.
+Remember that, in normal operation, only a single leader will be executing
+the algorithm. The other processors do nothing; they simply wait for the
+leadertoinformthemoftheoutcome. However,thealgorithmmustpreserve
+consistency even when it is executed by multiple processors, or when the
+leader fails before announcing the outcome and a new leader is chosen.
+3.1 The Algorithm
+We assume that each processor p starts with an input value input[p].2 As
+in Paxos’s Synod algorithm, a processor executes a sequence of numbered
+ballots, with increasing ballot numbers. A ballot number is a positive inte-
+ger, and different processors use different ballot numbers. For example, if
+1Thereisalsoanextraphasethataprocessorexecuteswhenrecoveringfromafailure.
+2If processor p fails, it can restart with a new value of input[p].
+3
+the processors are numbered from 1 through N, then processor i could use
+ballot numbers i, i+N, i+2N, etc. A processor p executes a ballot in two
+phases, the first trying to choose a value and the second trying to commit
+that value:
+Phase 1 Determine whether p can choose its input value input[p] or
+must choose some other value.
+Choose a value v.
+Phase 2 Try to commit v.
+The choice of the value v occurs in the transition from phase 1 to phase 2.
+The value is committed, and can be output, when p finishes phase 2.
+In either phase, a processor aborts its ballot if it learns that another
+processor has begun a higher-numbered ballot. In that case, the processor
+may then choose a higher ballot number and start a new ballot. (It will
+do so if it still thinks it is the leader.) If the processor completes phase 2
+without aborting—that is, without learning of a higher-numbered ballot—
+then value v is committed and the processor can output it. A processor
+p does not need to know the value of input[p] until it enters phase 2, so
+phase 1 can be performed in advance for any number of separate instances
+of the algorithm.
+To ensure consistency, we must guarantee that two different values can-
+not be successfully committed—either by different processors (because the
+leader-election algorithm has not yet succeeded) or by the same processor
+in two different ballots (because it failed and restarted). To ensure that the
+algorithm is nonblocking, we must guarantee that, if there is only a single
+processor p executing it, then p will eventually commit a value.
+In practice, when a processor successfully commits a value, it will write
+on its disk block that the value was committed and also broadcast that
+fact to the other processors. If a processor learns that a value has been
+committed, it will abort its ballot and simply output the value. It is obvious
+that this optimization preserves correctness; we will not consider it further.
+To execute the algorithm, a processor p maintains a record dblock[p]
+containing the following three components:
+mbal The current ballot number.
+bal The largest ballot number for which p entered phase 2.
+inp The value p tried to commit in ballot number bal.
+4
+Initially, bal equals 0, inp equals a special value NotAnInput that is not a
+possible input value, and mbal is any of its possible ballot numbers. We let
+disk[d][p] be the block on disk d in which processor p writes dblock[p]. We
+assume that reading and writing a block are atomic operations.
+Processor p executes phase 1 or 2 of a ballot as follows. For each disk
+d, it tries first to write dblock[p] to disk[d][p] and then to read disk[d][q]
+for all other processors q. It aborts the ballot if, for any d and q, it finds
+disk[d][q].mbal > dblock[p].mbal. The phase completes when p has written
+and read a majority of the disks, without reading any block whose mbal
+component is greater than dblock[p].mbal. When it completes phase 1, p
+chooses a new value of dblock[p].inp, sets dblock[p].bal to dblock[p].mbal (its
+current ballot number), and begins phase 2. When it completes phase 2, p
+has committed dblock[p].inp.
+Tocompleteourdescriptionofthetwophases, wenowdescribehowpro-
+cessor p chooses the value ofdblock[p].inp that it tries to commit in phase 2.
+LetblocksSeen bethesetconsistingofdblock[p]andalltherecordsdisk[d][q]
+read by p in phase 1. Let nonInitBlks be the subset of blocksSeen consisting
+of those records whose inp field is not NotAnInput. If nonInitBlks is empty,
+then p sets dblock[p].inp to its own input value input[p]. Otherwise, it sets
+dblock[p].inp to bk.inp for some record bk in nonInitBlks having the largest
+value of bk.bal.
+Finally, we describe what processor p does when it recovers from a fail-
+ure. In this case, p reads its own block disk[d][p] from a majority of disks
+d. It then sets dblock[p] to any block bk it read having the maximum value
+of bk.mbal, and it starts a new ballot by increasing dblock[p].mbal and be-
+ginning phase 1.
+The algorithm is summarized informally in Figure 1, which describes
+how a processor p executes a single ballot. The processor begins the ballot
+by executing the Start Ballot operation. It can begin a new ballot if a ballot
+aborts, or at any other time—except when it has failed, in which case it
+must execute the Restart After Failure operation. A precise specification of
+the algorithm appears in the appendix.
+3.2 Why the Algorithm Works
+Safety
+WeexplainintuitivelywhytheDiskSynodalgorithmsatisfiesthetwosafety
+properties of nontriviality and consistency. Nontriviality is trivial, since the
+val field of any block is always set either to the val field of some other block
+5
+Start Ballot
+Set dblock[p].mbal to a value larger than its current value.
+Set blocksSeen to {dblock[p]}.
+Begin Phase 1.
+Phase 1 or 2
+Concurrently for every disk d do
+Write dblock[p] to disk[d][p].
+for every processor q (cid:54)= p do
+Read disk[d][q] and insert it in the set blocksSeen.
+Abort the ballot if disk[d][q].mbal > dblock[p].mbal.
+until this has been done for a majority of disks.
+If phase 1
+then Set dblock[p].bal to dblock[p].mbal.
+Let nonInitBlks be the set of elements bk in blocksSeen with
+bk.inp (cid:54)= NotAnInput.
+If nonInitBlks is empty
+then Set dblock[p].inp to input[p].
+else Setdblock[p].inp toanelementbk ofnonInitBlks
+with a maximal value of bk.bal.
+Begin phase 2.
+else Commit dblock[p].inp.
+Restart After Failure
+Set tempSet to the empty set.
+Concurrently for every disk d do
+Read disk[d][q] and insert it in the set tempSet.
+until this has been done for a majority of disks.
+Set dblock[p] to an element bk of tempSet with a maximal value
+of mbal.
+Begin Start Ballot.
+Figure 1: The algorithm by which a processor p executes a single ballot.
+6
+or to input[p] for a processor p. Hence, a committed value must at one time
+have been an input value of some processor.
+We now explain why the Disk Synod algorithm maintains consistency.
+First,weconsiderthefollowingshared-memoryversionofthealgorithmthat
+uses single-writer, multiple-reader regular registers.3 Instead of writing to
+disk, processorp writesdblock[p]toasharedregister; anditreadsthevalues
+of dblock[q] for other processors q from the registers. A processor chooses
+its bal and inp values for phase 2 the same way as before, except that it
+reads just one dblock value for each other processor, rather than one from
+each disk. We assume for now that processors do not fail.
+To prove consistency, we must show that, for any processors p and q,
+if p finishes phase 2 and commits the value v and q finishes phase 2 and
+p
+commits the value v , then v = v . Let b and b be the respective ballot
+q p q p q
+numbers on which these values are committed. Without loss of generality,
+we can assume b ≤ b . Moreover, using induction on b , we can assume
+p q q
+that, if any processor r starts phase 2 for a ballot b with b ≤ b < b ,
+r p r q
+then it does so with dblock[r].inp = v .
+p
+When reading in phase 2, p cannot have seen the value of dblock[q].mbal
+written by q in phase 1—otherwise, p would have aborted. Hence p’s read
+of dblock[q] in phase 2 did not follow q’s phase 1 write. Because reading
+follows writing in each phase, this implies that q’s phase 1 read of dblock[p]
+must have followed p’s phase 2 write. Hence, q read the current (final)
+value of dblock[p] in phase 1—a record with bal field b and inp field v .
+p p
+Let bk be any other block that q read in its phase 1. Since q did not
+abort, b > bk.mbal. Since bk.mbal ≥ bk.bal for any block bk, this implies
+q
+b > bk.bal. By the induction assumption, we obtain that, if bk.bal ≥ b ,
+q p
+then bk.inp = v . Since this is true for all blocks bk read by q in phase 1,
+p
+and since q read the final value of dblock[p], the algorithm implies that q
+must set dblock[q].inp to v for phase 2, proving that v = v .
+p p q
+To obtain the Disk Synod algorithm from the shared-memory version,
+we use a technique due to Attiya, Bar-Noy, and Dolev [1] to implement
+a single-writer, multiple reader register with a network of disks. To write
+a value, a processor writes the value together with a version number to a
+majority of the disks. To read, a processor reads a majority of the disks
+and takes the value with the largest version number. Since two majorities of
+diskscontainatleastonediskincommon, areadmustobtaineitherthelast
+3A regular register is one in which a read that does not overlap a write returns the
+register’s current value, and a read that overlaps one or more writes returns either the
+register’s previous value or one of the values being written [8].
+7
+version for which the write was completed, or else a later version. Hence,
+this implements a regular register. With this technique, we transform the
+shared-memory version into a version for a network of processors and disks.
+The actual Disk Synod algorithm simplifies the algorithm obtained by
+this transformation in two ways. First, the version number is not needed.
+The mbal and bal values play the role of a version number. Second, a
+processor p need not choose a single version of dblock[q] from among the
+onesitreadsfromdisk. Becausembal andbal valuesdonotdecrease, earlier
+versions have no effect.
+So far, we have ignored processor failures. There is a trivial way to
+extendtheshared-memoryalgorithmtoallowprocessorfailures. Aprocessor
+recovers by simply reading its dblock value from its register and starting a
+new ballot. A failed process then acts like one in which a processor may
+start a new ballot at any time. We can show that this generalized version
+is also correct. However, in the actual disk algorithm, a processor can fail
+while it is writing. This can leave its disk blocks in a state in which no value
+has been written to a majority of the disks. Such a state has no counterpart
+in the shared-memory version. There seems to be no easy way to derive
+the recovery procedure from a shared-memory algorithm. The proof of the
+complete Disk Synod algorithm, with failures, is much more complicated
+than the one for the simple shared-memory version. Trying to write the
+kind of behavioral proof given above for the simple algorithm leads to the
+kind of complicated, error-prone reasoning that we have learned to avoid.
+Instead, we sketch a rigorous assertional proof in the appendix.
+Liveness
+Liveness(progress)oftheDiskSynodalgorithmrequireslivenessofaleader-
+election algorithm. A processor executes steps of the Disk Synod algorithm
+iff it believes itself to be the leader. We show that a value will be commit-
+ted if, eventually, a single nonfaulty processor p that can read and write a
+majority of the disks is forever the unique leader.4
+Suppose p is the unique leader and it can read and write a majority of
+the disks. Since p can access a majority of the disks, each phase it executes
+either completes or aborts. A phase aborts only if p reads an mbal value
+greater than its own, and p increases its own mbal value when it does abort.
+Since p is the unique leader, only it writes to the disks. So, if p does not
+complete phases 1 and 2, then its mbal value will eventually be greater than
+4Actually, p needs to be the unique leader just long enough to commit the value.
+8
+that of every disk block that it reads. Hence, p must eventually complete
+phases 1 and 2 without aborting, thus committing a value.
+3.3 Deriving Classic Paxos from Disk Paxos
+Intheusualviewofadistributedfault-tolerantsystem,aprocessorperforms
+actions and maintains its state in local memory, using stable storage to
+recover from failures. An alternative view is that a processor maintains the
+state of its stable storage, using local memory only to cache the contents of
+stablestorage. Identifyingdiskswithstablestorage,atraditionaldistributed
+system is then a network of disks and processors in which each disk belongs
+to a separate processor; other processors can read a disk only by sending
+messages to its owner.
+Let us now consider how to implement Disk Synod on a network of
+processors that each has its own disk. To perform phase 1 or 2, a processor
+p would access a disk d by sending a message containing dblock[p] to disk
+d’s owner q. Processor q could write dblock[p] to disk[d][p], read disk[d][r]
+for all r (cid:54)= p, and send the values it read back to p. However, examining
+the Disk Synod algorithm reveals that there’s no need to send back all that
+data. All p needs are (i) to know if its mbal field is larger than any other
+block’s mbal field and, if it is, (ii) the bal and inp fields for the block having
+the maximum bal field. Hence, q need only store on disk three values: the
+bal and inp fields for the block with maximum bal field, and the maximum
+mbal field of all disk blocks. Of course, q would have those values cached in
+its memory, so it would actually write to disk only if any of those values are
+changed.
+A processor must also read its own disk blocks to recover from a failure.
+Suppose we implement Disk Synod by letting p write to its own disk before
+sending messages to any other processor. This ensures that its own disk
+has the maximum value of disk[d][p].mbal among all the disks d. Hence,
+to restart after a failure, p need only read its block from its own disk. In
+addition to the mbal, bal, and inp value mentioned above, p would also keep
+the value of dblock[p] on its disk.
+We can now compare this algorithm with classic Paxos’s Synod proto-
+col[12]. Thembal,bal,andinp componentsofdblock[p]arejustlastTried[p],
+nextBal[p], and prevVote[p] of the Synod Protocol. Phase 1 of the Disk
+Synod algorithm corresponds to sending theNextBallot message and receiv-
+ing the LastVote responses in the Synod Protocol. Phase 2 corresponds to
+sending the BeginBallot and receiving the Voted replies.5 The Synod Pro-
+5In the Synod Protocol, a processor q does not bother sending a response if p sends
+9
+tocol’s Success message corresponds to the optimization mentioned above
+of recording on disk that a value has been committed.
+ThisversionoftheDiskSynodalgorithmdiffersfromtheSynodProtocol
+in two ways. First, the Synod Protocol’s NextBallot message contains only
+the mbal value; it does not contain bal and inp values. To obtain the Synod
+Protocol, we would have to modify the Disk Synod algorithm so that, in
+phase 1, it writes only the mbal field of its disk block and leaves the bal and
+inp fields unchanged. The algorithm remains correct, with essentially the
+same proof, under this modification. However, the modification makes the
+algorithm harder to implement with real disks.
+The second difference between this version of the Disk Synod algorithm
+and the Synod Protocol is in the restart procedure. A disk contains only
+the aforementioned mbal, bal, and inp values. It does not contain a sepa-
+rate copy of its owner’s dblock value. The Synod Protocol can be obtained
+from the following variant of the Disk Synod algorithm. Let bk be the block
+disk[d][p] with maximum bal field read by processor p in the restart proce-
+dure. Processor p can begin phase 1 with bal and inp values obtained from
+any disk block bk(cid:48), written by any processor, such that bk(cid:48).bal ≥ bk.bal.
+It can be shown that the Disk Synod algorithm remains correct under this
+modification too.
+4 Conclusion
+4.1 Implementation Considerations
+Implicit in our description of the Disk Synod algorithm are certain assump-
+tions about how reading and writing are implemented when disks are ac-
+cessedoveranetwork. Ifoperationssenttothedisksmaybelost,aprocessor
+p must receive an acknowledgment from disk d that its write to disk[d][p]
+succeeded. This may require p to explicitly read its disk block after writing
+it. If operations may arrive at the disk in a different order than they were
+sent, p will have to wait for the acknowledgment that its write to disk d
+succeeded before reading other processors’ blocks from d. Moreover, some
+mechanism is needed to ensure that a write from an earlier ballot does not
+arrive after a write from a later one by the same processor, overwriting the
+later value with the earlier one. How this is achieved will be system depen-
+dent. (It is impossible to implement any fault-tolerant system if writes to
+it a disk block with a value of mbal smaller than one already on disk. Sending back the
+maximum mbal value is an optimization mentioned in [12].
+10
+disk can linger arbitrarily long in the network and cause later values to be
+overwritten.)
+Recall that, in Disk Paxos, a sequence of instances of the Disk Synod
+algorithm is used to commit a sequence of commands. In a straightforward
+implementationofDiskPaxos, processorp wouldwritetoitsdiskblocksthe
+value of dblock[p] for the current instance of Disk Synod, plus the sequence
+of all commands that have already been committed. The sequence of all
+commands that have ever been committed is probably too large to fit on a
+singledisk block. However, thecomplete sequencecan bestored onmultiple
+disk blocks. All that must be kept in the same disk block as dblock[p] is a
+pointer to the head of the queue. For most applications, it is not necessary
+to remember the entire sequence of commands [12, Section 3.3.2]. In many
+cases, all the data that must be kept will fit in a single disk block.
+In the application for which Disk Paxos was devised (a future Compaq
+product), the set of processors is not known in advance. Each disk contains
+a directory listing the processors and the locations of their disk blocks.
+Before reading a disk, a processor reads the disk’s directory. To write a
+disk’s directory, a processor must acquire a lock for that disk by executing
+a real-time mutual exclusion algorithm based on Fischer’s protocol [9]. A
+processor joins the system by adding itself to the directory on a majority of
+disks.
+4.2 Concluding Remarks
+We have presented Disk Paxos, an efficient implementation of the state
+machineapproachinasysteminwhichprocessorscommunicatebyaccessing
+ordinary (nonprogrammable) disks. In the normal case, the leader commits
+a command by writing its own block and reading every other processor’s
+block on a majority of the shared disks. This is clearly the minimal number
+of disk accesses needed for a consensus algorithm that can make progress
+despite the failure of any minority of the disks and of any single processor.
+DiskPaxoswasmotivatedbytherecentdevelopmentoftheStorageArea
+Network (SAN)—an architecture consisting of a network of computers and
+disksinwhichalldiskscanbeaccessedbyeachcomputer. Commoditydisks
+are cheaper than computers, so using redundant disks for fault tolerance is
+more economical than using redundant computers. Moreover, since disks
+do not run application-level programs, they are less likely to crash than
+computers.
+Because commodity disks are not programmable, we could not simply
+substitute disks for processors in the classic Paxos algorithm. Instead we
+11
+took the ideas of classic Paxos and transplanted them to the SAN environ-
+ment. What we obtained is almost, but not quite, a generalization of classic
+Paxos. Indeed, when Disk Paxos is instantiated to a single disk, we obtain
+what may be called Shared-Memory Paxos. Algorithms for shared memory
+areusuallymoresuccinctandclearthantheirmessagepassingcounterparts.
+Thus, Disk Paxos for a single disk can be considered yet another revisiting
+of classic Paxos that exposes its underlying ideas by removing the message-
+passingclutter. Perhapsotherdistributedalgorithmscanalsobemademore
+clear by recasting them in a shared-memory setting.
+References
+[1] Hagit Attiya, Amotz Bar-Noy, and Danny Dolev. Sharing memory
+robustly in message-passing systems. Journal of the ACM, 42(1):124–
+142, January 1995.
+[2] Kenneth Birman, Andr´e Schiper, and Pat Stephenson. Lightweight
+causal and atomic group multicast. ACM Transactions on Computer
+Systems, 9(3):272–314, August 1991.
+[3] Roberto De Prisco, Butler Lampson, and Nancy Lynch. Revisiting the
+paxos algorithm. Theoretical Computer Science, 243:35–91, 2000.
+[4] Michael J. Fischer, Nancy Lynch, and Michael S. Paterson. Impossi-
+bility of distributed consensus with one faulty process. Journal of the
+ACM, 32(2):374–382, April 1985.
+[5] Eli Gafni and Leslie Lamport. Disk paxos. In Maurice Herlihy, edi-
+tor,DistributedComputing: 14thInternationalConference, DISC2000,
+volume 1914 of Lecture Notes in Computer Science, pages 330–344.
+Springer-Verlag, 2000.
+[6] Idit Keidar and Sergio Rajsbaum. On the cost of fault-tolerant con-
+sensus when there are no faults—a tutorial. TechnicalReport MIT-
+LCS-TR-821, Laboratory for Computer Science, Massachusetts Insti-
+tute Technology, Cambridge, MA, 02139, May 2001. also published in
+SIGACT News 32(2) (June 2001).
+[7] LeslieLamport.Time,clocks,andtheorderingofeventsinadistributed
+system. Communications of the ACM, 21(7):558–565, July 1978.
+12
+[8] Leslie Lamport. On interprocess communication. Distributed Comput-
+ing, 1:77–101, 1986.
+[9] Leslie Lamport. A fast mutual exclusion algorithm. ACM Transactions
+on Computer Systems, 5(1):1–11, February 1987.
+[10] Leslie Lamport. The temporal logic of actions. ACM Transactions on
+Programming Languages and Systems, 16(3):872–923, May 1994.
+[11] LeslieLamport. Howtowriteaproof.AmericanMathematicalMonthly,
+102(7):600–608, August-September 1995.
+[12] LeslieLamport. Thepart-timeparliament.ACMTransactionsonCom-
+puter Systems, 16(2):133–169, May 1998.
+[13] Leslie Lamport. Specifying concurrent systems with TLA+. In Man-
+fred Broy and Ralf Steinbru¨ggen, editors, Calculational System Design,
+pages 183–247, Amsterdam, 1999. IOS Press.
+[14] Butler W. Lampson. How to build a highly available system using
+consensus. In Ozalp Babaoglu and Keith Marzullo, editors, Distributed
+Algorithms, volume 1151 of Lecture Notes in Computer Science, pages
+1–17, Berlin, 1996. Springer-Verlag.
+[15] Edward K. Lee and Chandramohan Thekkath. Petal: Distributed vir-
+tual disks. In Proceedings of the Seventh International Conference on
+Architectural Support for Programming Languages and Operating Sys-
+tems (ASPLOS-VII), pages 84–92, New York, October 1996. ACM
+Press.
+[16] Fred B. Schneider. Implementing fault-tolerant services using the state
+machine approach: A tutorial. ACM Computing Surveys, 22(4):299–
+319, December 1990.
+[17] William E. Snaman, Jr. Application design in a VAXcluster system.
+Digital Technical Journal, 3(3):16–26, Summer 1991.
+[18] ChandramohanThekkath,TimothyMann,andEdwardK.Lee. Frangi-
+pani: Ascalabledistributedfilesystem. InProceedingsofthe16thACM
+SymposiumonOperatingSystemsPrinciples,pages224–237,NewYork,
+October 1997. ACM Press.
+[19] WernerVogelsetal. Thedesignandarchitectureofthemicrosoftcluster
+service. In Proceedings of FTCS98, pages 422–431. IEEE, June 1998.
+13
+[20] Yuan Yu, Panagiotis Manolios, and Leslie Lamport. Model checking
+TLA+ specifications. In Laurence Pierre and Thomas Kropf, editors,
+CorrectHardwareDesignandVerificationMethods,volume1703ofLec-
+ture Notes in Computer Science, pages 54–66, Berlin, Heidelberg, New
+York, September 1999. Springer-Verlag. 10th IFIP wg 10.5 Advanced
+Research Working Conference, CHARME ’99.
+Appendix
+We now give a precise specification of the consensus problem solved by
+the Disk Synod algorithm and of the algorithm itself. The specification is
+writteninTLA+ [13], aformallanguagethatcombinesthetemporallogicof
+actions(TLA)[10], settheory, andfirst-orderlogicwithnotationformaking
+definitions and encapsulating them in modules. In the course of writing the
+specifications, we try to explain any TLA+ notation whose meaning is not
+self-evident. These specifications have been debugged with the aid of the
+TLC model checker [20].6
+Weproveonlyconsistencyofthealgorithm. Wefeelthatthenonblocking
+property is sufficiently obvious not to need a formal proof. We therefore do
+not specify or reason about liveness properties. This means that we make
+hardly any use of temporal logic.
+A.1 The Specification of Consensus
+We now formally specify the consensus problem. We assume N processors,
+numbered1throughN. Eachprocessorp hastworegisters: aninputregister
+input[p] that initially equals some element of a set Inputs of possible input
+values, and an output register output[p] that initially equals a special value
+NotAnInput thatisnotanelementofInputs. Processorp choosesanoutput
+value by setting output[p]. It can also fail, which it does by setting input[p]
+to any value in Inputs and resetting output[p] to NotAnInput. The precise
+condition to be satisfied is that, if some processor p ever sets output[p] to
+some value v, then
+• v must be a value that is, or at one time was, the value of input[q] for
+some processor q
+6The typeset versions were generated manually from the actual TLA+ specifications
+by a procedure that may have introduced errors.
+14
+• ifanyprocessorr (includingp itself)latersetsoutput[r]tosomevalue
+w other than NotAnInput, then w = v.
+We specify only safety. There is no livenessrequirement, so the specification
+is satisfied if no processor ever changes output[p].
+TLA+ specifications are organized into modules. The specification of
+consensus is in a module named Synod, which begins:
+module Synod
+extends Naturals
+TheextendsstatementimportstheNaturals module, whichdefinestheset
+Nat of natural numbers and the usual arithmetic operations. It also defines
+i .. j to be the set of natural numbers from i through j. We next declare
+the specification’s two constants: the number N of processors, and the set
+Inputs of inputs; and we assert the assumption that N is a positive natural
+number. (TLA+, like ordinary mathematics, is untyped.)
+constant N, Inputs
+assume (N ∈ Nat)∧(N > 0)
+In TLA+, every value is a set, so we don’t have to assert that Inputs is a
+set. We next define two constants: the set Proc of processors, and the value
+NotAnInput. In TLA+, =∆ means is defined to equal, and choose x :F(x)
+equals an arbitrary value x such that F(x) is true (if such an x exists).
+Proc =∆ 1 .. N
+NotAnInput =∆ choose c : c ∈/ Inputs
+Note that the constants Proc and NotAnInput are defined, while the con-
+stants N and Inputs are simply declared.
+We next declare the variables input and output.
+variables input, output
+To write the specification, we introduce two internal variables: allInput,
+which equals the set of all current and past values of input[p], for all pro-
+cessors p; and chosen, which records the first input value output by some
+processor (and hence, the value that all processors must henceforth output).
+These variables are internal or “hidden” variables. In TLA, such variables
+are bound variables of the temporal existential quantifier ∃∃∃∃∃∃. Since inter-
+nal variables aren’t part of the specification, they should not be declared in
+module Synod. One way to introduce such variables in TLA+ is to declare
+them in a submodule. So, we introduce a submodule called Inner.
+15
+module Inner
+variables allInput, chosen
+Before going further, we explain some TLA+ notation. In programming
+languages, the variables input and output would be arrays indexed by the
+Proc. What programmers call an array indexed by S, mathematicians call
+a function with domain S. TLA+ uses the notation [x ∈ S (cid:55)→ e(x)] for the
+function f with domain S such that f[x] = e(x) for all x in S. It denotes by
+[S → T] the set of all functions f with domain S such that f[x] ∈ T for all
+x ∈ S. TLA+ allows a conjunction or disjunction to be written as a list of
+formulas bulleted by ∧ or ∨. Indentation is used to eliminate parentheses.
+We now define IInit to be the predicate describing the initial state.
+IInit =∆ ∧ input ∈ [Proc → Inputs]
+∧ output = [p ∈ Proc (cid:55)→ NotAnInput]
+∧ chosen = NotAnInput
+∧ allInput = {input[p] : p ∈ Proc}
+We next define the two actions, IChoose(p) and IFail(p), that describe the
+operations that a processor p can perform. In TLA, an action is a formula
+with primed and unprimed variables that describes the relation between the
+values of the variables in a new (primed) state and their values in an old
+(unprimed) state. For example, in a system with the two variables x and y,
+the action (x(cid:48) = x+1)∧(y(cid:48) = y) corresponds to the programming-language
+statement x := x +1. A conjunct with no primed variables is an enabling
+condition.
+In TLA+, the expression [f except ![x] = e] represents the function f(cid:98)
+that is the same as f except that f(cid:98)[x] = e. Thus, f(cid:48) = [f except ![c] = e]
+corresponds to the programming-language statement f[c] := e, except that
+it says nothing about variables other than f (whereas f[c] := e asserts
+that other variables are unchanged). An action must explicitly state what
+remains unchanged. We do this with the expression unchanged v, which
+means v(cid:48) = v. Leaving a tuple (cid:104)v ,...,v (cid:105) unchanged is equivalent to
+1 n
+leaving all its components v unchanged.
+i
+The IChoose(p) action represents the processor p choosing its output.
+It is enabled iff output[p] equals NotAnInput. If chosen is NotAnInput,
+then chosen and output[p] are set to any element of allInput. Otherwise,
+output[p] is set to chosen.
+IChoose(p) =∆
+∧ output[p] = NotAnInput
+16
+∧ if chosen = NotAnInput
+then ∃ip ∈ allInput : ∧ chosen(cid:48) = ip
+∧ output(cid:48) = [output except ![p] = ip]
+else ∧ output(cid:48) = [output except ![p] = chosen]
+∧ unchanged chosen
+∧ unchanged (cid:104)input,allInput(cid:105)
+The IFail(p) action represents processor p failing. It is always enabled. It
+sets output[p] to NotAnInput, sets input[p] to any element of Inputs, and
+adds that element to the set allInput.
+IFail(p) =∆
+∧ output(cid:48) = [output except ![p] = NotAnInput]
+∧ ∃ip ∈ Inputs : ∧ input(cid:48) = [input except ![p] = ip]
+∧ allInput(cid:48) = allInput ∪{ip}
+∧ unchanged chosen
+We next define the next-state action INext, which describes all possible
+steps. We then define ISpec, the specification with the internal variables
+chosen and allInput visible. It asserts that the initial state satisfies IInit,
+and every step either satisfies INext or leaves all the variables unchanged.
+Formula ISpec is defined to be a temporal formula, using the ordinary op-
+erator (cid:50) (always) of temporal logic, and the TLA notation that [A] equals
+v
+A∨(v(cid:48) = v), for any action A and state function v, for any action A and
+state function v. These definitions end the submodule.
+INext =∆ ∃p ∈ Proc : IChoose(p)∨IFail(p)
+ISpec =∆ IInit ∧ (cid:50)[INext]
+(cid:104)input,output,chosen,allInput(cid:105)
+Finally, we define SynodSpec, the complete specification, to be ISpec with
+the variables chosen and allInput hidden—that is, quantified with the tem-
+poral existential quantifier ∃∃∃∃∃∃ of TLA. The precise meaning of the TLA+
+constructs used here is unimportant.
+IS(chosen,allInput) =∆ instance Inner
+SynodSpec =∆ ∃∃∃∃∃∃chosen, allInput : IS(chosen,allInput)!ISpec
+This ends module Synod.
+17
+A.2 The Disk Synod Algorithm
+The Disk Synod algorithm is specified by a module DiskSynod that imports
+all the declarations and definitions from the Synod module.
+module DiskSynod
+extends Synod
+Thealgorithmassumesthatdifferentprocessorsusedifferentballotnumbers.
+Instead of fixing some specific choice of ballot numbers, we let Ballot(p)
+represent the set of ballot numbers that processor p can use, where Ballot
+is an unspecified constant operator.
+We have described the algorithm in terms of a majority of disks. The
+property of majorities we need is that any two majorities has a disk in com-
+mon. If there are an even number d of disks, we can maintain that property
+evenifweconsidercertainsetscontainingd/2diskstoconstituteamajority.
+We let IsMajority be an unspecified predicate so that if IsMajority(S) and
+IsMajority(T) is true for two sets S and T of disks, then S and T are not
+disjoint. (To rule out the trivial case when no set is a majority, we require
+that IsMajority(Disk) be true.)
+ThemodulenowdeclaresBallot, IsMajority, andtheconstantDisk that
+represents the set of disks. It also asserts the assumptions we make about
+them. In TLA+, the expression subsetS denotes the set of all subsets of
+the set S.
+constants Ballot( ), Disk, IsMajority( )
+assume ∧ ∀p ∈ Proc : ∧ Ballot(p) ⊆ {n ∈ Nat : n > 0}
+∧ ∀q ∈ Proc\{p} : Ballot(p)∩Ballot(q) = {}
+∧ IsMajority(Disk)
+∧ ∀S,T ∈ subsetDisk :
+IsMajority(S)∧IsMajority(T) ⇒ (S ∩T (cid:54)= {})
+We next define two constants: the set DiskBlock of all possible records that
+a processor can write to its disk blocks, and the record InitDB that is the
+initial value of all disk blocks. In TLA+, [f (cid:55)→ v ,...,f (cid:55)→ v ] is the
+1 1 n n
+record r with fields f , ..., f such that r.f = v , for all i in 1 .. n, and
+1 n i i
+[f : S ,...,f : S ] is the set of all such records with v an element of
+1 1 n n (cid:83) i
+the set S , for all i in 1 .. n. The set S, the union of all the elements of
+i
+S, is written union S. For example, union {A,B,C} equals A∪B ∪C.
+DiskBlock =∆ [mbal : (union {Ballot(p) : p ∈ Proc})∪{0},
+bal : (union {Ballot(p) : p ∈ Proc})∪{0},
+inp : Inputs ∪{NotAnInput}]
+18
+InitDB =∆ [mbal (cid:55)→ 0, bal (cid:55)→ 0, inp (cid:55)→ NotAnInput]
+We now declare all the specification’s variables—except for input and
+output, whose declarations are imported from Synod. We have described
+the variables disk (the contents of the disks) and dblock in Section 3. We
+let phase[p] be the current phase of processor p, which will be set to 0
+when p fails and to 3 when p chooses its output. For convenience, we
+let each processor start in phase 0 and begin the algorithm as if it were
+recovering from a failure. The variables disksWritten and blocksRead record
+aprocessor’sprogressinthecurrentphase;disksWritten[p]isthesetofdisks
+that processor p has written, and blocksRead[p][d] is the set of values p has
+read from disk d. More precisely, blocksRead[p][d] is a set of records with
+block and proc fields, where [block (cid:55)→ bk, proc (cid:55)→ q] is in blocksRead[p][d] iff
+p hasreadthevaluebk fromdisk[d][q]inthecurrentphase. Forconvenience,
+we declare vars to be the tuple of all the specification’s variables. We also
+define the predicate Init that defines the initial values of all variables.
+variables disk, dblock, phase, disksWritten, blocksRead
+vars =∆ (cid:104)input, output, disk, phase, dblock, disksWritten, blocksRead(cid:105)
+Init =∆ ∧ input ∈ [Proc → Inputs]
+∧ output = [p ∈ Proc (cid:55)→ NotAnInput]
+∧ disk = [d ∈ Disk (cid:55)→ [p ∈ Proc (cid:55)→ InitDB]]
+∧ phase = [p ∈ Proc (cid:55)→ 0]
+∧ dblock = [p ∈ Proc (cid:55)→ InitDB]
+∧ disksWritten = [p ∈ Proc (cid:55)→ {}]
+∧ blocksRead = [p ∈ Proc (cid:55)→ [d ∈ Disk (cid:55)→ {}]]
+We now define two operators that describe the state of a processor during
+the current phase: hasRead(p,d,q) is true iff p has read disk[d][q], and
+allBlocksRead(p)equalsthesetofalldisk[d][q]valuesthatp hasreadduring
+the current phase. The TLA+ expression let def in exp equals expression
+exp in the context of the local definitions in def.
+hasRead(p,d,q) =∆ ∃br ∈ blocksRead[p][d] : br.proc = q
+allBlocksRead(p) =∆
+let allRdBlks =∆ union {blocksRead[p][d] : d ∈ Disk}
+in {br.block : br ∈ allRdBlks}
+We now define InitializePhase(p) to be an action that sets disksWritten[p]
+and blocksRead[p] to their initial values, to indicate that p has done no
+reading or writing yet in the current phase. This action will be used to
+19
+define other actions that make up the next-state relation; it itself is not part
+of the next-state relation.
+InitializePhase(p) =∆
+∧ disksWritten(cid:48) = [disksWritten except ![p] = {}]
+∧ blocksRead(cid:48) = [blocksRead except ![p] = [d ∈ Disk (cid:55)→ {}]]
+Wenowdefinetheactionsthatwillformpartofthenext-stateaction. These
+actions describe all the atomic actions of the algorithm that a processor p
+can perform. The first is StartBallot(p) in which p initiates a new ballot.
+We allow p to do this at any time during phase 1 or 2. The action sets
+phase[p] to 1, increases dblock[p].mbal, and initializes the phase.
+StartBallot(p) =∆
+∧ phase[p] ∈ {1,2}
+∧ phase(cid:48) = [phase except ![p] = 1]
+∧ ∃b ∈ Ballot(p) : ∧ b > dblock[p].mbal
+∧ dblock(cid:48) = [dblock except ![p].mbal = b]
+∧ InitializePhase(p)
+∧ unchanged (cid:104)input,output,disk(cid:105)
+In action Phase1or2Write(p,d), processor p writes disk[d][p] and adds d to
+thesetdisksWritten[p]ofdiskswrittenbyp. Theactionisenablediffp isin
+phase 1 or 2.7 In the TLA+ expression [f except ![c] = e], an @ appearing
+in e stands for f[c]. Thus, x(cid:48) = [x except ![c] = @ + 1] corresponds
+to the programming-language statement x[c] := x[c] + 1. The except
+construct also has a more general form for “arrays of arrays”. For example,
+the formula x(cid:48) = [x except ![a][b] = e] corresponds to the programming-
+language statement x[a][b] := e.
+Phase1or2Write(p,d) =∆
+∧ phase[p] ∈ {1,2}
+∧ disk(cid:48) = [disk except ![d][p] = dblock[p]]
+∧ disksWritten(cid:48) = [disksWritten except ![p] = @∪{d}]
+∧ unchanged (cid:104)input,output,phase,dblock,blocksRead(cid:105)
+Action Phase1or2Read(p,d,q) describes p reading disk[d][q]. It is enabled
+iff d is in disksWritten[p], meaning that p has already written its block to
+disk d. (This implies that p is in phase 1 or 2.) We allow p to reread a disk
+7We could add the enabling condition d ∈/ disksWritten[p], but it’s not necessary
+becausetheactionisano-op,leavingallvariablesunchanged,if p hasalreadywrittenits
+current value of dblock[p] to disk d.
+20
+block it has already read. If disk[d][q].mbal is less than p’s current mbal
+value, then blocksRead[p][d] is updated and p continues executing its ballot.
+Otherwise, p aborts the ballot and begins a new one.
+Phase1or2Read(p,d,q) =∆
+∧ d ∈ disksWritten[p]
+∧ if disk[d][q].mbal < dblock[p].mbal
+then ∧ blocksRead(cid:48) =
+[blocksRead except
+![p][d] = @ ∪ {[block (cid:55)→ disk[d][q], proc (cid:55)→ q]}]
+∧ unchanged
+(cid:104)input,output,disk,phase,dblock,disksWritten(cid:105)
+else StartBallot(p)
+The action EndPhase1or2(p) describes processor p successfully finishing
+phase 1 or 2. It is enabled when p is in phase 1 or 2 and, on a majority
+of the disks, p has written its block and read every other processor’s block.
+When p finishes phase 1, it sets dblock[p].inp and dblock[p].bal as described
+in Section 3.1 and starts phase 2. When p finishes phase 2, it sets output[p],
+sets phase[p] to 3, and terminates. (However, it could still fail and start
+again.) TheTLA+ exceptconstructappliestorecordsaswellasfunctions,
+and it can have multiple “replacements” separated by commas.
+EndPhase1or2(p) =∆
+∧ IsMajority({d ∈ disksWritten[p] :
+∀q ∈ Proc\{p} : hasRead(p,d,q)})
+∧ ∨ ∧ phase[p] = 1
+∧ dblock(cid:48) =
+[dblock except
+![p].bal = dblock[p].mbal,
+![p].inp =
+let blocksSeen =∆ allBlocksRead(p)∪{dblock[p]}
+nonInitBlks =∆
+{bs ∈ blocksSeen : bs.inp (cid:54)= NotAnInput}
+maxBlk =∆
+choose b ∈ nonInitBlks :
+∀c ∈ nonInitBlks : b.bal ≥ c.bal
+in if nonInitBlks = {} then input[p]
+else maxBlk.inp]
+∧ unchanged output
+21
+∨ ∧ phase[p] = 2
+∧ output(cid:48) = [output except ![p] = dblock[p].inp]
+∧ unchanged dblock
+∧ phase(cid:48) = [phase except ![p] = @+1]
+∧ InitializePhase(p)
+∧ unchanged (cid:104)input,disk(cid:105)
+Action Fail(p) represents a failure by processor p. The action is always
+enabled. It chooses a new value of input[p], sets phase[p] to 0 and initializes
+dblock[p], output[p], disksWritten[p], and blocksRead[p].
+Fail(p) =∆
+∧ ∃ip ∈ Inputs : input(cid:48) = [input except ![p] = ip]
+∧ phase(cid:48) = [phase except ![p] = 0]
+∧ dblock(cid:48) = [dblock except ![p] = InitDB]
+∧ output(cid:48) = [output except ![p] = NotAnInput]
+∧ InitializePhase(p)
+∧ unchanged disk
+Thenexttwoactionsdescribefailurerecovery. InPhase0Read(p,d),proces-
+sor p reads disk[d][p], recording the value read in blocksRead[p]. Again, we
+allow redundant reads of the same disk block. In EndPhase0(p), processor
+p completes its recovery and enters phase 1, as described in Section 3.1.
+Phase0Read(p,d) =∆
+∧ phase[p] = 0
+∧ blocksRead(cid:48) = [blocksRead except
+![p][d] = @ ∪ {[block (cid:55)→ disk[d][p], proc (cid:55)→ p]}]
+∧ unchanged (cid:104)input,output,disk,phase,dblock,disksWritten(cid:105)
+EndPhase0(p) =∆
+∧ phase[p] = 0
+∧ IsMajority({d ∈ Disk : hasRead(p,d,p)})
+∧ ∃b ∈ Ballot(p) :
+∧ ∀r ∈ allBlocksRead(p) : b > r.mbal
+∧ dblock(cid:48) = [dblock except
+![p] = [(choose r ∈ allBlocksRead(p) :
+∀s ∈ allBlocksRead(p) : r.bal ≥ s.bal)
+except !.mbal = b]]
+∧ InitializePhase(p)
+∧ phase(cid:48) = [phase except ![p] = 1]
+∧ unchanged (cid:104)input,output,disk(cid:105)
+22
+As in most TLA specifications, we define the next-state action Next that
+describes all possible steps of all processors. We then define the formula
+DiskSynodSpec, our specification of the algorithm, to assert that the ini-
+tial state satisfies Init and every step either satisfies Next or leaves all the
+variables unchanged.
+Next =∆ ∃p ∈ Proc :
+∨ StartBallot(p)
+∨ ∃d ∈ Disk : ∨ Phase0Read(p,d)
+∨ Phase1or2Write(p,d)
+∨ ∃q ∈ Proc\{p} : Phase1or2Read(p,d,q)
+∨ EndPhase1or2(p)
+∨ Fail(p)
+∨ EndPhase0(p)
+DiskSynodSpec =∆ Init ∧ (cid:50)[Next]
+vars
+Themoduleendsbyassertingthecorrectnessofthealgorithm, whichmeans
+that the algorithm’s specification implies the formula SynodSpec that is its
+correctness condition.
+theorem DiskSynodSpec ⇒ SynodSpec
+A.3 An Assertional Proof
+To prove correctness of the Disk Synod algorithm, we must prove that
+DiskSynodSpec implies SynodSpec, which is the theorem asserted at the end
+of module DiskSynod. In general, a theorem and its proof must appear in
+a context that defines the meaning of the identifiers they mention. When
+proving a theorem that appears in a module, we assume the context (the
+definitions and declarations) provided by the module.
+In our proof of the theorem that DiskSynodSpec implies SynodSpec, we
+will be informal in our use of identifier names. We will use identifiers like
+ISpec that are defined in submodule Inner of the Synod module and as-
+sume that they have their expected meaning. Readers who understand
+the fine points of TLA+ will realize that those identifiers are not defined
+in the context of module DiskSynod, and they should be prefaced with
+IS(chosen, allInput)!, as in IS(chosen, allInput)!ISpec. However, we will
+ignore this formal detail. (We chose our identifier names so that dropping
+the IS(chosen, allInput)! causes no name clashes.)
+23
+We now sketch the proof that DiskSynodSpec implies SynodSpec. For-
+mula SynodSpec equals ∃∃∃∃∃∃chosen, allInput :ISpec. To prove such a formula,
+we must find Skolem functions with which to instantiate the bound vari-
+ableschosen andallInput,andthenprovethatDiskSynodSpec impliesISpec,
+when chosen and allInput are defined to equal those Skolem functions. The
+choiceofSkolemfunctionsiscalledarefinement mapping. However, wecan-
+not define such a refinement mapping because chosen and allInput record
+history that is not present in the actual state of the algorithm. Instead, we
+add chosen and allInput to the algorithm specification as history variables.
+Formally, we define a specification HDiskSynodSpec such that
+DiskSynodSpec ≡ ∃∃∃∃∃∃chosen, allInput : HDiskSynodSpec
+We then prove that HDiskSynodSpec implies ISpec, from which we infer by
+simple logic that DiskSynodSpec implies SynodSpec.
+The first step in our proof that DiskSynodSpec implies SynodSpec is to
+definetherequiredformulaHDiskSynodSpec andtostateformallyandprove
+thetheoremthatitimpliesISpec. TodefineHDiskSynodSpec,wemustdefine
+its initial predicate and next-state action. The initial predicate HInit is the
+conjunction of the initial predicate Init of DiskSynodSpec with formulas
+that specify the initial values of chosen and allInput. Its next-state action
+HNext is the conjunction of the next-state action Next of DiskSynodSpec
+withformulasthatspecifythevaluesofchosen(cid:48) andallInput(cid:48) asfunctionsof
+the (unprimed and primed) values of the other variables. A general theorem
+of TLA asserts that, if no variable among the tuple x of variables occurs in
+I, N, or the tuple y of variables, then
+I ∧(cid:50)[N] ≡ ∃∃∃∃∃∃x : (I ∧(x = f(y)))∧(cid:50)[N ∧(x(cid:48) = g(x,y,y(cid:48)))]
+y (cid:104)x,y(cid:105)
+foranyf andg. SubstitutingInit forI,Next forN,andtheformulasimplied
+by the definitions of HInit and HNext below for f and g, this result implies
+thatthespecificationobtainedfromHDiskSynodSpec byhiding(existentially
+quantifying) chosen and allInput is equivalent to DiskSynodSpec. Hence, as
+explained above, proving that HDiskSynodSpec implies ISpec will show that
+DiskSynodSpec impliesSynodSpec,provingthecorrectnessoftheDiskSynod
+algorithm.
+We define HDiskSynodSpec in a module HDiskSynod that extends the
+DiskSynod module and declares chosen and allInput as variables.
+module HDiskSynod
+extends DiskSynod
+variables allInput, chosen
+24
+The initial values of chosen and allInput are the same as in the initial
+predicate of Ispec.
+HInit =∆ ∧ Init
+∧ chosen = NotAnInput
+∧ allInput = {input[p] : p ∈ Proc}
+The action HNext ensures that chosen equals the first output value that is
+different from NotAnInput, and that allInput always equals the set of all
+input values that have appeared thus far.
+HNext =∆
+∧ Next
+∧ chosen(cid:48) = let hasOutput(p) =∆ output(cid:48)[p] (cid:54)= NotAnInput
+in if ∨ chosen (cid:54)= NotAnInput
+∨ ∀p ∈ Proc : ¬hasOutput(p)
+then chosen
+else output(cid:48)[choose p ∈ Proc : hasOutput(p)]
+∧ allInput(cid:48) = allInput ∪ {input(cid:48)[p] : p ∈ Proc}
+The module then defines HDiskSynodSpec in the usual way, and asserts that
+it implies ISpec, with chosen and allInput replaced by the variables of the
+same name declared in the current module. (Again, the details of how this
+is expressed in TLA+ are not important.)
+HDiskSynodSpec =∆ HInit ∧ (cid:50)[HNext]
+(cid:104)vars,chosen,allInput(cid:105)
+theorem HDiskSynodSpec ⇒ IS(chosen, allInput)!ISpec
+To prove the correctness of the Disk Synod algorithm, it suffices to prove
+thetheoremabove,thatHDiskSynodSpec impliesISpec. (Rememberthatwe
+aredroppingtheIS(chosen, allInput)! fromidentifiersdefinedinsubmodule
+Inner.) We now outline the proof of this theorem. Let ivars be the tuple of
+all variables of ISpec:
+ivars =∆ (cid:104)input, output, chosen, allInput(cid:105)
+To prove that HDiskSynodSpec implies ISpec we must prove
+theorem R1 HInit ⇒ IInit
+theorem R2 HInit ∧(cid:50)[HNext] ⇒ (cid:50)[INext]
+(cid:104)vars,chosen,allInput(cid:105) ivars
+25
+TheproofofR1istrivial. ToproveR2, standard TLAreasoningshowsthat
+it suffices to find a state predicate HInv for which we can prove:
+theorem R2a HInit ∧(cid:50)[HNext] ⇒ (cid:50)HInv
+(cid:104)vars,chosen,allInput(cid:105)
+theorem R2b HInv ∧HInv(cid:48)∧HNext ⇒ INext ∨ (unchanged ivars)
+ApredicateHInv satisfyingR2a issaidtobeaninvariantofthespecification
+HInit ∧(cid:50)[HNext] . To prove R2a, we make HInv strong
+(cid:104)vars,chosen,allInput(cid:105)
+enough to satisfy:
+theorem I1 HInit ⇒ HInv
+theorem I2 HInv ∧HNext ⇒ HInv(cid:48)
+ApredicateHInv satisfyingI2issaidtobeaninvariantoftheactionHNext.
+A standard TLA theorem asserts that I1 and I2 imply R2a. Hence, R2b,
+I1, and I2 together imply HDiskSynodSpec ⇒ ISpec, which implies the
+correctness of the algorithm. So, we must now just define HInv and prove
+R2b, I1, and I2.
+There are two general approaches to defining HInv. In both, we write
+HInv as a conjunction HI ∧...∧HI . In the bottom-up method, we define
+1 k
+the HI in increasing order of i, so that each conjunction HI ∧...∧HI is
+i 1 k
+an invariant of HNext. We stop when we obtain an invariant strong enough
+to prove R2b. In the top-down method, we start by defining HI so that
+k
+R2b is satisfied with HI substituted for HInv. We then define the HI in
+k i
+decreasingorderofi sothatHI ∧...∧HI ∧HNext ⇒ HI(cid:48) ,stoppingwhen
+i k i+1
+we obtain an invariant of HNext. In practice, one uses a combination of the
+two methods—with a lot of backtracking. Here, we present the invariant in
+a bottom-up fashion.
+Ifthesetofdisksisempty,thenIsMajority(D)isfalseforallsubsetsD of
+Disk. (ThisfollowsfromtheassumptionaboutIsMajority bysubstitutingD
+forbothS andT.) Hence, HDiskSynodSpec impliesthatthesystemremains
+forever in its initial state, trivially satisfying ISpec. It therefore suffices to
+consider only the case when Disk is nonempty:
+assume Disk (cid:54)= {}
+ThestandardstartingpointforaTLAproofisasimple“typeinvariant”,
+which we call HInv1, asserting that all variables have the correct type:
+HInv1 =∆
+∧ input ∈ [Proc → Inputs]
+∧ output ∈ [Proc → Inputs ∪{NotAnInput}]
+26
+∧ disk ∈ [Disk → [Proc → DiskBlock]]
+∧ phase ∈ [Proc → 0 .. 3]
+∧ dblock ∈ [Proc → DiskBlock]
+∧ output ∈ [Proc → Inputs ∪{NotAnInput}]
+∧ disksWritten ∈ [Proc → subsetDisk]
+∧ blocksRead ∈ [Proc → [Disk →
+subset[block : DiskBlock,proc : Proc]]]
+∧ allInput ∈ subsetInputs
+∧ chosen ∈ Inputs ∪{NotAnInput}
+Our first lemma asserts that HInv1 is an invariant of HNext:
+lemma I2a HInv1∧HNext ⇒ HInv1(cid:48).
+The proofs of Theorem R2b and of most lemmas appear in Section A.4
+below.
+Before going any further, we define some useful state functions. First,
+we let MajoritySet be the set of all subsets of the set of disks containing
+a majority of them; we let blocksOf(p) be the set of all copies of p’s disk
+blocks in the system—that is, dblock[p], p’s blocks on disk, and all blocks
+of p read by some processor; and we let allBlocks be the set of all copies of
+all disk blocks of all processors.
+MajoritySet =∆ {D ∈ subsetDisk : IsMajority(D)}
+blocksOf(p) =∆
+let rdBy(q,d) =∆ {br ∈ blocksRead[q][d] : br.proc = p}
+in {dblock[p]} ∪ {disk[d][p] : d ∈ Disk}
+∪ {br.block : br ∈ union {rdBy(q,d) : q ∈ Proc,d ∈ Disk}}
+allBlocks =∆ union {blocksOf(p) : p ∈ Proc}
+The next conjunct of HInv describes some simple relations between the
+values of the different variables.
+HInv2 =∆
+∧ ∀p ∈ Proc :
+∀bk ∈ blocksOf(p) : ∧ bk.mbal ∈ Ballot(p)∪{0}
+∧ bk.bal ∈ Ballot(p)∪{0}
+∧ (bk.bal = 0) ≡ (bk.inp = NotAnInput)
+∧ bk.mbal ≥ bk.bal
+∧ bk.inp ∈ allInput ∪{NotAnInput}
+27
+∧ ∀p ∈ Proc,d ∈ Disk :
+∧ (d ∈ disksWritten[p]) ⇒ ∧ phase[p] ∈ {1,2}
+∧ disk[d][p] = dblock[p]
+∧ (phase[p] ∈ 1,2) ⇒ ∧ (blocksRead[p][d] (cid:54)= {}) ⇒
+(d ∈ disksWritten[p])
+∧ ¬hasRead(p,d,p)
+∧ ∀p ∈ Proc :
+∧ (phase[p] = 0) ⇒ ∧ dblock[p] = InitDB
+∧ disksWritten[p] = {}
+∧ ∀d ∈ Disk : ∀br ∈ blocksRead[p][d] :
+∧ br.proc = p
+∧ br.block = disk[d][p]
+∧ (phase[p] (cid:54)= 0) ⇒ ∧ dblock[p].mbal ∈ Ballot(p)
+∧ dblock[p].bal ∈ Ballot(p)∪{0}
+∧ ∀d ∈ Disk : ∀br ∈ blocksRead[p][d] :
+br.block.mbal < dblock[p].mbal
+∧ (phase[p] ∈ {2,3}) ⇒ (dblock[p].bal = dblock[p].mbal)
+∧ output[p] = if phase[p] = 3 then dblock[p].inp else NotAnInput
+∧ chosen ∈ allInput ∪{NotAnInput}
+∧ ∀p ∈ Proc : ∧ input[p] ∈ allInput
+∧ (chosen = NotAnInput) ⇒ (output[p] = NotAnInput)
+The invariance of HInv1∧HInv2 follows from Lemma I2a and:
+lemma I2b HInv1∧HInv2∧HNext ⇒ HInv2(cid:48)
+The next conjunct of HInv expresses the observation that if processors
+p and q have each read the other’s block from disk d during their current
+phases, then at least one of them has read the other’s current block.
+HInv3 =∆ ∀p,q ∈ Proc, d ∈ Disk :
+∧ phase[p] ∈ {1,2}
+∧ phase[q] ∈ {1,2}
+∧ hasRead(p,d,q)
+∧ hasRead(q,d,p)
+⇒ ∨ [block (cid:55)→ dblock[q], proc (cid:55)→ q] ∈ blocksRead[p][d]
+∨ [block (cid:55)→ dblock[p], proc (cid:55)→ p] ∈ blocksRead[q][d]
+lemma I2c HInv1∧HInv2∧HInv3∧HNext ⇒ HInv3(cid:48)
+The next conjunct of the invariant expresses relations among the mbal and
+bal valuesofaprocessorandofitsdiskblocks. Itsfirstconjunctassertsthat,
+28
+when p is not recovering from a failure, its mbal value is at least as large as
+the bal field of any of its blocks, and at least as large as the mbal field of
+its block on some disk in any majority set. Its second conjunct asserts that,
+in phase 1, its mbal value is actually greater than the bal field of any of its
+blocks. Its third conjunct asserts that, in phase 2, its bal value is the mbal
+field of all its blocks on some majority set of disks. The fourth conjunct
+asserts that the bal field of any of its blocks is at most as large as the mbal
+field of all its disk blocks on some majority set of disks.
+HInv4 =∆
+∀p ∈ Proc :
+∧ (phase[p] (cid:54)= 0) ⇒
+∧ ∀bk ∈ blocksOf(p) : dblock[p].mbal ≥ bk.bal
+∧ ∀D ∈ MajoritySet :
+∃d ∈ D : ∧ dblock[p].mbal ≥ disk[d][p].mbal
+∧ dblock[p].bal ≥ disk[d][p].bal
+∧ (phase[p] = 1) ⇒ (∀bk ∈ blocksOf(p) : dblock[p].mbal > bk.bal)
+∧ (phase[p] ∈ {2, 3}) ⇒
+(∃D ∈ MajoritySet : ∀d ∈ D : disk[d][p].mbal = dblock[p].bal)
+∧ ∀bk ∈ blocksOf(p) :
+∃D ∈ MajoritySet : ∀d ∈ D : disk[d][p].mbal ≥ bk.bal
+lemma I2d HInv1∧HInv2∧HInv2(cid:48)∧HInv4∧HNext ⇒ HInv4(cid:48)
+Before going further, we define maxBalInp(b, v) to assert that every
+block in allBlocks with bal field at least b has inp field v.
+maxBalInp(b,v) =∆ ∀bk ∈ allBlocks : (bk.bal ≥ b) ⇒ (bk.inp = v)
+We now come to a conjunct of HInv that provides some high-level insight
+into why the algorithm is correct. It asserts that, if a processor p is in
+phase 2, then either its bal and inp values satisfy maxBalInp, or else p must
+eventually abort its current ballot. Processor p will eventually abort its
+ballot if there is some processor q and majority set D such that p has not
+read q’s block on any disk in D, and all of those blocks have mbal values
+greater than dblock[p].bal. (Since p must read at least one of those disks, it
+must eventually read one of those blocks and abort.)
+29
+HInv5 =∆
+∀p ∈ Proc :
+(phase[p] = 2) ⇒ ∨ maxBalInp(dblock[p].bal, dblock[p].inp)
+∨ ∃D ∈ MajoritySet, q ∈ Proc :
+∀d ∈ D : ∧ disk[d][q].mbal > dblock[p].bal
+∧ ¬hasRead(p, d, q)
+lemma I2e
+HInv1∧HInv2∧HInv2(cid:48)∧HInv3∧HInv4∧HInv5∧HNext ⇒ HInv5(cid:48)
+Before defining our final conjunct, we define a predicate valueChosen(v)
+that is true if v is the only possible value that can be chosen as an output.
+It asserts that there is some ballot number b such that maxBalInp(b, v) is
+true. This condition is satisfied if there is no block bk in allBlocks with
+bk.bal ≥ b. So, valueChosen(v) must require that some processor p has
+written blocks with bal field at least b to a majority set D of the disks. (By
+maxBalInp(b,v), those blocks must have inp field v). We also ensure that,
+oncevalueChosen(v)becomestrue,itcanneverbemadefalse. Thisrequires
+the additional condition that no processor q that is currently executing
+phase 1 with mbal value at least b can fail to see those blocks that p has
+written. So, valueChosen(v) also asserts that, for every disk d in D, if q has
+already read disk[d][p], then it has read a block with bal field at least b.
+valueChosen(v) =∆
+∃b ∈ union {Ballot(p) : p ∈ Proc} :
+∧ maxBalInp(b,v)
+∧ ∃p ∈ Proc, D ∈ MajoritySet :
+∀d ∈ D : ∧ disk[d][p].bal ≥ b
+∧ ∀q ∈ Proc :
+∧ phase[q] = 1
+∧ dblock[q].mbal ≥ b
+∧ hasRead(q,d,p)
+⇒ (∃br ∈ blocksRead[q][d] : br.bal ≥ b)
+It’s obvious that, if valueChosen(v) = valueChosen(w), then v = w.
+The final conjunct of HInv asserts that, once an output has been cho-
+sen, valueChosen(chosen) holds, and each processor’s output equals either
+chosen or NotAnInput.
+HInv6 =∆ ∧ (chosen (cid:54)= NotAnInput) ⇒ valueChosen(chosen)
+∧ ∀p ∈ Proc : output[p] ∈ {chosen,NotAnInput}
+lemma I2f HInv1∧HInv2∧HInv2(cid:48)∧HInv3∧HInv6∧HNext ⇒ HInv6(cid:48)
+30
+We define HInv to be the conjunction of HInv1–HInv6.
+HInv =∆ HInv1∧HInv2∧HInv3∧HInv4∧HInv5∧HInv6
+Theorem I2 then follows easily from Lemmas I2a–I2f.
+A.4 Proofs
+We now sketch the proofs of most of the lemmas from Section A.3 and of
+Theorem R2b. We give hierarchically structured proofs [11]. A structured
+proof consists of a sequence of statements and their proofs; each of those
+proofsiseitherastructuredprooforanordinaryparagraph-styleproof. The
+jth step in the current level-i proof is numbered (cid:104)i(cid:105)j. Within a paragraph-
+style proof, (cid:104)i(cid:105)j denotes the most recent statement with that number. The
+proof statement “(cid:104)i(cid:105)j. Q.E.D.” denotes the current goal—that is, the level
+i −1 statement being proved by this step. A proof statement
+Assume: A
+Prove: P
+asserts that the assumption A implies P. If P is the current goal, then this
+is abbreviated as
+Case: A
+Anassumption constant c ∈ S assertsthatc isanewconstantparameter
+that we assume is in S. We prove ∀c ∈ S :P(c) by proving
+Assume: constant c ∈ S
+Prove: P(c)
+The assumption constant c ∈ S s.t. A(c) also assumes that c satisfies
+A(c). A proof statement
+(cid:104)i(cid:105)j choose c ∈ S s.t. P(c)
+asserts the existence of a value c in S satisfying P(c), and defines c to be
+such a value. To prove this statement, we must demonstrate the existence
+of c.
+We recommend that proofs be read hierarchically, from the top level
+down. To read the proof of a long level-i step, you should first read the
+level-(i +1) statements that form its proof, together with the proof of the
+final “Q.E.D.” step (which is usually a short paragraph), and then read the
+proofs of the level-(i +1) steps in any desired order.
+31
+We also use a hierarchical scheme for naming subformulas of a formula.
+IfF isthenameofaformulathatisaconjunction,thenF.i isthenameofits
+ith conjunct. A similar scheme is used for a disjunction, except using letters
+instead of numbers, soF.c is the name of the third disjunct ofF. If F is the
+nameoftheformulaP ⇒ Q,thenF.ListhenameofP andF.R isthename
+of Q. If F is the name of the formula ∃x :P(x) or ∀x :P(x), then F(e)
+is the name of the formula P(e), for any expression e. This is generalized
+in the obvious way for abbreviated quantifications like ∃x,y :P(x,y). For
+example, HInv5(n).R.b(E,m)(dd).2 is the formula ¬hasRead(n, dd, m).
+We now give the proofs. We omit the proofs of Lemmas I2a and I2b,
+which require a simple but tedious case analysis for the different disjuncts
+of Next. In the informal paragraph-style proofs, we use HInv1 implicitly in
+manyplacesbytacitlyassumingthatvariableshavevaluesoftherighttype.
+For example, we deduce phase(cid:48)[p] = 2 from
+phase(cid:48) = [phase except ![p] = 2]
+withoutmentioningthatthisfollowsonlyifphase isafunctionwhosedomain
+contains p, which is implied by HInv1.4.
+A.4.1 Lemma I2c
+We prove Lemma I2c by proving:
+Assume: 1. HInv1∧HInv2∧HInv3∧HNext
+2. constants p,q ∈ Proc, d ∈ Disk
+3. HInv3(p,q,d).L(cid:48)
+Prove: HInv3(p,q,d).R(cid:48)
+(cid:104)1(cid:105)1. Case: ¬HInv3(p,q,d).L
+(cid:104)2(cid:105)1. Case: (p (cid:54)= q)∧Phase1or2Read(p,d,q)
+(cid:104)3(cid:105)1. (phase[q] ∈ {1,2})∧hasRead(q,d,p)
+Proof: Assumption 3 implies
+(phase(cid:48)[q] ∈ {1,2})∧hasRead(q,d,p)(cid:48)
+and the level (cid:104)2(cid:105) case assumption implies that hasRead(q,d,p) and
+phase[q] are left unchanged.
+(cid:104)3(cid:105)2. disk[d][q] = dblock[q]
+Proof: (cid:104)3(cid:105)1 and HInv2.2(q,d).2 imply d ∈ disksWritten[q], which
+by HInv2.2(q,d).1 implies disk[d][q] = dblock[q].
+(cid:104)3(cid:105)3. Q.E.D.
+Proof: Phase1or2Read(p,d,q) (the level (cid:104)2(cid:105) case assumption) im-
+plies:
+[block (cid:55)→ disk[d][q], proc (cid:55)→ q] ∈ blocksRead(cid:48)[p][d]
+32
+and we then obtain HInv3(p,q).R.a(cid:48) from (cid:104)3(cid:105)2, since (p (cid:54)= q) ∧
+Phase1or2Read(p,d,q) implies dblock(cid:48)[q] = dblock[q].
+(cid:104)2(cid:105)2. Case: (p (cid:54)= q)∧Phase1or2Read(q,d,p)
+Proof:Theproofisthesameasthatof(cid:104)2(cid:105)1withp andq interchanged
+and HInv3(p,q).R.a(cid:48) replaced by HInv3(p,q).R.b(cid:48).
+(cid:104)2(cid:105)3. Case: EndPhase0(p)
+Proof: This implies ¬hasRead(p,d,q)(cid:48), so HInv3(p,q,d).L(cid:48) is false,
+making HInv3(p,q,d)(cid:48) true.
+(cid:104)2(cid:105)4. Case: EndPhase0(q)
+Proof:Theproofisthesameasthatof(cid:104)2(cid:105)3withp andq interchanged.
+(cid:104)2(cid:105)5. Q.E.D.
+Proof: By assumption 3 and the level (cid:104)1(cid:105) case assumption, one of the
+four conjuncts of HInv3(p,q,d).L is changed from false to true. Steps
+(cid:104)2(cid:105)1–(cid:104)2(cid:105)4 cover the four subactions of Next that can make one of those
+conjuncts true.
+(cid:104)1(cid:105)2. Case: HInv3(p,q,d).L
+Proof: HInv3(p,q,d).L and HInv3 (which holds by assumption 1) im-
+ply HInv3(p,q,d).R. The only subactions of HNext that can change
+HInv3(p,q,d).R from true to false are ones that remove elements from
+blocksRead[p][d] or blocksRead[q][d] or that change dblock[p] or dblock[q].
+All such subactions have an InitializePhase(p) or InitializePhase(q) con-
+junct that makes HInv3(p,q,d).R(cid:48) false, contrary to assumption 3.
+(cid:104)1(cid:105)3. Q.E.D.
+Proof: By (cid:104)1(cid:105)1 and (cid:104)1(cid:105)2.
+A.4.2 Lemma BksOf
+The following simple result will be used below.
+lemma BksOf
+HNext ∧HInv1 ⇒
+∀p ∈ Proc : blocksOf(p)(cid:48) ⊆ blocksOf(p) ∪ {dblock(cid:48)[p]}
+The lemma follows from the observation that the only way an HNext step
+creates a new block for a processor p (rather than copying an existing one,
+which leaves blocksOf(p) unchanged) is by changing dblock[p].
+A.4.3 Lemma I2d
+Assume: 1. HInv1∧HInv2∧HInv2(cid:48)∧HInv4∧HNext
+2. constant p ∈ Proc
+33
+Prove: HInv4(p)(cid:48)
+(cid:104)1(cid:105)1. HInv4(p).1(cid:48)
+(cid:104)2(cid:105)1. Case: (phase[p] = 0)∧(phase(cid:48)[p] (cid:54)= 0)
+(cid:104)3(cid:105)1. EndPhase0(p)
+Proof: By the level (cid:104)2(cid:105) case assumption, since EndPhase0(p) is the
+onlysubactionofHNext thatchangesphase[p]fromzerotoanonzero
+value.
+(cid:104)3(cid:105)2. Assume: constant bk ∈ blocksOf(p)(cid:48) s.t. bk (cid:54)= dblock(cid:48)[p]
+Prove: dblock(cid:48)[p].mbal ≥ bk.bal
+(cid:104)4(cid:105)1. bk ∈ blocksOf(p)
+Proof: Lemma BksOf and the level (cid:104)3(cid:105) assumption.
+(cid:104)4(cid:105)2. choose D1 ∈ MajoritySet s.t.
+∀d ∈ D1 : disk[d][p].mbal ≥ bk.bal
+Proof: HInv4.4 and (cid:104)4(cid:105)1 imply the existence of D1.
+(cid:104)4(cid:105)3. ∀D ∈ MajoritySet : ∃d ∈ D : disk[d][p].mbal ≥ bk.bal
+Proof: By (cid:104)4(cid:105)2, since for any majority set D, we can choose d to
+be a disk in D1∩D, which is nonempty because any two majority
+sets have an element in common.
+(cid:104)4(cid:105)4. ∃d ∈ Disk : ∃rb ∈ blocksRead[p][d] : rb.block.mbal ≥ bk.bal
+(cid:104)5(cid:105)1. ∀d ∈ Disk : ∀rb ∈ blocksRead[p][d] : rb.block = disk[d][p]
+Proof: By HInv2.3(p).1.R.3, which holds by assumption 1 and
+case assumption (cid:104)2(cid:105).
+(cid:104)5(cid:105)2. ∀d ∈ Disk : hasRead(p,d,p) ⇒ ∃rb ∈ blocksRead[p][d] :
+rb.block = disk[d][p]
+Proof: By (cid:104)5(cid:105)1 and the definition of hasRead(p,d,p), which
+implies that blocksRead[p][d] is nonempty.
+(cid:104)5(cid:105)3. ∃D ∈ MajoritySet :
+∀d ∈ D : ∃rb ∈ blocksRead[p][d] : rb.block = disk[d][p]
+Proof: By (cid:104)5(cid:105)2 and step (cid:104)3(cid:105)1, from which we deduce that
+hasRead(p,d,p) holds for all d in some majority set.
+(cid:104)5(cid:105)4. Q.E.D.
+Proof:Steps(cid:104)4(cid:105)3and(cid:104)5(cid:105)3implythatthereisadiskd andanrb
+in blocksRead[p][d] such that rb.block.mbal = disk[d][p].mbal ≥
+bk.bal.
+(cid:104)4(cid:105)5. Q.E.D.
+Proof: (cid:104)4(cid:105)4 and (cid:104)3(cid:105)1 imply dblock(cid:48)[p].mbal > bk.bal.
+(cid:104)3(cid:105)3. HInv4(p).1.R.2(cid:48)
+34
+(cid:104)4(cid:105)1. ∃D ∈ MajoritySet :
+∀d ∈ D : ∧ dblock(cid:48)[p].mbal > disk[d][p].mbal
+∧ dblock(cid:48)[p].bal ≥ disk[d][p].bal
+Proof:(cid:104)3(cid:105)1impliesdblock(cid:48)[p].mbal > br.mbal anddblock(cid:48)[p].bal ≥
+br.bal, for all br ∈ allBlocksRead(p). Step (cid:104)3(cid:105)1, the level (cid:104)2(cid:105) case
+assumption, and HInv2.3(p).3 imply that allBlocksRead(p) con-
+tains all blocks disk[d][p] for d in some majority set D of disks.
+(cid:104)4(cid:105)2. ∀D ∈ MajoritySet :
+∃d ∈ D : ∧ dblock(cid:48)[p].mbal > disk[d][p].mbal
+∧ dblock(cid:48)[p].bal ≥ disk[d][p].bal
+Proof: By (cid:104)4(cid:105)1, since any two majority sets have a disk in com-
+mon.
+(cid:104)4(cid:105)3. Q.E.D.
+Proof: HInv4(p).1.R.2(cid:48) follows from (cid:104)4(cid:105)2 and (cid:104)3(cid:105)1, which implies
+that disk is unchanged.
+(cid:104)3(cid:105)4. Q.E.D.
+Proof: By (cid:104)3(cid:105)2 and (cid:104)3(cid:105)3, since (cid:104)3(cid:105)2 implies HInv4(p).1.R.1(bk)(cid:48) ex-
+cept for the case bk = dblock(cid:48)[p]; and HInv4(p).1.R.1(bk)(cid:48) follows
+from HInv2.1(p)(dblock[p]).4(cid:48) in that case.
+(cid:104)2(cid:105)2. Case: (phase[p] (cid:54)= 0)∧(phase(cid:48)[p] (cid:54)= 0)
+(cid:104)3(cid:105)1. ∧ dblock(cid:48)[p].mbal ≥ dblock[p].mbal
+∧ dblock(cid:48)[p].bal ≥ dblock[p].bal
+Proof: Only the following four subactions of Next change dblock[p]:
+StartBallot(p) EndPhase1or2(p) EndPhase0(p) Fail(p)
+These four cases are checked as follows.
+• A StartBallot(p) step increases dblock[p].mbal, and it does not
+change dblock[p].bal.
+• An EndPhase1or2(p) step leaves dblock[p].mbal unchanged and
+changes dblock[p].bal only by setting it to dblock[p].mbal when
+phase[p] = 1, in which case HInv2.1(p)(dblock[p]).4 implies that
+its value is not decreased.
+• EndPhase0(p) and Fail(p) are ruled out by the level (cid:104)2(cid:105) case
+assumption.
+(cid:104)3(cid:105)2. HInv4(p).1.R.1(cid:48)
+Proof: If bk ∈ blocksOf(p), then HInv4(p).1.R.1(bk)(cid:48) follows from
+(cid:104)3(cid:105)1 and HInv4(p).1.R.1 (which holds by assumption 1 and the level
+(cid:104)2(cid:105) case assumption). If bk = dblock(cid:48)[p], then HInv4(p).1.R.1(bk)(cid:48)
+followsfromHInv2.1(p)(bk).4(cid:48). WethenobtainHInv4(p).1.R.1(cid:48)from
+Lemma BksOf.
+(cid:104)3(cid:105)3. HInv4(p).1.R.2(cid:48)
+35
+Proof: HNext implies that disk(cid:48)[p][d] equals disk[p][d] or dblock[p],
+soHInv4(p).1.R.2(cid:48)followsfrom(cid:104)3(cid:105)1andHInv4(p).1.R.2,whichholds
+by assumption 1 and the level (cid:104)2(cid:105) case assumption.
+(cid:104)3(cid:105)4. Q.E.D.
+Proof: By (cid:104)3(cid:105)2 and (cid:104)3(cid:105)3.
+(cid:104)2(cid:105)3. Q.E.D.
+Proof: By (cid:104)2(cid:105)1 and (cid:104)2(cid:105)2, since HInv4(p).1(cid:48) is trivially true if phase(cid:48)[p]
+equals 0.
+(cid:104)1(cid:105)2. HInv4(p).2(cid:48)
+(cid:104)2(cid:105)1. Case: (phase[p] (cid:54)= 1)∧(phase(cid:48)[p] = 1)
+(cid:104)3(cid:105)1. Case: phase[p] = 0
+(cid:104)4(cid:105)1. EndPhase0(p)
+Proof: By HNext and the levels (cid:104)2(cid:105) and (cid:104)3(cid:105) case assumptions.
+(cid:104)4(cid:105)2. ∀bk ∈ blocksOf(p) :
+∃D ∈ MajoritySet : ∀d ∈ D : disk[d][p].mbal ≥ bk.bal
+Proof: By HInv4(p).4.
+(cid:104)4(cid:105)3. ∀bk ∈ blocksOf(p) :
+∀D ∈ MajoritySet : ∃d ∈ D : disk[d][p].mbal ≥ bk.bal
+Proof: By (cid:104)4(cid:105)2, since any two majority sets have a disk in com-
+mon.
+(cid:104)4(cid:105)4. ∀bk ∈ blocksOf(p) :
+∃br ∈ allBlocksRead(p) : br.mbal ≥ bk.bal
+Proof: Step (cid:104)4(cid:105)1 implies that blocksRead[p][d] is nonempty for
+all disks d in some majority set D, and HInv2.3(p).1.R.3 (which
+holds by assumption 1 and the level (cid:104)3(cid:105) case assumption) implies
+rb.block = disk[d][p] for every d ∈ D and rb ∈ blocksRead[p][d].
+The result then follows from (cid:104)4(cid:105)3, since rb ∈ blocksRead[p][d] im-
+plies rb.block ∈ allBlocksRead(p).
+(cid:104)4(cid:105)5. Q.E.D.
+(cid:104)5(cid:105)1. ∀br ∈ allBlocksRead(p) : dblock(cid:48)[p].mbal > br.mbal
+Proof: By (cid:104)4(cid:105)1.
+(cid:104)5(cid:105)2. ∀bk ∈ blocksOf(p) : HInv4(p).2.R(bk)(cid:48)
+Proof: By (cid:104)5(cid:105)1 and (cid:104)4(cid:105)4.
+(cid:104)5(cid:105)3. ∃br ∈ allBlocksRead(p) : dblock(cid:48)[p].bal = br.bal
+Proof: By (cid:104)4(cid:105)1.
+(cid:104)5(cid:105)4. HInv4(p).2.R(dblock[p])(cid:48)
+Proof: By (cid:104)5(cid:105)1, (cid:104)5(cid:105)3, and HInv2.1(p).
+(cid:104)5(cid:105)5. Q.E.D.
+Proof: (cid:104)5(cid:105)2, (cid:104)5(cid:105)4, and Lemma BksOf imply HInv4(p).2.R(cid:48).
+(cid:104)3(cid:105)2. Case: phase[p] ∈ {2,3}
+36
+(cid:104)4(cid:105)1. ∀bk ∈ blocksOf(p) : dblock[p].mbal ≥ bk.bal
+Proof:HInv4(p).1andthelevel(cid:104)3(cid:105)caseassumption(whichimply
+HInv4(p).1.R.1).
+(cid:104)4(cid:105)2. ∧ dblock(cid:48)[p].mbal > dblock[p].mbal
+∧ dblock(cid:48)[p].bal = dblock[p].bal
+Proof: By HNext and the level (cid:104)2(cid:105) and (cid:104)3(cid:105) case assumptions,
+which imply StartBallot(p).
+(cid:104)4(cid:105)3. Q.E.D.
+Proof: By Lemma BksOf, it suffices to prove HInv4(p).2.R(bk)(cid:48)
+for bk ∈ blocksOf(p) and bk = dblock(cid:48)[p]. For bk ∈ blocksOf(p),
+it follows from (cid:104)4(cid:105)1 and (cid:104)4(cid:105)2. For bk = dblock(cid:48)[p], it follows from
+(cid:104)4(cid:105)2 and HInv2.1(p)(dblock[p]).4.
+(cid:104)3(cid:105)3. Q.E.D.
+Proof: The level (cid:104)2(cid:105) case assumption implies that (cid:104)3(cid:105)1 and (cid:104)3(cid:105)2
+cover all possibilities.
+(cid:104)2(cid:105)2. Case: (phase[p] = 1)∧(phase(cid:48)[p] = 1)
+Proof:ByHNext,thisimpliesdblock(cid:48)[p] = dblock[p],soLemmaBksOf
+implies that HInv4(p).2(cid:48) follows from HInv4(p).2.
+(cid:104)2(cid:105)3. Q.E.D.
+Proof: Since HInv4(p).2(cid:48) is trivially true if phase(cid:48)[p] (cid:54)= 1, the cases of
+(cid:104)2(cid:105)1 and (cid:104)2(cid:105)2 are exhaustive.
+(cid:104)1(cid:105)3. HInv4(p).3(cid:48)
+(cid:104)2(cid:105)1. Case: (phase[p] (cid:54)= 2)∧(phase(cid:48)[p] = 2)
+(cid:104)3(cid:105)1. EndPhase1or2(p)∧(phase[p] = 1)
+Proof: By HNext and the level (cid:104)2(cid:105) case assumption.
+(cid:104)3(cid:105)2. ∃D ∈ MajoritySet : ∀d ∈ D : disk[d][p].mbal = dblock[p].mbal
+Proof:ByHInv2.2(p).1,since(cid:104)3(cid:105)1impliesthatdisksWritten[p]con-
+tains a majority set of disks.
+(cid:104)3(cid:105)3. Q.E.D.
+Proof:(cid:104)3(cid:105)1impliesdblock(cid:48)[p].bal = dblock[p].mbal anddisk(cid:48) = disk,
+which by (cid:104)3(cid:105)2 implies HInv4(p).3(cid:48)
+(cid:104)2(cid:105)2. Case: (phase[p] ∈ {2,3})∧(phase(cid:48)[p] ∈ {2,3})
+(cid:104)3(cid:105)1. dblock(cid:48)[p].bal = dblock[p].bal
+Proof: By HNext and the level (cid:104)2(cid:105) case assumption.
+(cid:104)3(cid:105)2. ∀d ∈ Disk :
+Phase1or2Write(p,d) ⇒ (disk(cid:48)[d][p].mbal = dblock[p].bal)
+Proof: By the level (cid:104)2(cid:105) case assumption and HInv2.3(p).3.
+(cid:104)3(cid:105)3. Q.E.D.
+Proof: HInv4(p).3(cid:48) follows from HInv4(p).3, (cid:104)3(cid:105)1, and (cid:104)3(cid:105)2, since
+HNext ∧¬Phase1or2Write(p,d) implies disk(cid:48)[d][p] = disk[d][p], for
+37
+any disk d.
+(cid:104)2(cid:105)3. Q.E.D.
+Proof: HInv4(p).3(cid:48) follows from (cid:104)2(cid:105)1 and (cid:104)2(cid:105)2 because it is trivially
+trueifphase(cid:48)[p] ∈/ {2,3},andHNext∧(phase(cid:48)[p] = 3)impliesphase[p] ∈
+{2,3},
+(cid:104)1(cid:105)4. HInv4(p).4(cid:48)
+(cid:104)2(cid:105)1. Case: EndPhase1or2(p)∧(phase[p] = 1)
+(cid:104)3(cid:105)1. ∃D ∈ MajoritySet : ∀d ∈ D : disk(cid:48)[d][p].mbal = dblock(cid:48)[p].bal
+Proof: By (cid:104)1(cid:105)3 and the level (cid:104)2(cid:105) case assumption, which implies
+phase(cid:48)[p] = 2.
+(cid:104)3(cid:105)2. disk(cid:48) = disk
+Proof: By the level (cid:104)2(cid:105) case assumption.
+(cid:104)3(cid:105)3. Q.E.D.
+Proof: If bk ∈ blocksOf(p), then HInv4(p).4(bk)(cid:48) follows from (cid:104)3(cid:105)2
+and HInv4(p).4(bk). If bk = dblock(cid:48)[p], then HInv4(p).4(bk)(cid:48) follows
+from (cid:104)3(cid:105)1. By Lemma BksOf, this proves HInv4(p).4(cid:48).
+(cid:104)2(cid:105)2. Case: Fail(p)
+Proof: If bk ∈ blocksOf(p), then HInv4(p).4(bk)(cid:48) follows easily from
+HInv4(p).4(bk), since Fail(p) implies disk(cid:48) = disk. If bk = dblock(cid:48)[p],
+then HInv4(p).4(bk)(cid:48) holds because Fail(p) implies dblock(cid:48)[p].bal = 0.
+By Lemma BksOf, this proves HInv4(p).4(cid:48).
+(cid:104)2(cid:105)3. Case: ∃d ∈ Disk : Phase1or2Write(p,d)
+(cid:104)3(cid:105)1. Assume: 1. (d ∈ Disk)∧Phase1or2Write(p,d)
+2. (bk ∈ blocksOf(p))∧(D ∈ MajoritySet)
+3. ∀dd ∈ D : disk[dd][p].mbal ≥ bk.bal
+Prove: ∀dd ∈ D : disk(cid:48)[dd][p].mbal ≥ bk.bal
+(cid:104)4(cid:105)1. disk(cid:48)[d][p].mbal ≥ bk.bal
+Proof: Assumption 1 of (cid:104)3(cid:105)1 implies disk(cid:48)[d][p] = dblock[p] and
+phase[p] (cid:54)= 0, so this follows from HInv4(p).1.R.1.
+(cid:104)4(cid:105)2. Q.E.D.
+Proof: The conclusion of (cid:104)3(cid:105)1 follows from its assumption 3 and
+(cid:104)4(cid:105)1, since assumption 1 of (cid:104)3(cid:105)1 implies that disk(cid:48)[dd] = disk[dd]
+if dd (cid:54)= d.
+(cid:104)3(cid:105)2. Q.E.D.
+Proof: HInv4(p).4(cid:48) follows from HInv4(p).4, (cid:104)3(cid:105)1, and the level (cid:104)2(cid:105)
+case assumption, which implies blocksOf(p)(cid:48) ⊆ blocksOf(p).
+(cid:104)2(cid:105)4. Q.E.D.
+Proof:TheonlywaytochangeHInv4(p).4fromtruetofalseistoadda
+new element to {bk.bal : bk ∈ blocksOf(p)} or to change disk[d][p], for
+some disk d. The cases covered by (cid:104)2(cid:105)1, (cid:104)2(cid:105)2, (cid:104)2(cid:105)3 include all the sub-
+38
+actions of HNext that can do this. (That EndPhase0 does not add any
+element to {bk.bal : bk ∈ blocksOf(p)} follows from Inv2.3(p).1.R.3,
+which implies allBlocksRead(p) ⊆ blocksOf(p).)
+(cid:104)1(cid:105)5. Q.E.D.
+Proof: By steps (cid:104)1(cid:105)1–(cid:104)1(cid:105)4.
+A.4.4 Lemma I2e
+Simple logic shows that, to prove Lemma I2e, it suffices to prove:
+Assume: 1. HInv1∧HInv2∧HInv2(cid:48)∧HInv3∧HInv4∧HInv5∧HNext
+2. constant p ∈ Proc
+3. phase(cid:48)[p] = 2
+4. ¬HInv5(p).R.a(cid:48)
+Prove: HInv5(p).R.b(cid:48)
+(cid:104)1(cid:105)1. Case: (phase[p] (cid:54)= 2)
+(cid:104)2(cid:105)1. EndPhase1or2(p)∧(phase[p] = 1)
+Proof: By HNext, assumption 3, and the level (cid:104)1(cid:105) case assumption.
+(cid:104)2(cid:105)2. choose bk ∈ allBlocks s.t.
+(bk.bal ≥ dblock(cid:48)[p].bal)∧(bk (cid:54)= dblock(cid:48)[p])
+(cid:104)3(cid:105)1. choose bk ∈ allBlocks(cid:48) s.t.
+(bk.bal ≥ dblock(cid:48)[p].bal)∧(bk (cid:54)= dblock(cid:48)[p])
+Proof: Assumption 4 and the definition of maxBalInp imply the
+existence of bk.
+(cid:104)3(cid:105)2. choose q ∈ Proc : bk ∈ blocksOf(q)(cid:48)
+Proof: (cid:104)3(cid:105)1 asserts bk ∈ allBlocks, so the existence of q follows from
+the definition of allBlocks.
+(cid:104)3(cid:105)3. bk ∈ blocksOf(q)
+Proof: We consider the two cases q = p and q (cid:54)= p. In both cases,
+the result follows from (cid:104)3(cid:105)2 and Lemma BksOf. If q = p, it follows
+because bk (cid:54)= dblock(cid:48)[p] (by (cid:104)3(cid:105)1). If q (cid:54)= p, it follows because (cid:104)2(cid:105)1
+implies dblock(cid:48)[q] = dblock[q], so the lemma implies blocksOf(q)(cid:48) ⊆
+blocksOf(q).
+(cid:104)3(cid:105)4. Q.E.D.
+Proof: By (cid:104)3(cid:105)1, (cid:104)3(cid:105)3, and the definition of allBlocks.
+(cid:104)2(cid:105)3. choose q ∈ Proc\{p} s.t. bk ∈ blocksOf(q)
+Proof: By (cid:104)2(cid:105)2 and the definition of allBlocks, there is some processor
+q such that bk ∈ blocksOf(q). Steps (cid:104)2(cid:105)1 and (cid:104)2(cid:105)2 imply bk.bal ≥
+dblock[p].mbal, so phase[p] = 1 (by (cid:104)2(cid:105)1) and HInv4(p).2 imply q (cid:54)= p.
+(cid:104)2(cid:105)4. ∃D ∈ MajoritySet : ∀d ∈ D : disk[d][q].mbal ≥ dblock(cid:48)[p].bal
+39
+Proof: By (cid:104)2(cid:105)3, HInv4(q).4, and (cid:104)2(cid:105)2.
+(cid:104)2(cid:105)5. ∃D ∈ MajoritySet : ∀d ∈ D : disk[d][q].mbal > dblock(cid:48)[p].bal
+Proof: By (cid:104)2(cid:105)3 (which implies p (cid:54)= q) and (cid:104)2(cid:105)4, since (cid:104)2(cid:105)1 (which
+by HInv2.3(p).2 implies dblock(cid:48)[p].bal > 0), HInv2.1, and the assump-
+tion that different processors have distinct ballot numbers imply that
+disk[d][q].mbal (cid:54)= dblock(cid:48)[p].bal.
+(cid:104)2(cid:105)6. Q.E.D.
+Proof: (cid:104)2(cid:105)1 implies ¬hasRead(p,d,q)(cid:48), for all disks d. Hence, (cid:104)2(cid:105)5
+implies HInv5(p).R.b(cid:48).
+(cid:104)1(cid:105)2. Case: (phase[p] = 2)∧HInv5(p).R.a
+(cid:104)2(cid:105)1. choose q ∈ Proc\{p} s.t. ∧ EndPhase1or2(q)∧(phase[q] = 1)
+∧ dblock(cid:48)[q].bal > dblock[p].bal
+∧ dblock(cid:48)[q].inp (cid:54)= dblock[p].inp
+(cid:104)3(cid:105)1. dblock(cid:48)[p] = dblock[p]
+Proof: By phase[p] = 2 (the level (cid:104)1(cid:105) case assumption), phase(cid:48)[p] =
+2 (assumption 3), and HNext.
+(cid:104)3(cid:105)2. choose q ∈ Proc s.t. ∧ dblock(cid:48)[q].bal ≥ dblock[p].bal
+∧ dblock(cid:48)[q].inp (cid:54)= dblock[p].inp
+∧ dblock(cid:48)[q].bal ∈/
+{bk.bal : bk ∈ blocksOf(q)}
+Proof:By(cid:104)3(cid:105)1, HInv5.R.a (fromthelevel(cid:104)1(cid:105)caseassumption)and
+¬HInv5.R.a(cid:48) (assumption 3), there exist a processor q and a bk in
+allBlocks(q)(cid:48)\allBlocks(q) such that bk.bal ≥ dblock[p].bal, bk.inp (cid:54)=
+dblock[p].inp, and bk.bal ∈/ {bb.bal : bb ∈ blocksOf(q)}. Lemma
+BlksOf implies bk = dblock(cid:48)[q].
+(cid:104)3(cid:105)3. dblock[p].bal > 0
+Proof: By HInv2.3(p).2.R.1, and HInv2.3(p).3, since phase[p] = 2
+by the level (cid:104)1(cid:105) case assumption.
+(cid:104)3(cid:105)4. dblock(cid:48)[q].bal > 0
+Proof: By conjunct 1 of (cid:104)3(cid:105)2 and (cid:104)3(cid:105)3.
+(cid:104)3(cid:105)5. ¬EndPhase0(q)
+Proof: By conjunct 3 of (cid:104)3(cid:105)2, since HInv2.3(q).1.R.3 implies:
+∀d ∈ Disk : blocksRead[q][d] ⊆ blocksOf(q)
+(cid:104)3(cid:105)6. EndPhase1or2(q)∧(phase[q] = 1)
+Proof: Conjunct 3 of (cid:104)3(cid:105)2 implies dblock(cid:48)[q].bal (cid:54)= dblock[q].bal. By
+HNext,thisimplieseitherEndPhase1or2(q)∧(phase[q] = 1),Fail(q),
+or EndPhase0(q). The second possibility is ruled out by (cid:104)3(cid:105)4 and the
+third is ruled out by (cid:104)3(cid:105)5.
+(cid:104)3(cid:105)7. (q (cid:54)= p)∧(dblock(cid:48)[q].bal (cid:54)= dblock[p].bal)
+40
+Proof: (cid:104)3(cid:105)6 and phase[p] = 2 (by the level (cid:104)1(cid:105) case assumption)
+imply p (cid:54)= q. We then obtain dblock(cid:48)[q].bal (cid:54)= dblock[p].bal from
+HInv2.1, (cid:104)3(cid:105)3, and the assumption that different processors have dis-
+tinct ballot numbers.
+(cid:104)3(cid:105)8. Q.E.D.
+Proof: By (cid:104)3(cid:105)2, (cid:104)3(cid:105)6, and (cid:104)3(cid:105)7.
+(cid:104)2(cid:105)2. choose D ∈ MajoritySet s.t.
+∀d ∈ D : ∧ disk[d][q].mbal > dblock[p].bal
+∧ hasRead(q,d,p)
+Proof: By HInv2.2(q,d).1 and conjunct 1 of (cid:104)2(cid:105)1, there is a majority
+set D such that hasRead(q,d,p) and disk[d][q].mbal = dblock(cid:48)[q].bal,
+for all d ∈ D. The result then follows from conjunct 2 of (cid:104)2(cid:105)1.
+(cid:104)2(cid:105)3. ∀d ∈ D : [block (cid:55)→ dblock[p], proc (cid:55)→ p] ∈/ blocksRead[q][d]
+Proof:ByHInv5(p).R.a (thelevel(cid:104)1(cid:105)caseassumption), conjunct1of
+(cid:104)2(cid:105)1, and the definitions of maxBalInp and EndPhase1or2, if dblock[p]
+were in allBlocksRead(q), then dblock(cid:48)[q].inp would equal dblock[p].inp,
+contradicting conjunct 3 of (cid:104)2(cid:105)1.
+(cid:104)2(cid:105)4. ∀d ∈ D : ¬∃br ∈ blocksRead[p][d] : br.block.mbal ≥ dblock[p].bal
+Proof: By HInv2.3(p).2.R.3 and HInv2.3(p).3, since the level (cid:104)1(cid:105) case
+assumption asserts phase[p] = 2.
+(cid:104)2(cid:105)5. ∀d ∈ D : ¬hasRead(p,d,q)
+Proof: We assume d ∈ D and hasRead(p,d,q), and we obtain a con-
+tradiction.
+(cid:104)3(cid:105)1. [block (cid:55)→ dblock[q], proc (cid:55)→ q] ∈ blocksRead[p][d]
+Proof: We have phase[p] = 2 (by the level (cid:104)1(cid:105) case assumption),
+phase[q] = 1 (by conjunct 1 of (cid:104)2(cid:105)1) and hasRead(q,d,p) (by (cid:104)2(cid:105)2),
+so this follows from hasRead(p,d,q) by HInv3(p,q,d) and (cid:104)2(cid:105)3.
+(cid:104)3(cid:105)2. dblock[q].mbal > dblock[p].bal
+Proof: Conjunct 1 of (cid:104)2(cid:105)1 implies dblock(cid:48)[q].bal = dblock[q].mbal, so
+this follows from conjunct 2 of (cid:104)2(cid:105)1.
+(cid:104)3(cid:105)3. Q.E.D.
+Proof: (cid:104)3(cid:105)1 and (cid:104)3(cid:105)2 contradict (cid:104)2(cid:105)4.
+(cid:104)2(cid:105)6. Q.E.D.
+Proof: (cid:104)2(cid:105)2 and (cid:104)2(cid:105)5 imply HInv5(p).R.b. Conjunct 1 of (cid:104)2(cid:105)1 implies
+that disk, dblock[p].bal and hasRead(p,d,q) are unchanged, for all d ∈
+Disk, so HInv5(p).R.b implies HInv5(p).R.b(cid:48).
+(cid:104)1(cid:105)3. Case: (phase[p] = 2)∧HInv5(p).R.b
+(cid:104)2(cid:105)1. choose D ∈ MajoritySet, q ∈ Proc s.t.
+(q (cid:54)= p)∧HInv5(p).R.b(D,q)
+41
+Proof: The level (cid:104)1(cid:105) case assumption implies the existence of D and q
+satisfying HInv5(p).R.b(D,q). Since any two majority sets have a disk
+in common, HInv4(p).3 then implies q (cid:54)= p.
+(cid:104)2(cid:105)2. Case: ∃d ∈ D : Phase1or2Write(q,d)
+(cid:104)3(cid:105)1. dblock[q].mbal > dblock[p].bal.
+Proof: Since D is a majority set (by (cid:104)2(cid:105)1), HInv4(q).1.R.2 implies
+dblock[q].mbal ≥ disk[d][p].mbal forsomed ∈ D, sotheresultfollows
+from HInv5(p).R.b(D,q) (which holds by (cid:104)2(cid:105)1).
+(cid:104)3(cid:105)2. Q.E.D.
+Proof: The level (cid:104)2(cid:105) case assumption implies that dblock[p] and
+hasRead(p,d,q) are left unchanged, for all d, and that disk is un-
+changed except that disk(cid:48)[d][q] = dblock[q] for some disk d. It fol-
+lows from this and (cid:104)3(cid:105)1 that HInv5(p).R.b(D,q) (which holds by
+(cid:104)2(cid:105)1) implies HInv5(p).R.b(D,q)(cid:48).
+(cid:104)2(cid:105)3. Case: ∃d ∈ D : Phase1or2Read(p,d,q)
+Proof: By HInv5(p).R.b(D,q) (from (cid:104)2(cid:105)1), we have disk[d][q].mbal >
+dblock[p].bal, for all d ∈ D. Since phase[p] = 2 (by the level (cid:104)1(cid:105) case
+assumption), HInv2.3(p).3 implies dblock[p].bal = dblock[p].mbal, so
+disk[d][q].mbal > dblock[p].mbal for all d ∈ D. Thus, the case assump-
+tionimpliesphase(cid:48)[p] = 1(becausetheballotmustabort),contradicting
+assumption 3.
+(cid:104)2(cid:105)4. Q.E.D.
+Proof: Since phase(cid:48)[p] = phase[p] = 2 (by assumption 3 and the level
+(cid:104)1(cid:105) case assumption), HNext implies that dblock[p] is unchanged and
+that, for any d ∈ D:
+∧ (disk(cid:48)[d][q] (cid:54)= disk[d][q]) ⇒ Phase1or2Write(q,d)
+∧ hasRead(p,d,q)(cid:48)∧¬hasRead(p,d,q) ⇒ Phase1or2Read(p,d,q)
+Hence, (cid:104)2(cid:105)2 and (cid:104)2(cid:105)3 cover the only cases in which HInv5(p).R.b(D,q)
+can be made false. In all other cases, HInv5(p).R.b(cid:48) follows from
+HInv5(p).R.b(D,q) (which holds by (cid:104)2(cid:105)1).
+(cid:104)1(cid:105)4. Q.E.D.
+Proof: Since HInv5(p) holds by assumption 1, the cases in steps (cid:104)1(cid:105)1,
+(cid:104)1(cid:105)2, and (cid:104)1(cid:105)3 are exhaustive.
+A.4.5 Lemma I2f
+The proof of Lemma I2f uses:
+lemma VC ∀v ∈ Inputs : HInv1∧HInv4∧HNext ∧valueChosen(v)
+⇒ valueChosen(v)(cid:48)
+42
+We prove Lemma VC by proving:
+Assume: 1. constant b ∈ union {Ballot(p) : p ∈ Proc}
+2. constants v ∈ Inputs, p ∈ Proc, D ∈ MajoritySet
+3. maxBalInp(b,v)
+4. valueChosen(v)(b).2(p,D)
+Prove: maxBalInp(b,v)(cid:48)∧valueChosen(v)(b).2(p,D)(cid:48)
+(cid:104)1(cid:105)1. maxBalInp(b,v)(cid:48)
+(cid:104)2(cid:105)1. Case: ∃q ∈ Proc : EndPhase1or2(q)∧(phase[q] = 1)
+(cid:104)3(cid:105)1. choose q ∈ Proc s.t. EndPhase1or2(q)∧(phase[q] = 1)
+Proof: q exists by the level (cid:104)2(cid:105) case assumption.
+(cid:104)3(cid:105)2. allBlocks(cid:48) ⊆ allBlocks ∪{dblock(cid:48)[q]}.
+Proof: Lemma BlksOf, (cid:104)3(cid:105)1, and the definition of EndPhase1or2.
+(cid:104)3(cid:105)3. Case: (p (cid:54)= q)∧(dblock[q].mbal ≥ b)
+(cid:104)4(cid:105)1. choose d ∈ D s.t. hasRead(q,d,p)
+Proof: The existence of d follows from (cid:104)3(cid:105)1 and p (cid:54)= q (from the
+level(cid:104)3(cid:105)caseassumption),whichimplythathasRead(q,d,p)holds
+for all d in some majority set, since any two majority sets have a
+disk in common.
+(cid:104)4(cid:105)2. ∃br ∈ blocksRead[q][d] : br.block.bal ≥ b
+Proof: This is the conclusion of valueChosen(v)(b).2(p,D)(d).2,
+which holds by assumption 4 since (cid:104)4(cid:105)1 implies d ∈ D. Its hy-
+potheses are proved as follows:
+• phase[q] = 1 holds by (cid:104)3(cid:105)1.
+• dblock[q].mbal ≥ b holds by the level (cid:104)3(cid:105) case assumption.
+• hasRead(q,d,p) holds by (cid:104)4(cid:105)1.
+(cid:104)4(cid:105)3. dblock(cid:48)[q].inp = v
+Proof: By (cid:104)4(cid:105)2, maxBalInp(b,v) (assumption 3), (cid:104)3(cid:105)1, and the
+definition of EndPhase1or2.
+(cid:104)4(cid:105)4. Q.E.D.
+Proof: maxBalInp(b,v)(cid:48) holds by(cid:104)4(cid:105)3, (cid:104)3(cid:105)2, and maxBalInp(b,v)
+(assumption 3).
+(cid:104)3(cid:105)4. Case: (p = q)∧(dblock[q].mbal ≥ b)
+(cid:104)4(cid:105)1. ∀d ∈ D : disk[d][p].bal ≥ b
+Proof: By assumption 4.
+(cid:104)4(cid:105)2. ∃d ∈ D : disk[d][p] = dblock[p]
+Proof:Thelevel(cid:104)2(cid:105)caseassumptionandp = q (fromthelevel(cid:104)3(cid:105)
+case assumption) imply that disksWritten[p] contains a majority
+set, and hence an element d of D. The result then follows from
+HInv2.2(p,d).1.
+43
+(cid:104)4(cid:105)3. dblock(cid:48)[p].inp = v
+Proof: (cid:104)4(cid:105)1 and (cid:104)4(cid:105)2 imply dblock[p].bal ≥ b, so maxBalInp(b,v)
+(assumption 3), (cid:104)3(cid:105)1, q = p (from the level (cid:104)3(cid:105) case assumption),
+and the definition of EndPhase1or2 imply dblock(cid:48)[p].inp = v.
+(cid:104)4(cid:105)4. Q.E.D.
+Proof: Assumption 3, (cid:104)3(cid:105)2, (cid:104)4(cid:105)3, and p = q (the level (cid:104)3(cid:105) case
+assumption) imply maxBalInp(b,v)(cid:48).
+(cid:104)3(cid:105)5. Case: dblock[q].mbal < b
+Proof: By (cid:104)3(cid:105)1, this implies dblock(cid:48)[q].bal < b, so maxBalInp(b,v)
+(assumption 3) and (cid:104)3(cid:105)2 imply maxBalInp(b,v)(cid:48).
+(cid:104)3(cid:105)6. Q.E.D.
+Proof: By (cid:104)3(cid:105)3, (cid:104)3(cid:105)4, and (cid:104)3(cid:105)5.
+(cid:104)2(cid:105)2. Case: ∃q ∈ Proc : Fail(q)
+Proof: By maxBalInp(b,v) (assumption 3), since b > 0 (by assump-
+tion 1) and the definition of Fail(q) imply:
+{bk ∈ allBlocks(cid:48) : bk.bal ≥ b} ⊆ {bk ∈ allBlocks : bk.bal ≥ b}
+(cid:104)2(cid:105)3. Q.E.D.
+Proof: By (cid:104)2(cid:105)1 and (cid:104)2(cid:105)2 , since HNext implies that the only kind of
+step that can add a new element to {(cid:104)bk.bal, bk.inp(cid:105) : bk ∈ allBlocks}
+is an EndPhase1or2(q)∧(phase[q] = 1) step or a Fail(q) step, for some
+processor q.
+(cid:104)1(cid:105)2. valueChosen(v)(b).2(p,D)(cid:48)
+(cid:104)2(cid:105)1. Assume: constant d ∈ D
+Prove: disk(cid:48)[d][p].bal ≥ b
+(cid:104)3(cid:105)1. Case: Phase1or2Write(p,d)
+(cid:104)4(cid:105)1. ∃dd ∈ D : dblock[p].bal ≥ disk[dd][p].bal
+Proof:ByHInv4(p).1.R.2(D), sinceD ∈ MajoritySet byassump-
+tion 2, and phase[p] (cid:54)= 0 by the level (cid:104)3(cid:105) case assumption.
+(cid:104)4(cid:105)2. dblock[p].bal ≥ b
+Proof: By (cid:104)4(cid:105)1 and assumption 4, which implies disk[dd][p].bal ≥
+b for all dd ∈ D.
+(cid:104)4(cid:105)3. Q.E.D.
+Proof: By the level (cid:104)3(cid:105) case assumption, disk(cid:48)[d][p] = dblock[p],
+so (cid:104)4(cid:105)2 implies disk(cid:48)[d][p].bal ≥ b.
+(cid:104)3(cid:105)2. Case: disk(cid:48)[d][p] = disk[d][p]
+Proof: In this case, assumption 4 and d ∈ D (by the level (cid:104)2(cid:105)
+assumption) imply disk(cid:48)[d][p].bal ≥ b.
+(cid:104)3(cid:105)3. Q.E.D.
+Proof: By (cid:104)3(cid:105)1 and (cid:104)3(cid:105)2, since:
+HNext ∧(disk(cid:48)[d][p] (cid:54)= disk[d][p]) ⇒ Phase1or2Write(p,d)
+44
+(cid:104)2(cid:105)2. Assume: 1. constants q ∈ Proc, d ∈ D
+2. phase(cid:48)[q] = 1
+3. dblock(cid:48)[q].mbal ≥ b
+4. hasRead(q,d,p)(cid:48)
+Prove: ∃br ∈ blocksRead(cid:48)[q][d] : br.block.bal ≥ b
+(cid:104)3(cid:105)1. phase[q] = 1
+Proof: By the level (cid:104)2(cid:105) assumptions 2 and 4, since:
+HNext ∧(phase(cid:48)[q] (cid:54)= phase[q]) ⇒ InitalizePhase(q)
+and InitalizePhase(q) implies ¬hasRead(q,d,p)(cid:48).
+(cid:104)3(cid:105)2. dblock(cid:48)[q].mbal = dblock[q].mbal
+Proof: By the level (cid:104)2(cid:105) assumption 4, since:
+HNext ∧(dblock(cid:48)[q] (cid:54)= dblock[q]) ⇒ InitalizePhase(q)
+and InitalizePhase(q) implies ¬hasRead(q,d,p)(cid:48).
+(cid:104)3(cid:105)3. Case: Phase1or2Read(q,d,p)
+Proof: Assumption 4 and d ∈ D (by the level (cid:104)2(cid:105) assumption 1)
+imply disk[d][p].bal ≥ b. By Phase1or2Read(q,d,p) and the level
+(cid:104)2(cid:105) assumption 4 (which implies that the action does not abort the
+ballot), this implies:
+[block (cid:55)→ disk[d][p], proc (cid:55)→ p] ∈ blocksRead(cid:48)[q][d]
+proving the level (cid:104)2(cid:105) goal.
+(cid:104)3(cid:105)4. Case: ¬Phase1or2Read(q,d,p)
+(cid:104)4(cid:105)1. hasRead(q,d,p)
+Proof: By the level (cid:104)3(cid:105) case assumption and the level (cid:104)2(cid:105) assump-
+tion 4, since:
+HNext ∧¬hasRead(q,d,p)∧hasRead(q,d,p)(cid:48)
+⇒ Phase1or2Read(q,d,p)
+(cid:104)4(cid:105)2. ∃br ∈ blocksRead[q][d] : br.block.bal ≥ b
+Proof: By assumption 4, since d ∈ D by the level (cid:104)2(cid:105) assump-
+tion 1, phase[q] = 1 by (cid:104)3(cid:105)1, dblock[q].mbal ≥ b by (cid:104)3(cid:105)2 and the
+level (cid:104)2(cid:105) assumption 3, and hasRead(q,d,p) by (cid:104)4(cid:105)1.
+(cid:104)4(cid:105)3. Q.E.D.
+Proof: By (cid:104)4(cid:105)2 and the level (cid:104)2(cid:105) assumption 4, since:
+HNext ∧ hasRead(q,d,p)(cid:48) ⇒
+(blocksRead[q][d] ⊆ blocksRead[q][d](cid:48))
+(cid:104)3(cid:105)5. Q.E.D.
+Proof: By (cid:104)3(cid:105)3 and (cid:104)3(cid:105)4.
+(cid:104)2(cid:105)3. Q.E.D.
+Proof: (cid:104)2(cid:105)1 and (cid:104)2(cid:105)2 imply valueChosen(v)(b).2(p,D)(cid:48).
+(cid:104)1(cid:105)3. Q.E.D.
+Proof: By (cid:104)1(cid:105)1 and (cid:104)1(cid:105)2.
+45
+We now prove Lemma I2f by proving:
+Assume: HInv1∧HInv2∧HInv2(cid:48)∧HInv3∧HInv5∧HInv6∧HNext
+Prove: HInv6(cid:48)
+(cid:104)1(cid:105)1. Assume: chosen(cid:48) (cid:54)= NotAnInput
+Prove: valueChosen(chosen)(cid:48)
+(cid:104)2(cid:105)1. Case: chosen = NotAnInput
+(cid:104)3(cid:105)1. choose p ∈ Proc s.t. EndPhase1or2(p)∧(phase[p] = 2)
+Proof:HInv2.5andthelevel(cid:104)2(cid:105)caseassumptionimplyoutput[p] =
+NotAnInput forallprocessorsp. FromHNext.2andthelevels(cid:104)1(cid:105)and
+(cid:104)2(cid:105) assumptions, we deduce that output(cid:48)[p] (cid:54)= NotAnOutput for some
+p ∈ Proc. By HNext, this implies EndPhase1or2(p)∧(phase[p] = 2).
+(cid:104)3(cid:105)2. maxBalInp(dblock[p].bal, dblock[p].inp)
+Proof: (cid:104)3(cid:105)1 implies
+∃D ∈ MajoritySet : ∀d ∈ D, q ∈ Proc : hasRead(p,d,q)
+Since any two majority sets have a disk in common, this implies
+¬HInv5(p).R.b. Hence, HInv5 and (cid:104)3(cid:105)1 (which implies phase[p] = 2)
+imply HInv5(p).R.a.
+(cid:104)3(cid:105)3. maxBalInp(dblock[p].bal, chosen)(cid:48)
+Proof: (cid:104)3(cid:105)1, HNext.2, and the level (cid:104)2(cid:105) case assumption imply
+(chosen(cid:48) = dblock[p].inp)∧(dblock(cid:48)[p].bal = dblock[p].bal)
+which by (cid:104)3(cid:105)2 implies maxBalInp(dblock(cid:48)[p].bal, chosen(cid:48)). Lemma
+BksOf and (cid:104)3(cid:105)1 imply that no new element is added to
+{(cid:104)bk.bal, bk.inp(cid:105) : bk ∈ allBlocks}
+so maxBalInp(b,v)(cid:48) = maxBalInp(b,v) for any constants b and v. If
+b and v are constants, then b = dblock(cid:48)[p].bal and v = chosen(cid:48) imply
+maxBalInp(b,v)(cid:48) = maxBalInp(dblock[p].bal, chosen)(cid:48).
+(cid:104)3(cid:105)4. choose D ∈ MajoritySet s.t.
+∀d ∈ D : ∧ disk[d][p] = dblock[p]
+∧ ∀q ∈ Proc\{p} : hasRead(p,d,q)
+Proof: D exists by (cid:104)3(cid:105)1 and HInv2.2(p,d).1.
+(cid:104)3(cid:105)5. Assume: constants q ∈ Proc, d ∈ D s.t.
+∧ phase[q] = 1
+∧ dblock[q].mbal ≥ dblock[p].bal
+∧ hasRead(q,d,p)
+Prove: [block (cid:55)→ dblock[p], proc (cid:55)→ p] ∈ blocksRead[q][d]
+Proof: (cid:104)3(cid:105)1 and HInv2.3(p).3 imply dblock[p].bal = dblock[p].mbal;
+HInv2.3(p).2.R.3 and the assumption dblock[q].mbal ≥ dblock[p].bal
+then imply
+[block (cid:55)→ dblock[q], proc (cid:55)→ q] ∈/ blocksRead[p][d]
+46
+The result now follows from the conclusion of HInv3(p,q,d), whose
+hypotheses are proved as follows: phase[p] = 2 follows from (cid:104)3(cid:105)1);
+phase[q] = 1 is an assumption; hasRead(p,d,q) follows from (cid:104)3(cid:105)4
+(since phase[p] (cid:54)= phase[q] implies p (cid:54)= q); and hasRead(q,d,p) is an
+assumption.
+(cid:104)3(cid:105)6. ∀q ∈ Proc,d ∈ D :
+∧ phase(cid:48)[q] = 1
+∧ dblock(cid:48)[q].mbal ≥ dblock[p].bal
+∧ hasRead(q,d,p)(cid:48)
+⇒ (∃br ∈ blocksRead(cid:48)[q][d] : br.block.bal = dblock[p].bal)
+Proof: (cid:104)3(cid:105)1 and the assumption phase(cid:48)[q] = 1 imply q (cid:54)= p, so (cid:104)3(cid:105)1
+impliesphase[q],dblock[q],hasRead(q,d,p),andblocksRead[q][d]are
+unchanged, for all disks d. The result now follows from (cid:104)3(cid:105)5.
+(cid:104)3(cid:105)7. Q.E.D.
+Proof: We deduce valueChosen(chosen)(cid:48) as follows:
+• valueChosen(chosen)(cid:48)(dblock[p].bal).1 follows from (cid:104)3(cid:105)3 because
+(cid:104)3(cid:105)1 implies dblock[p].bal(cid:48) = dblock[p].bal.
+• valueChosen(chosen)(cid:48)(dblock[p].bal).2(p,D).1 follows from (cid:104)3(cid:105)4,
+since (cid:104)3(cid:105)1 implies disk(cid:48) = disk.
+• valueChosen(chosen)(cid:48)(dblock[p].bal).2(p,D).2 follows from (cid:104)3(cid:105)6.
+(cid:104)2(cid:105)2. Case: chosen (cid:54)= NotAnInput
+(cid:104)3(cid:105)1. chosen(cid:48) = chosen
+Proof: By HNext.2 and the level (cid:104)2(cid:105) case assumption.
+(cid:104)3(cid:105)2. Q.E.D.
+Proof: We deduce valueChosen(chosen) from the level (cid:104)2(cid:105) case as-
+sumption and HInv6.1. By Lemma VC and (cid:104)3(cid:105)1, this implies the
+level (cid:104)1(cid:105) goal, valueChosen(chosen)(cid:48).
+(cid:104)2(cid:105)3. Q.E.D.
+Proof: Immediate from (cid:104)2(cid:105)1 and (cid:104)2(cid:105)2.
+(cid:104)1(cid:105)2. Assume: constant p ∈ Proc s.t. output(cid:48)[p] (cid:54)= NotAnInput
+Prove: output(cid:48)[p] = chosen(cid:48)
+(cid:104)2(cid:105)1. Case: chosen = NotAnInput
+(cid:104)3(cid:105)1. ∀q ∈ Proc : output[q] = NotAnInput
+Proof: By HInv2.5 and the level (cid:104)2(cid:105) case assumption.
+(cid:104)3(cid:105)2. Q.E.D.
+Proof: (cid:104)3(cid:105)1, the level (cid:104)2(cid:105) case assumption, and HNext.2 imply that
+if output(cid:48)[p] (cid:54)= NotAnInput, then chosen(cid:48) = output(cid:48)[p].
+(cid:104)2(cid:105)2. Case: chosen (cid:54)= NotAnInput
+(cid:104)3(cid:105)1. valueChosen(chosen)
+Proof: By the level (cid:104)2(cid:105) case assumption and HInv6.1.
+47
+(cid:104)3(cid:105)2. valueChosen(chosen)(cid:48)
+Proof: By (cid:104)1(cid:105)1, since the level (cid:104)2(cid:105) case assumption and HNext.2
+imply chosen(cid:48) (cid:54)= NotAnInput.
+(cid:104)3(cid:105)3. chosen(cid:48) = chosen
+Proof: By (cid:104)3(cid:105)1, (cid:104)3(cid:105)2, and Lemma VC, since valueChosen(v) and
+valueChosen(w) imply v = w.
+(cid:104)3(cid:105)4. Case: output[p] = NotAnInput
+(cid:104)4(cid:105)1. EndPhase1or2(p)∧(phase[p] = 2)
+Proof:By the level(cid:104)1(cid:105)assumption, the level(cid:104)3(cid:105) caseassumption,
+and HNext.
+(cid:104)4(cid:105)2. ∃D ∈ MajoritySet : ∀q ∈ Proc\{p} : hasRead(p,d,q)
+Proof: By (cid:104)4(cid:105)1.
+(cid:104)4(cid:105)3. ¬HInv5(p).R.b
+Proof: Since any two majority sets have a disk in common, (cid:104)4(cid:105)2
+implies¬HInv5(p).R.b(D,q)foranymajoritysetD andanyq (cid:54)= p.
+We then have only to prove ¬HInv5(p).R.b(D,p) for any ma-
+jority set D. Step (cid:104)4(cid:105)1 implies that disksWritten[p] contains a
+disk d in D, and HInv2.2(p,d).1.R.2 and HInv2.3(p).3 then imply
+disk[d][p].mbal = dblock[p].bal, proving ¬HInv5(p).R.b(D,p).
+(cid:104)4(cid:105)4. maxBalInp(dblock[p].bal, dblock[p].inp)
+Proof:HInv5(p)andphase[p] = 2(from(cid:104)4(cid:105)1)implyHInv5(p).R,
+so (cid:104)4(cid:105)3 implies HInv5(p).R.a.
+(cid:104)4(cid:105)5. choose bk ∈ allBlocks, b ∈ union {Ballot(p) : p ∈ Proc}
+s.t. maxBalInp(b,chosen)∧(bk.bal ≥ b)
+Proof: The existence of bk and b follows from (cid:104)3(cid:105)1 and the defi-
+nition of valueChosen.
+(cid:104)4(cid:105)6. dblock[p].inp = chosen
+Proof: If dblock[p].bal ≥ b, then this follows from (cid:104)4(cid:105)5 and the
+definition of maxBalInp(b,chosen). If dblock[p].bal < b, then (cid:104)4(cid:105)4
+implies bk.inp = dblock[p].inp, while (cid:104)4(cid:105)5 implies bk.inp = chosen.
+(cid:104)4(cid:105)7. Q.E.D.
+Proof: (cid:104)3(cid:105)3, (cid:104)4(cid:105)1 (which implies output(cid:48)[p] = dblock[p].inp), and
+(cid:104)4(cid:105)6 imply output(cid:48)[p] = chosen(cid:48).
+(cid:104)3(cid:105)5. Case: output[p] (cid:54)= NotAnInput
+Proof: In this case, HInv2.3(p).4, the level (cid:104)1(cid:105) assumption, and
+HNext imply output(cid:48)[p] = output[p]; and HInv6.2 and (cid:104)3(cid:105)3 imply
+output(cid:48)[p] = chosen(cid:48).
+(cid:104)3(cid:105)6. Q.E.D.
+Proof: By (cid:104)3(cid:105)4 and (cid:104)3(cid:105)5
+(cid:104)2(cid:105)3. Q.E.D.
+48
+Proof: By (cid:104)2(cid:105)1 and (cid:104)2(cid:105)2
+(cid:104)1(cid:105)3. Q.E.D.
+Proof: HInv6(cid:48) follows immediately from (cid:104)1(cid:105)1 and (cid:104)1(cid:105)2.
+A.4.6 Theorem R2b
+We now prove Theorem R2b by proving:
+Assume: HInv ∧HInv(cid:48)∧HNext
+Prove: (∃p ∈ Proc : IFail(p)∨IChoose(p))∨(unchanged ivars)
+(cid:104)1(cid:105)1. Case: ∃p ∈ Proc : Fail(p)
+Proof: We assume p ∈ Proc and Fail(p) and prove IFail(p), which im-
+plies the goal. We obtain IFail(p).1 from Fail(p).4. From Fail(p).1 we
+infer the existence of ip ∈ Inputs satisfying IFail(p).2(ip).1; it also satis-
+fies IFail(p).2(ip).2 by HNext.3 and HInv2.5. We deduce IFail(p).3 from
+Fail(p).4, HNext.2 and HInv2.5.
+(cid:104)1(cid:105)2. Case: ∃p ∈ Proc : (phase[p] = 2)∧EndPhase1or2
+(cid:104)2(cid:105)1. choose p ∈ Proc s.t. (phase[p] = 2)∧EndPhase1or2
+Proof: p exists by the level (cid:104)1(cid:105) case assumption.
+(cid:104)2(cid:105)2. dblock[p].inp ∈ allInput
+Proof: By (cid:104)2(cid:105)1 (which asserts phase[p] = 2), HInv2.3(p).2.R.1 and
+HInv2.3(p).3.R, we deduce dblock[p].bal (cid:54)= 0. By conjuncts 3 and 5 of
+HInv2.1(p)(dblock[p]), this implies dblock[p].inp ∈ allInput.
+(cid:104)2(cid:105)3. Case: chosen = NotAnInput
+(cid:104)3(cid:105)1. ∀q ∈ Proc : output[q] = NotAnInput
+Proof: By the level (cid:104)2(cid:105) case assumption and HInv2.5.
+(cid:104)3(cid:105)2. ∀q ∈ Proc\{p} : output(cid:48)[q] = NotAnInput
+Proof: (cid:104)3(cid:105)1 and (cid:104)2(cid:105)1.
+(cid:104)3(cid:105)3. chosen(cid:48) = output(cid:48)[p]
+Proof: By (cid:104)3(cid:105)2, (cid:104)2(cid:105)1 (which implies output(cid:48)[p] (cid:54)= NotAnInput), the
+level (cid:104)2(cid:105) case assumption, and HNext.2.
+(cid:104)3(cid:105)4. Q.E.D.
+(cid:104)4(cid:105)1. IChoose(p).1
+Proof: By (cid:104)3(cid:105)1.
+(cid:104)4(cid:105)2. IChoose(p).2
+Proof: (cid:104)2(cid:105)1 and (cid:104)3(cid:105)3 imply
+∧ chosen(cid:48) = dblock[p].inp
+∧ output(cid:48) = [output except ![p] = dblock[p].inp]
+IChoose(p).2 then follows from (cid:104)2(cid:105)2 and the level (cid:104)2(cid:105) case assump-
+tion.
+(cid:104)4(cid:105)3. IChoose(p).3
+49
+Proof: By (cid:104)2(cid:105)1 (which implies input(cid:48) = input), HInv2.5, and
+HNext.3.
+(cid:104)4(cid:105)4. Q.E.D.
+Proof: (cid:104)4(cid:105)1, (cid:104)4(cid:105)2, and (cid:104)4(cid:105)3 imply IChoose(p), which implies our
+goal.
+(cid:104)2(cid:105)4. Case: chosen (cid:54)= NotAnInput
+(cid:104)3(cid:105)1. chosen(cid:48) = chosen
+Proof: By HNext.2 and the level (cid:104)2(cid:105) case assumption.
+(cid:104)3(cid:105)2. output(cid:48)[p] = chosen
+Proof: HInv6.2(cid:48) and (cid:104)3(cid:105)1 imply output(cid:48)[p] equals either chosen or
+NotAnInput. Step (cid:104)2(cid:105)1 implies output(cid:48)[p] = dblock[p].inp, which by
+(cid:104)2(cid:105)2 and HInv1.9 implies output(cid:48)[p] (cid:54)= NotAnInput.
+(cid:104)3(cid:105)3. Q.E.D.
+Proof: (cid:104)2(cid:105)1 and HInv2.3(p).4 imply IChoose(p).1; (cid:104)2(cid:105)1, (cid:104)3(cid:105)1, (cid:104)3(cid:105)2
+and the level (cid:104)2(cid:105) case assumption imply IChoose(p).2; and (cid:104)2(cid:105)1,
+HNext.3, and HInv2.5 imply IChoose(p).3. This proves IChoose(p),
+which implies the goal.
+(cid:104)2(cid:105)5. Q.E.D.
+Proof: By (cid:104)2(cid:105)3 and (cid:104)2(cid:105)4.
+(cid:104)1(cid:105)3. Q.E.D.
+Proof: By (cid:104)1(cid:105)1 and (cid:104)1(cid:105)2, since
+HInv2.5∧HNext ∧(ivars(cid:48) (cid:54)= ivars) ⇒
+(input(cid:48) (cid:54)= input)∨(output(cid:48) (cid:54)= output)
+and
+HNext ∧((input(cid:48) (cid:54)= input)∨(output(cid:48) (cid:54)= output)) ⇒
+∃p ∈ Proc : Fail(p)∨((phase[p] = 2)∧EndPhase1or2)
+50

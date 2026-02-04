@@ -1,0 +1,299 @@
+[
+  {
+    "source_url": "http://lamport.azurewebsites.net/pubs/pubs.html#di...",
+    "pdf_url": "http://lamport.azurewebsites.net/pubs/a_new_approach-corrigendum.pdf",
+    "file": "a_new_approach-corrigendum.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://lamport.azurewebsites.net/pubs/pubs.html#di...",
+    "pdf_url": "https://arxiv.org/pdf/1011.2560.pdf",
+    "file": "1011.2560.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://lamport.azurewebsites.net/pubs/pubs.html#di...",
+    "pdf_url": "http://lamport.azurewebsites.net/pubs/dbakery-complete.pdf",
+    "file": "dbakery-complete.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://lamport.azurewebsites.net/pubs/pubs.html#di...",
+    "pdf_url": "https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-2005-33.pdf",
+    "file": "tr-2005-33.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://lamport.azurewebsites.net/pubs/pubs.html#di...",
+    "pdf_url": "https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-2005-30.pdf",
+    "file": "tr-2005-30.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://lamport.azurewebsites.net/pubs/pubs.html#di...",
+    "pdf_url": "https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-2005-112.pdf",
+    "file": "tr-2005-112.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://lamport.azurewebsites.net/tla/byzpaxos.html",
+    "pdf_url": "http://lamport.azurewebsites.net/pubs/vertical-paxos.pdf",
+    "file": "vertical-paxos.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://lamport.azurewebsites.net/tla/byzpaxos.html",
+    "pdf_url": "http://lamport.azurewebsites.net/pubs/web-dsn-submission.pdf",
+    "file": "web-dsn-submission.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://lamport.azurewebsites.net/tla/byzpaxos.html",
+    "pdf_url": "http://lamport.azurewebsites.net/tla/pluscal-code.pdf",
+    "file": "pluscal-code.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://lamport.azurewebsites.net/tla/byzpaxos.html",
+    "pdf_url": "http://lamport.azurewebsites.net/tla/Consensus.pdf",
+    "file": "Consensus.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://lamport.azurewebsites.net/tla/byzpaxos.html",
+    "pdf_url": "http://lamport.azurewebsites.net/tla/VoteProof.pdf",
+    "file": "VoteProof.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://lamport.azurewebsites.net/tla/byzpaxos.html",
+    "pdf_url": "http://lamport.azurewebsites.net/tla/PConProof.pdf",
+    "file": "PConProof.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://lamport.azurewebsites.net/tla/byzpaxos.html",
+    "pdf_url": "http://lamport.azurewebsites.net/tla/BPConProof.pdf",
+    "file": "BPConProof.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://research.microsoft.com/en-us/um/people/lamport/pubs/pubs.html#paxos-commit",
+    "pdf_url": "https://arxiv.org/pdf/1011.2560.pdf",
+    "file": "1011.2560.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://research.microsoft.com/en-us/um/people/lamport/pubs/pubs.html#paxos-commit",
+    "pdf_url": "http://research.microsoft.com/en-us/um/people/lamport/pubs/dbakery-complete.pdf",
+    "file": "dbakery-complete.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://research.microsoft.com/en-us/um/people/lamport/pubs/pubs.html#paxos-commit",
+    "pdf_url": "https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-2005-33.pdf",
+    "file": "tr-2005-33.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://research.microsoft.com/en-us/um/people/lamport/pubs/pubs.html#paxos-commit",
+    "pdf_url": "https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-2005-30.pdf",
+    "file": "tr-2005-30.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "http://research.microsoft.com/en-us/um/people/lamport/pubs/pubs.html#paxos-commit",
+    "pdf_url": "https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-2005-112.pdf",
+    "file": "tr-2005-112.pdf",
+    "type": "found"
+  },
+  {
+    "url": "https://cedric.cnam.fr/fichiers/RC474.pdf",
+    "file": "RC474.pdf",
+    "type": "direct"
+  },
+  {
+    "source_url": "https://en.wikipedia.org/wiki/Sliding_puzzle",
+    "pdf_url": "https://web.archive.org/web/20141217140643/http://www.cs.brandeis.edu/~storer/JimPuzzles/SLIDE/CornellCrossword/KeithArticle2011.pdf",
+    "file": "KeithArticle2011.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://en.wikipedia.org/wiki/Sliding_puzzle",
+    "pdf_url": "http://www.cs.brandeis.edu/~storer/JimPuzzles/SLIDE/CornellCrossword/KeithArticle2011.pdf",
+    "file": "KeithArticle2011.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://en.wikipedia.org/wiki/Sliding_puzzle",
+    "pdf_url": "https://web.archive.org/web/20210107214840/https://faculty.etsu.edu/beelerr/fifteen-supp.pdf",
+    "file": "fifteen-supp.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://en.wikipedia.org/wiki/Tower_of_Hanoi",
+    "pdf_url": "https://www.cs.wm.edu/~pkstoc/biblio2.pdf",
+    "file": "biblio2.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://en.wikipedia.org/wiki/Tower_of_Hanoi",
+    "pdf_url": "https://web.archive.org/web/20170921001150/https://pdfs.semanticscholar.org/fb87/0a772baf96a2e11901122a2b04c3dd25596d.pdf",
+    "file": "0a772baf96a2e11901122a2b04c3dd25596d.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://en.wikipedia.org/wiki/Tower_of_Hanoi",
+    "pdf_url": "https://page.mi.fu-berlin.de/rote/Papers/pdf/Loopless+Gray+code+enumeration+and+the+Tower+of+Bucharest.pdf",
+    "file": "Loopless+Gray+code+enumeration+and+the+Tower+of+Bucharest.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://en.wikipedia.org/wiki/Tower_of_Hanoi",
+    "pdf_url": "https://web.archive.org/web/20201216150701/https://page.mi.fu-berlin.de/rote/Papers/pdf/Loopless+Gray+code+enumeration+and+the+Tower+of+Bucharest.pdf",
+    "file": "Loopless+Gray+code+enumeration+and+the+Tower+of+Bucharest.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://en.wikipedia.org/wiki/Tower_of_Hanoi",
+    "pdf_url": "https://web.archive.org/web/20201216230211/https://arxiv.org/pdf/1604.06707.pdf",
+    "file": "1604.06707.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://en.wikipedia.org/wiki/Tower_of_Hanoi",
+    "pdf_url": "http://www.seas.upenn.edu/~cis194/spring13/hw/01-intro.pdf",
+    "file": "01-intro.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://en.wikipedia.org/wiki/Tower_of_Hanoi",
+    "pdf_url": "http://wexler.free.fr/library/files/zhang%20%281994%29%20representations%20in%20distributed%20cognitive%20tasks.pdf",
+    "file": "zhang%20%281994%29%20representations%20in%20distributed%20cognitive%20tasks.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://en.wikipedia.org/wiki/Tower_of_Hanoi",
+    "pdf_url": "https://ml-site.cdn-apple.com/papers/the-illusion-of-thinking.pdf",
+    "file": "the-illusion-of-thinking.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://github.com/josehu07/summerset",
+    "pdf_url": "https://www.cs.cornell.edu/home/rvr/papers/OSDI04.pdf",
+    "file": "OSDI04.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://github.com/josehu07/summerset",
+    "pdf_url": "https://www.microsoft.com/en-us/research/uploads/prod/2016/12/paxos-simple-Copy.pdf",
+    "file": "paxos-simple-Copy.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://github.com/josehu07/summerset",
+    "pdf_url": "https://www.cs.cmu.edu/~dga/papers/epaxos-sosp2013.pdf",
+    "file": "epaxos-sosp2013.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://github.com/josehu07/summerset",
+    "pdf_url": "https://raft.github.io/raft.pdf",
+    "file": "raft.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://github.com/josehu07/summerset",
+    "pdf_url": "https://www.usenix.org/system/files/fast20-wang_zizhong.pdf",
+    "file": "fast20-wang_zizhong.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://github.com/josehu07/summerset",
+    "pdf_url": "https://www.cs.cmu.edu/~imoraru/papers/qrl.pdf",
+    "file": "qrl.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://github.com/mryndzionek/tlaplus_specs#chameneostla",
+    "pdf_url": "https://cedric.cnam.fr/fichiers/RC474.pdf",
+    "file": "RC474.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://github.com/mryndzionek/tlaplus_specs#cigarettesmokerstla",
+    "pdf_url": "https://cedric.cnam.fr/fichiers/RC474.pdf",
+    "file": "RC474.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://github.com/mryndzionek/tlaplus_specs#slidingpuzzlestla",
+    "pdf_url": "https://cedric.cnam.fr/fichiers/RC474.pdf",
+    "file": "RC474.pdf",
+    "type": "found"
+  },
+  {
+    "url": "https://lamport.azurewebsites.net/pubs/disk-paxos.pdf",
+    "file": "disk-paxos.pdf",
+    "type": "direct"
+  },
+  {
+    "source_url": "https://lamport.azurewebsites.net/tla/toolbox.html",
+    "pdf_url": "https://lamport.azurewebsites.net/tla/inductive-invariant.pdf",
+    "file": "inductive-invariant.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://link.springer.com/chapter/10.1007/978-3-540-87779-0_30",
+    "pdf_url": "https://link.springer.com/content/pdf/10.1007/978-3-540-87779-0.pdf",
+    "file": "978-3-540-87779-0.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://link.springer.com/chapter/10.1007/978-3-540-87779-0_30",
+    "pdf_url": "https://link.springer.com/content/pdf/10.1007/978-3-540-87779-0_30.pdf",
+    "file": "978-3-540-87779-0_30.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://members.loria.fr/SMerz/talks/argentina2005/Charpentier/charpov/Teaching/CS-986/TLC/",
+    "pdf_url": "https://members.loria.fr/SMerz/talks/argentina2005/Charpentier/charpov/Teaching/CS-986/TLC/ACP_SB.pdf",
+    "file": "ACP_SB.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://members.loria.fr/SMerz/talks/argentina2005/Charpentier/charpov/Teaching/CS-986/TLC/",
+    "pdf_url": "https://members.loria.fr/SMerz/talks/argentina2005/Charpentier/charpov/Teaching/CS-986/TLC/ACP_NB.pdf",
+    "file": "ACP_NB.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://members.loria.fr/SMerz/talks/argentina2005/Charpentier/charpov/Teaching/CS-986/TLC/",
+    "pdf_url": "https://members.loria.fr/SMerz/talks/argentina2005/Charpentier/charpov/Teaching/CS-986/TLC/ACP_NB_WRONG_TLC.pdf",
+    "file": "ACP_NB_WRONG_TLC.pdf",
+    "type": "found"
+  },
+  {
+    "url": "https://raft.github.io/raft.pdf",
+    "file": "raft.pdf",
+    "type": "direct"
+  },
+  {
+    "source_url": "https://www.josehu.com/technical/2024/02/19/practical-MultiPaxos-TLA-spec.html",
+    "pdf_url": "https://www.josehu.com/assets/file/Guanzhou_Hu_CV.pdf",
+    "file": "Guanzhou_Hu_CV.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://www.josehu.com/technical/2024/02/19/practical-MultiPaxos-TLA-spec.html",
+    "pdf_url": "https://lamport.azurewebsites.net/tla/summary-standalone.pdf",
+    "file": "summary-standalone.pdf",
+    "type": "found"
+  },
+  {
+    "source_url": "https://www.microsoft.com/en-us/research/publication/fast-paxos/",
+    "pdf_url": "https://www.microsoft.com/en-us/research/wp-content/uploads/2016/02/tr-2005-112.pdf",
+    "file": "tr-2005-112.pdf",
+    "type": "found"
+  }
+]

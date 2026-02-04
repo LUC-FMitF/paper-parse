@@ -1,0 +1,1664 @@
+Source: zhang%20%281994%29%20representations%20in%20distributed%20cognitive%20tasks.pdf
+================================================================================
+
+Preprint: To appear in Cognitive Science, 18, 87-122, 1994.
+Representations in Distributed Cognitive Tasks
+Jiajie Zhang Donald A. Norman
+The Ohio State University Apple Computer, Inc.
+jiazhang@magnus.acs.ohio-state.edu dnorman@apple.com
+ABSTRACT People behave in an information rich
+environment filled with natural and ar-
+In this paper we propose a theoretical frame- tificial objects extended across space and
+work of distributed representations and a time. A wide variety of cognitive tasks,
+methodology of representational analysis for the
+whether in everyday cognition, scien-
+study of distributed cognitive tasksÑtasks that
+tific practice, or professional life, require
+require the processing of information distributed
+the processing of information dis-
+across the internal mind and the external envi-
+ronment. The basic principle of distributed rep- tributed across the internal mind and
+resentations is that the representational system the external environment. It is the in-
+of a distributed cognitive task is a set of internal terwoven processing of internal and ex-
+and external representations, which together
+ternal information that generates much
+represent the abstract structure of the task. The
+of a person's intelligent behavior (e.g.,
+basic strategy of representational analysis is to
+Hutchins, 1990, in preparation;
+decompose the representation of a hierarchical
+task into its component levels so that the repre- Norman, 1988, 1991, in press).
+sentational properties at each level can be inde- The traditional approach to cogni-
+pendently examined. The theoretical framework tion, however, often assumes that rep-
+and the methodology are used to analyze the hi-
+resentations are exclusively in the mind
+erarchical structure of the Tower of Hanoi prob-
+(e.g., as propositions, schemas, produc-
+lem. Based on this analysis, four experiments are
+tions, mental images, connectionist
+designed to examine the representational proper-
+ties of the Tower of Hanoi. Finally, the nature of networks, etc.). External objects, if they
+external representations is discussed. have anything to do with cognition at
+all, are at most peripheral aids. For in-
+This research was supported by a grant to Donald stance, written digits are usually consid-
+Norman and Edwin Hutchins from the Ames Research
+ered as mere memory aids for calcula-
+Center of the National Aeronautics & Space Agency,
+tion. Thus, because the traditional ap-
+Grant NCC 2-591 in the Aviation Safety/Automation
+Program, technical monitor, Everett Palmer. Additional proach lacks a means of accommodating
+support was provided by funds from the Apple external representations in its own
+Computer Company and the Digital Equipment
+right, it sometimes has to postulate
+Corporation to the Affiliates of Cognitive Science at
+complex internal representations to ac-
+UCSD.
+We are very grateful to Ed Hutchins for many in- count for the complexity of behavior,
+spiring discussions throughout this study. We would much of which, however, is merely a
+also like to thank David Kirsh, Jean Mandler, Mark St.
+reflection of the complexity of the envi-
+John, Hank Strub, and Kazuhiro Takahashi for many
+good comments during this study, James Greeno and ronment (e.g., Kirlik, 1989; Simon, 1981;
+Daniel Reisberg for thoughtful comments and suggestions Suchman, 1987).
+on an earlier version of the manuscript, and Sandra
+This paper addresses the represen-
+Hong, Lin Riley, and Richard Warren for their assis-
+tational issues in distributed cognitive
+tance in the experiments.
+Correspondence and requests for reprints should be tasksÑtasks that require the processing
+sent to Jiajie Zhang, Department of Psychology, The Ohio of information distributed across the in-
+State University, 1885 Neil Avenue, Columbus, OH
+ternal mind and the external environ-
+43210.
+1
+Distributed Cognitive Tasks
+2
+ment, focusing on three problems: (a) change from the geocentric representa-
+the distributed representation of infor- tion of the solar system (Ptolemaic sys-
+mation; (b) the interaction between in- tem) to the heliocentric representation
+ternal and external representations; and (Copernican system) laid the founda-
+(c) the nature of external representa- tion of modern science and fundamen-
+tions. In the first part of this paper, we tally changed people's conception of the
+begin with an introduction to the repre- universe.
+sentational effect, then we propose a Psychological studies of the repre-
+theoretical framework of distributed sentational effect in problem solving
+representations and a methodology of and reasoning have focused on a few
+representational analysis for the study well-structured problems, including
+of distributed cognitive tasks. In the the Tower of Hanoi problem (e.g., Hayes
+second part, we illustrate the principles & Simon, 1977; Kotovsky & Fallside,
+of distributed representations and the 1989; Kotovsky, Hayes & Simon, 1985;
+strategies of representational analysis Simon & Hayes, 1976), the Chinese Ring
+through the analysis of the representa- puzzle (Kotovsky & Simon, 1990), the
+tional structure of the Tower of Hanoi Hobbits-Orcs problem (e.g., Greeno,
+problem. In the third part, we design 1974; Jeffries, Polson, & Razran, 1977;
+four sets of Tower of Hanoi isomorphs Thomas, 1974), Wason's selection task
+for empirical investigations. In the last (e.g., Cheng & Holyoak, 1985; Evans,
+part, we summarize our major claims 1983; Margolis, 1987; Wason, 1966;
+and discuss the general properties of Wason & Johnson-Laird, 1972), and
+distributed cognitive tasks. Wason's THOG problem (e.g., Griggs &
+Hewstead, 1982; O'Brien, Noveck,
+PHENOMENON, THEORY, AND Davidson, Fisch, Lea, & Freitag, 1990;
+METHODOLOGY Wason & Johnson-Laird, 1969). The ba-
+sic finding is that different representa-
+The Representational Effect tions of a problem can have dramatic
+The representational effect refers to the impact on problem difficulty even if the
+phenomenon that different isomorphic formal structures are the same. One
+representations of a common formal characteristic of these problems is that
+structure can cause dramatically differ- they all require the processing of both
+ent cognitive behaviors. One obvious internal and external information.
+example is the representation of num- However, most of these studies either
+bers (for cognitive analyses, see exclusively focused on internal repre-
+Nickerson, 1988; Norman, in press; sentations or, when taking external rep-
+Zhang, 1992; Zhang & Norman, 1993). resentations into account, failed to sepa-
+We are all aware that Arabic numerals rate them from internal representa-
+are more efficient than Roman numer- tions.
+als for multiplication (e.g., 73 ´ 27 is In this paper, we argue that inter-
+´ nal and external representations are two
+easier than LXXIII XXVII), even
+indispensable parts of the representa-
+though both types of numerals repre-
+tional system of any distributed cogni-
+sent the same entitiesÑnumbers. The
+tive task. To study a distributed cogni-
+most dramatic case is probably the
+tive task, it is essential to decompose
+Copernican revolution, where the
+the representation of the task into its in-
+Distributed Cognitive Tasks
+3
+ternal and external components so that For simple tasks, a representation and
+the different functions of internal and its referent can be perceived by both
+external representations can be identi- theorists and task performers. For ex-
+fied. ample, both theorists and task perform-
+ers know that written numerals,
+Distributed Representations whether they are Arabic or Roman, are
+The basic principle of distributed repre- the representations of abstract numbers.
+sentations is that the representational For complex tasks, however, a represen-
+system of a distributed cognitive task tation and its referent are usually only
+can be considered as a set, with some meaningful from the point of view of
+members internal and some external. theorists. To a task performer, a repre-
+Internal representations are in the sentation does not represent anything:
+mind, as propositions, productions, it is simply the medium (internal
+schemas, mental images, connectionist and/or external) on which the task per-
+networks, or other forms. External rep- former performs the task. For example,
+resentations are in the world, as physi- for the Tower of Hanoi problem that we
+cal symbols (e.g., written symbols, beads will consider later, the three problems
+of abacuses, etc.) or as external rules, in Figure 12 all represent the same ab-
+constraints, or relations embedded in stract structure (i.e., problem space, see
+physical configurations (e.g., spatial re- Figure 3) to a theorist. To a task per-
+lations of written digits, visual and spa- former, however, they are simply three
+tial layouts of diagrams, physical con- different problems and they do not rep-
+straints in abacuses, etc.). Generally, resent anything, though the task per-
+there are one or more internal and ex- former might notice some regularities
+ternal representations involved in any across these problems. Our notion of
+distributed cognitive task. representation is essential for our pre-
+Figure 1 shows the representa- sent studies of the representational
+tional system of a task with two internal properties of distributed cognitive tasks.
+and two external representations. Each By considering alternative representa-
+internal representation resides in a per- tions of a common abstract structure,
+son's mind, and each external represen- we can identify the factors that affect the
+tation resides in an external medium. cognitive behavior in distributed cogni-
+The internal representations form an tive tasks.
+internal representational space, and the Our current approach to dis-
+external representations form an exter- tributed cognitive tasks demands: (a)
+nal representational space. These two the consideration of the internal and ex-
+spaces together form a distributed repre- ternal representations of a distributed
+sentational space, which is the represen- cognitive task as a representational sys-
+tation of the abstract task space that de- tem; (b) the explicit decomposition of
+scribes the abstract structures and prop- the representational system into its in-
+erties of the task. ternal and external components; and (c)
+We need to clarify our use of the the identification of the different func-
+term "representation". In our present tions of internal and external represen-
+study, the referent (the represented tations in cognition. The traditional
+world) of a representation (the repre- approach to cognition is not appropriate
+senting world) is an abstract structure. for the study of distributed cognitive
+Distributed Cognitive Tasks
+4
+Distributed Representational Space
+al n
+al
+n o
+R e I p n r t e e s r e S n p t a a t c i e Internal 2 External 2 Repr S e E s p x e a t n e c t e r a n t a io l nal
+Internal 1 External 1
+Abstract Abstract Task Space
+Figure 1. The theoretical framework of distributed representations. The internal representa-
+tions form an internal representational space, and the external representations form an exter-
+nal representational space. The internal and external representational spaces together form a
+distributed representational space, which is the representation of the abstract task space.
+tasks, because (a) it considers external Representational Analysis
+representations as mere peripheral aids Representational analysis is a method-
+to cognition, and (b) it often mixes ex- ology for the study of the representa-
+ternal representations with internal tional effect in distributed cognitive
+representations. Furthermore, the tra- tasks. It is based on hierarchical repre-
+ditional approach often mistakenly sentations, isomorphic representations,
+equates a task's distributed representa- and distributed representations.
+tion that has both internal and external Many distributed cognitive tasks
+components to the task's internal repre- have multi-level hierarchical represen-
+sentation. This confusion often leads tations (see Zhang, 1992, for a few ex-
+one to postulate complex internal amples). At each level of a task's hier-
+mechanisms to explain the complex archical representation, there is an ab-
+structure of the wrongly identified in- stract structure that can be implemented
+ternal representation, much of which is by different isomorphic representations.
+merely a reflection of the structure of For some levels, the isomorphic repre-
+the external representation. sentations can be distributed representa-
+tions. By decomposing the representa-
+Distributed Cognitive Tasks
+5
+tion of a task into its component levels, structure of the TOH was not analyzed
+we can identify the representational in these studies. In this section, we use
+properties at each level that are respon- the principles of distributed representa-
+sible for a different aspect of the repre- tions and the methodology of represen-
+sentational effect. It should be noted tational analysis described in last section
+that different tasks usually have differ- to analyze the representational struc-
+ent hierarchical structures and have dif- ture of the TOH in a systematic way.
+ferent representational properties at
+their component levels. The key of the
+methodology of representational analy-
+sis is the strategy of decomposing a task
+into its component levels and studying
+the representational properties at each
+Figure 2. The standard Tower of Hanoi prob-
+level.
+lem. The task is to move the three disks from
+The methodology of representa-
+one configuration to another, following two
+tional analysis is fully illustrated in the rules: (1) Only one disk can be transferred at
+analysis of the representational struc- a time; (2) A disk can only be transferred to a
+ture of the Tower of Hanoi problem in pole on which it will be the largest.
+next section. It has also been used to
+Rule Representations
+study several real world problems, in-
+The standard TOH1 shown in Figure 2
+cluding numeration systems, relational
+has two internal rules: (1) only one disk
+information displays, and cockpit in-
+can be transferred at a time; (2) a disk
+strument displays (Zhang, 1992).
+can only be transferred to a pole on
+which it will be the largest. These two
+THE REPRESENTATIONAL
+rules have to be memorized. The TOH
+STRUCTURE OF THE TOH
+in Figure 2 also has one external rule:
+The Tower of Hanoi (henceforth TOH;
+(3) only the largest disk on a pole can be
+see Figures 2 and 3) is a well-studied
+transferred to another pole. In the rep-
+problem. Much of the research has fo-
+resentation shown in Figure 2, Rule 3
+cused on its isomorphs and problem
+need not be stated explicitly because the
+representations (e.g., Hayes & Simon,
+physical structure of the disks and poles
+1977; Kotovsky & Fallside, 1989;
+coupled with Rule 1 guarantee that it
+Kotovsky, Hayes & Simon, 1985; Simon
+will be followed. But if the disks were
+& Hayes, 1976). The basic finding is that
+not stacked on poles, explicit statement
+different problem representations can
+of Rule 3 would be necessary. In our
+have dramatic impact on problem diffi-
+studies we used four rules2 :
+culty even if the formal structures are
+the same. Many of these studies either
+1 The disk sizes of the traditional TOH are the reverse
+explicitly or implicitly mentioned ex-
+of those shown in Figure 2: the largest disk is at the
+ternal representations. However, they
+bottom and the smallest is at the top. The disk sizes have
+did not consider internal and external been reversed to make all experimental designs
+representations as two indispensable consistent. We call the size-reversed TOH with disks
+and poles in Figure 2 our standard TOH, because all
+parts of the representational system of
+other TOH isomorphs in our present study were derived
+the TOH, and they did not separate ex-
+from this version.
+ternal representations from internal 2 Experiments 1A and 1B used all four rules.
+ones. Furthermore, the hierarchical Experiments 2 and 3 only used Rules 1, 2, and 3, which
+are the three rules for the standard TOH.
+Distributed Cognitive Tasks
+6
+S3
+E2
+E1
+S1 S2
+E3
+Figure 3. The problem space of the Tower of Hanoi problem. Each rectangle shows one of the 27 pos-
+sible configurations (states) of the three disks on the three poles. The lines between the rectangles
+show the transformations from one state to another when the rules are followed. S1, S2, and S3 are
+three starting states, and E1, E2, and E3 are three ending states. They will be used later in the ex-
+periments.
+Any of these four rules can be ei-
+Rule 1: Only one disk can be transferred ther internal or external. Internal rules
+at a time. are memorized rules that are explicitly
+Rule 2: A disk can only be transferred to stated as written propositions in the in-
+a pole on which it will be the structions for experiments. External
+largest. rules are not stated in any form in the
+Rule 3: Only the largest disk on a pole instructions. They are the constraints
+can be transferred to another that are embedded in or implied by
+pole. physical configurations and can be per-
+Rule 4: The smallest disk and the largest ceived and followed without being ex-
+disk can not be placed on a sin- plicitly formulated. Some external
+gle pole unless the medium rules may sometimes depend on other
+sized disk is also on that pole. internal rules and/or some background
+Distributed Cognitive Tasks
+7
+knowledge. For example, the external external. In Condition I1-E23 (Figure
+Rule 3 in the standard TOH depends on 11C, in Experiment 1B; and Figure 12C,
+the internal Rule 1, because Rule 3 is a in Experiment 2), Rules 2 and 3 are ex-
+rule about the movement of a single ob- ternal. In Condition I1-E234 (Figure 11D,
+ject3 . In addition, Rules 2 and 3, in Experiment 1B), Rules 2, 3, and 4 are
+whether they are implemented as ex- external. Detailed explanations of these
+ternal or internal rules, require that external rules are described in
+only one hand can be used to move the Experiment 1B and Experiment 2.
+objects and the objects can only be
+placed on the three poles (or plates, see Problem Space Structures
+Figures 11 & 12), because otherwise we A problem space of the TOH is com-
+can always use the spare hand or an- posed of all possible states and moves
+other place (e.g., table surface) as a tem- constrained by the rules. Figures 4A-E
+porary holder (equivalent to the addi- show the problem spaces constrained by
+tion of a fourth pole for the standard Rules 1, 1+2, 1+3, 1+2+3, and 1+2+3+4,
+TOH) such that Rules 2 and 3 can be by- respectively (see footnote 3) They are
+passed. These two extra requirements derived from the problem space shown
+are embedded in the cover stories for in Figure 3. The rectangles (problem
+the experiments (see Figure 9), and they states) in Figure 3 are not shown in
+are not counted as internal rules. Figure 4 for the reason of clarity.
+Furthermore, Rule 2 in the Waitress Figures 4A-D have the same 27 problem
+and Coffee TOH (see Figure 11) is an ex- states as in Figure 3. Figure 4E only has
+ternal rule that needs some cultural 21 problem states (shown by the dots),
+knowledge: spilling coffee in front of a which are the outer 21 rectangles in
+customer is not a good behavior for a Figure 3. Lines with arrows are uni-
+waitress or a waiter (see Experiment 1B directional; lines without arrows are bi-
+for details). Even though some external directional. One important point is that
+rules are not fully independent and not these five spaces can represent internal,
+truly external, we still call them exter- external, or mixed problem spaces, de-
+nal rules in the sense that they are not pending upon how the rules construct-
+stated and memorized but nevertheless ing them are distributed across internal
+functionally equivalent to those that are and external representations. A prob-
+explicitly stated and memorized. lem space constructed by external rules
+In the experiments that follow, we is an external problem space, one con-
+varied the number of external rules. In structed by internal rules is an internal
+Condition I1 (Figure 11A, in problem space, and one constructed by a
+Experiment 1B) and Condition I123 mixture of internal and external rules is
+(Figure 12A, in Experiment 2), no rule is a mixed problem space. Figure 4B is the
+external. In Conditions I1-E3 (Figure internal problem space of the standard
+11B, in Experiment 1B) and I12-E3 TOH because Rules 1 and 2 are internal.
+(Figure 12B, in Experiment 2), Rule 3 is If the physical constraints imposed by
+the disks themselves are such that only
+one can be moved at a time (e.g., the
+3 The four rules for the Tower of Hanoi are not fully or-
+disks are large or heavy), then Figure 4C
+thogonal. Rules 2, 3, and 4 are orthogonal to one an-
+other and Rule 4 is orthogonal to Rule 1. However, is the external problem space of the
+Rules 2 and 3 are not orthogonal to Rule 1, because Rule standard TOH because under this cir-
+1 is the prerequisite of Rules 2 and 3.
+Distributed Cognitive Tasks
+8
+cumstance Rules 1 and 3 are both exter- forms the abstract problem space, which
+nal. These two spaces form the dis- is equivalent to the problem space
+tributed problem space of the standard shown in Figure 4D.
+TOH (Figure 5), and their conjunction
+(A) Rule 1 (B) Rules 1+2
+(C) Rules 1+3 (D) Rules 1+2+3
+¥
+¥ ¥
+¥ ¥
+¥ ¥
+¥ ¥
+¥ ¥
+¥ ¥
+¥ ¥ ¥ ¥ ¥ ¥ ¥ ¥
+(E) Rules 1+2+3+4
+Figure 4. Problem spaces constructed by five different sets of rules. They are derived from
+the problem space shown in Figure 3. Lines with arrows are uni-directional. Lines
+without arrows are bi-directional. The rectangles (problem states) are not shown here for
+the reason of clarity. (A)-(D) have the same 27 problem states as in Figure 3. (E) only
+has 21 problem states (shown by the dots), which are the outer 21 rectangles in Figure 3.
+Distributed Cognitive Tasks
+9
+Distributed Problem Space
+Internal
+External
+Problem Space
+Problem Space
+Abstract Problem Space
+Figure 5. The distributed representation of the TOH. The distributed problem space is composed of
+the internal and the external problem spaces. The abstract problem space is the conjunction of the
+internal and the external problem spaces.
+Dimensional Representations quired by the rules. The values on this
+The standard TOH (Figure 2) has three dimension are constants, that is, the
+disks, which possess two dimensions of sizes of the disks are fixed. The second
+properties. The first is the ordinal di- is the nominal dimension represented
+mension represented by the sizes of the by the locations of the disks, which also
+three disks, which has three levels: has three levels: left, middle, right.
+large > medium > small. The ordinal This dimension is called nominal di-
+information on this dimension is re- mension because only the categorical
+Distributed Cognitive Tasks
+10
+information of the three locations is the dimensional representations of the
+needed for the rules. (For a description TOH are shown in Figure 14.
+of psychological scales, see Stevens, The ordinal and nominal dimen-
+1946, 1951.) The values on this dimen- sions of the TOH can be represented ei-
+sion are variables, that is, a disk can be ther internally or externally. If the or-
+at any of the three locations. The three dinal dimension is represented by phys-
+poles in the standard TOH shown in ical properties that are on an ordinal (or
+Figure 2 are not essential: they are only higher) scale (e.g., sizes or ordered loca-
+used to construct the external Rule 3. tions), it can be represented externally.
+The ordinal and nominal dimen- For example, the sizes of the balls in
+sions do not have to be represented by Figure 6A are an external representa-
+sizes and locations of the disks, as in the tion of the ordinal dimension because
+standard TOH. They can be represented the ordinal relation is embedded in the
+by any properties of any objects. For ex- physical properties (sizes) of the balls. If
+ample, Figure 6 shows two TOH iso- the ordinal dimension is represented by
+morphs whose ordinal and nominal physical properties that are on a nomi-
+dimensions are represented by different nal scale, it must be represented inter-
+properties. In Figure 6A, the ordinal nally. For example, if we use colors to
+dimension is represented by the sizes of represent the ordinal dimension, we
+the balls (large > medium > small), and must first arbitrarily assign an order to
+the nominal dimension is represented them (e.g., red > green > yellow) and
+by the locations of the balls (left, middle, then internalize this ordinal relation
+and right). In Figure 6B, the ordinal (see Figures 14G, 14H, 14I for examples).
+dimension is represented by the loca- The nominal dimension can be repre-
+tions of the triangular cylinders (top > sented externally by physical properties
+middle > bottom). Each cylinder has that are either on a nominal or on an
+three different colors (R = red, G = ordinal scale, because an ordinal scale is
+green, Y = yellow) on its three sides, also a nominal scale (but not vice
+which represent the nominal dimen- versa).
+sion. The sizes of the balls in Figure Furthermore, the ordinal and
+6A are mapped to the locations of the nominal dimensions of the TOH can be
+cylinders in Figure 6B, and the locations represented by either visual properties
+in Figure 6A are mapped to the colors of (such as size, color, texture, and shape)
+the cylinder sides in Figure 6B. For ex- or spatial properties (such as location).
+ample, moving the largest ball from the The separation of spatial properties
+right location to the left location in from visual properties is significant be-
+Figure 6A corresponds to rotating the cause many studies have found that
+top cylinder from the yellow side to the there are important anatomical and
+red side in Figure 6B. More examples of
+Distributed Cognitive Tasks
+11
+Ordinal Dimension Nominal Dimension
+(A) (large > medium > small) (left, middle, right)
+Y
+(B) R
+(top > middle > bottom) (red, green, yellow)
+G
+Figure 6. The mapping between dimensions of two TOH isomorphs. The three triangular
+cylinders in (B) can be rotated independently around their axis. The three sides of each
+cylinder have three different colors (R = red, G = green, Y = yellow). The sizes of the
+balls (ordinal dimension) in (A) are mapped to the locations of the cylinders (ordinal
+dimension) in (B), and the locations of the balls (nominal dimension) in (A) are mapped
+to the colors of cylinder sides (nominal dimension) in (B). For example, moving the
+largest ball from the right location to the left location in (A) corresponds to rotating the
+top cylinder from the yellow side to the red side.
+functional differences between visual tions of visual and spatial dimensions
+and spatial representations. Mishkin, in the TOH task.
+Ungerleider, & Macko (1983) found that
+there are two separate systems for vi- The Abstract Structure of the TOH
+sual and spatial information processing: The TOH has a goal, a set of rules, two
+visual information processing follows a dimensions, and three objects. Figure 7
+projection from the occipital to the shows the abstract structure of the TOH
+temporal cortex, and spatial informa- (see also Figure 8, which will be ex-
+tion processing follows a projection plained in the following section). The
+from the occipital to the parietal cortex. goal is defined by an initial and a final
+Goldman-Rakic (1992) showed that problem state. The rules can vary in
+among the prefrontal neurons respon- numbers, that is, any subset of the four
+sible for working memory, some only rules or all of them can be chosen for a
+respond to spatial locations while oth- given version of the TOH. The rules in
+ers only respond to visual properties. a given set can be distributed across in-
+Treisman & Gelade (1980) found that ternal and external representations in
+the visual and spatial properties of a different ways. The two dimensions
+stimulus are processed differently in can be represented by different physical
+perceptual tasks and that location is re- properties. O , O , and O are the three
+1 2 3
+quired for focused attention to conjunc- levels of the ordinal dimension, and
+tive stimuli. The differences between N , N , and N are the three levels of
+1 2 3
+visual and spatial representations may the nominal dimension. An object OBJ
+i
+have important implications for com- is described as OBJ = (O, N), which can
+i i l
+plex cognitive tasks such as problem be at three different levels on the nom-
+solving and reasoning. One of the pur- inal dimension: (O , N ), (O , N ), (O ,
+i 1 i 2 i
+poses of Experiment 3 in the present N ). The three objects can be repre-
+3
+study is to examine the different func- sented by different physical entities.
+Distributed Cognitive Tasks
+12
+¥ Two property dimensions.
+Ordinal dimension. 3 levels: O
+1
+> O
+2
+> O
+3
+.
+Nominal dimension. 3 levels: N , N , N .
+1 2 3
+¥ Object: OBJ = (O, N). i = 1, 2, 3; l = 1, 2, 3.
+i i l
+= 1,
+¥ Problem state: S(l, m, n) = ((O , N), (O , N ), (O , N )). l, m, n 2, 3.
+1 l 2 m 3 n
+¹
+¥ Operation: OP(O, N) = (O, N ). l m.
+i l i m
+¥ Rules:
+1: OP is a unary operator.
+2: When OBJ = (O, N ), OP(O, N) = (O, N ) is true if O > O
+j j m i l i m i j.
+3: When OBJ = (O, N) & OBJ = (O, N), OP(O, N) is true if O > O.
+i i l j j l i l i j
+4. OBJ = (O , N ) & OBJ = (O , N ) is true if OBJ = (O , N )
+1 1 m 3 3 m 2 2 m
+®
+¥ Goal: S(lÕ, mÕ, nÕ) S(lÓ, mÓ, nÓ).
+Figure 7. The abstract structure of the TOH. O , O , and O are the three levels of the ordinal
+1 2 3
+dimension, and N , N , and N are the three levels of the nominal dimension. An object OBJ is
+1 2 3 i
+described as OBJ
+i
+= (O
+i
+, N
+l
+), which can be at three different levels on the nominal dimension: (O
+i
+,
+N ), (O, N ),(O, N ). All four rules or any subset of them can be chosen for a given problem.
+1 i 2 i 3
+The Hierarchical Representation of the Different sets of rules construct different
+Tower Of Hanoi problem spaces. Figure 4 shows prob-
+lem spaces constructed by different sets
+From the abstract structure of the TOH of rules: Rule 1, Rules 1+2, Rules 1+3,
+(Figure 7), we can identify four levels of Rules 1+2+3, and Rules 1+2+3+4.
+representations: problem space struc- Problems that have different problem
+tures, rule representations, dimensional spaces are isomorphic at this level if
+representations, and object representa- their goals (initial and final states) are
+tions. At each level, there is an abstract the same. At this level, the formal
+structure that can be implemented by properties of problem space structures
+different representations. The different (such as the connections between prob-
+representations at each level are iso- lem states and the total number of prob-
+morphic in the sense that they all share lem states) are the major factors that af-
+the same abstract structure at that par- fect problem solving behavior.
+ticular level. The hierarchical represen- In Figure 4, when the number of
+tation of the TOH is summarized in rules increases, problem space struc-
+Figure 8, and the details are described as tures become more constrained and
+follows. problem solving behavior might
+change accordingly. The effect of the
+The Level of Problem Space Structures structural change of a problem space on
+The problem space of a problem is problem solving behavior might de-
+composed of all possible states and all pend on the nature of the rules
+moves constrained by the rules of the (whether internal or external).
+problem. The TOH is not bound to the Experiments 1A and 1B were designed
+three rules of the standard TOH. to examine these two factors. In
+Distributed Cognitive Tasks
+13
+Experiment 1A, the change of the prob- and the same nominal information on
+lem space structure was caused by in- the nominal dimension.
+ternal rules, while in Experiment 1B, it There are two factors at this level
+was caused by external rules. that might affect the problem solving
+behavior of the TOH. The first factor is
+The Level of Rule Representations whether the ordinal dimension of the
+Given a set of rules, say, Rules 1, 2, TOH is represented internally (e.g., by
+and 3, the abstract problem space con- colors) or externally (e.g., by sizes and
+structed by them is fixed. However, the locations). The second factor is whether
+rules can be distributed across internal the ordinal and nominal dimensions of
+and external representations in differ- the TOH are represented by visual
+ent ways. For example, Rule 1 may be properties (e.g., size and color) or spatial
+internal and Rules 2 and 3 external, or properties (e.g., location). The different
+Rules 1 and 2 internal and Rule 3 exter- representational properties of internal
+nal, or all three rules internal (see and external dimensions and those of
+Figure 12). Problems that have the visual and spatial dimensions may
+same set of rules but different distribu- produce different processing strategies
+tions of rules are isomorphic to each for the problem solving of the TOH.
+other at this level in the sense that they Experiment 3 was designed to examine
+all have the same abstract problem these two factors.
+space. Experiment 2 was designed to
+study the effect of the distributed repre- The Level of Object Representations
+sentation of rules on problem solving The problems that are isomorphic
+behavior. at all previous three levels can be iso-
+morphic at still another levelÑthe
+The Level of Dimensional level of object representations. At this
+Representations level, different objects can be used. For
+The ordinal and the nominal di- example, when the ordinal dimension
+mensions of the TOH do not have to be is represented by sizes, we can use dif-
+represented by sizes and locations as in ferent sized disks or different sized balls.
+the standard TOH. They can be repre- For the same reason, when the nominal
+sented by any properties (see Figure 6 dimension is represented by colors, we
+and Figure 14 for examples). Problems can use different sets of colors to repre-
+whose ordinal and nominal dimen- sent the nominal dimension, e.g., red,
+sions are represented by different prop- green, and yellow, or purple, blue, and
+erties are isomorphic to each other at pink. The representational properties at
+this level in the sense that the different this level usually do not have as large
+properties represent the same ordinal effects as those at the first three levels.
+information on the ordinal dimension
+Distributed Cognitive Tasks
+14
+Final
+State
+Initial
+State
+R ul e 1
+R
+ules 1 &
+2
+R
+ules 1, 2,
+& 3
+ules
+1, 2, 3,
+& 4
+R
+External Space Internal Space External Space Internal Space
+(Rule 1) (Rules 1, 2, & 3) (Rules 1 & 3) (Rules 1 & 2)
+R Y G
+SSSiiizzzeee---LLLooocccaaatttiiiooonnn Size-Color
+Location-Size Location-Location
+Size-Location SSSiiizzzeee---LLLooocccaaatttiiiooonnn SSSiiizzzeee---LLLooocccaaatttiiiooonnn
+ecapS
+melborP
+eluR
+lanoisnemiD
+tcejbO
+serutcurtS
+snoitatneserpeR
+snoitatneserpeR
+snoitatneserpeR
+Figure 8. The hierarchical representation of the TOH. At the level of problem space structures,
+different sets of rules construct different problem spaces. At the level of rule representations, the
+same set of rules can be distributed across internal and external representations in different ways.
+At the level of dimensional representations, the ordinal and nominal dimensions can be represented
+by different properties. At the level of object representations, different objects can be used.
+Distributed Cognitive Tasks
+15
+EXPERIMENT 1A: PROBLEM SPACE for Condition I1234 are shown in
+STRUCTURES (INTERNAL) Figure 9. The instructions for
+Conditions I123, I13, and I1 were the
+In Experiments 1A and 1B, we study same as for I1234, except that different
+isomorphic representations at the level sets of rules were stated in the instruc-
+of problem space structures. tions.
+Isomorphic representations at this level
+have the same goal but different prob- Method
+lem spaces constructed by different sets Subjects
+of rules. Figure 4 shows that the prob- The subjects were 24 undergradu-
+lem spaces become more constrained ate students enrolled in introductory
+with the increase of the number of psychology courses at the University of
+rules. How does the structural change California, San Diego, who volunteered
+of the problem space affect problem for the experiment to earn course credit.
+solving behavior? There are at least
+two rival factors. On the one hand, the Materials
+fewer rules, the more paths there are Three plastic orange balls of differ-
+from an initial state to a final state. ent sizes (small, medium, and large)
+Hence, fewer rules might make the and three porcelain plates were used for
+problem easier. On the other hand, the all four conditions.
+more rules, the fewer the choices.
+Subjects can simply follow where the Design
+highly constrained structure forces Each subject played all four games,
+them to go. So, more rules might make once each. There were twenty-four pos-
+the problem easier. This implies that sible permutations for the four games.
+the problem difficulty might not change The twenty-four subjects were assigned
+monotonically with the number of to these permutations randomly. Due
+rules. The effect on problem solving to a limitation in the number of sub-
+behavior caused by the structural jects available, the first, second, third,
+change of the problem space might also and fourth games always started at posi-
+depend on the nature of the rules tions S1, S2, S3, and S1 and ended at
+(whether internal or external). positions E1, E2, E3, and E1, respectively
+Experiments 1A and 1B examine these (see Figure 3). This treatment was not
+effects. In Experiment 1A, all rules are expected to cause significant systematic
+internal. We change the number of in- deviation because the task structures of
+ternal rules. In Experiment 1B, all but the four problems each subject solved
+Rule 1 are external. We change the were different from each other, and the
+number of external rules. games were randomized.
+Experiment 1A has four condi-
+tions, in which all rules were internal. Procedure
+Condition I1 has Rule 1, Condition I13 Each subject seated in front of a
+has Rules 1 and 3, Condition I123 has table and read the instructions aloud
+Rules 1, 2, and 3, and Condition I1234 slowly. Then the subject was asked to
+has Rules 1, 2, 3, and 4. We made a turn the instruction sheet over and to
+restaurant story (Waitress and Oranges) attempt to repeat all the rules. If the
+for the instructions. The instructions subject could recite all the rules twice
+Distributed Cognitive Tasks
+16
+Waitress and Oranges
+A strange, exotic restaurant requires everything to be done in a special manner. Here is an
+example. Three customers sitting at the counter each ordered an orange. The customer on the
+left ordered a large orange. The customer in the middle ordered a medium sized orange.
+And the customer on the right ordered a small orange. The waitress brought all three
+oranges in one plate and placed them all in front of the middle customer (as shown in
+Diagram 1). Because of the exotic style of this restaurant, the waitress had to move the
+oranges to the proper customers following a strange ritual. No orange was allowed to touch
+the surface of the table. The waitress had to use only one hand to rearrange these three
+oranges so that each orange would be placed in the correct plate (as shown in Diagram 2),
+following these rules:
+¥ Only one orange can be transferred at a time. (Rule 1 )
+¥ An orange can only be transferred to a plate on which it will be the largest. (Rule 2)
+¥ Only the largest orange in a plate can be transferred to another plate. (Rule 3)
+¥ The smallest orange and the largest orange can not be placed on a single plate unless
+the medium sized orange is also on that plate (Rule 4).
+How would the waitress do this? That is, you solve the problem and show the movement of
+oranges the waitress has to do to go from the arrangement shown in Diagram 1 to the
+arrangement shown in Diagram 2.
+Diagram 1
+Diagram 2
+Figure 9. The instructions for the I1234 condition in Experiment 1A. The instructions for other three
+conditions were the same as the one shown here, except that different sets of rules were stated.
+without error, the subject was in- I1234, respectively. In order to make
+structed to start the games. Otherwise meaningful comparisons, solution
+the subject reread the instructions and times, solution steps, and errors for
+was again tested. The cycle continued each condition were normalized by be-
+until the subject reached the criterion. ing divided by the number of mini-
+The final states were presented to the mum steps for each condition. The p
+subject in diagrams. A subjectÕs hand values of the main effects and multiple
+movements and speech were recorded comparisons are shown in the upper
+by a video camera. The solution time, half of Table 1. When solution times
+which was from the time the experi- and errors are used as the difficulty
+menter said "start" to when the subject measurements, the difficulty order was,
+£
+finished the last move, was recorded by from easiest to hardest: I1 < I13 < I1234
+a timer synchronized with the video I123. The difference between I1234 and
+camera. I123 was not statistically significant.
+When solution steps are used as the dif-
+Results ficulty measurement, the difficulty or-
+£
+The results are shown in Figure 10. The der remained the same (I1 < I13 I1234
+minimum numbers of steps from the < I123), but in this case the difference be-
+starting state to the final state are 2, 4, 7, tween I13 and I1234 was not statistically
+and 8 for Conditions I1, I13, I123, and significant.
+Distributed Cognitive Tasks
+17
+25
+B
+20
+B
+15
+J
+10 B J
+J
+5
+JB
+0
+1 2 3 4
+spetS
+.niM/semiT
+3
+B
+2 B J
+J B
+J
+1 BJ
+0
+1 2 3 4
+Number of Rules
+B Experiment 1A
+(Internal Rules)
+J Experiment 1B
+(External Rules)
+spetS
+.niM/spetS
+Number of Rules
+0.3
+B B
+0.2
+0.1
+B
+0 JB J J J
+1 2 3 4
+spetS
+.niM/srorrE
+I123 I123
+I1234
+I13 I1234
+I1-E23 I1-E234
+I13 I1-E234 I1 I1-E3
+I1-E23
+I1
+I1 I1-E3
+I1
+I123 I1234
+I13
+I1
+I1 I1-E3 I1-E23 I1-E234
+Number of Rules
+Figure 10. The results of Experiments 1A and 1B. Solution times were measured in seconds. The min-
+imum numbers of steps to solve the problems are 2, 4, 7, and 8 for Conditions I1, I13, I123, and I1234,
+respectively. In order to make meaningful comparisons, solution times, steps, and errors for each
+condition were normalized by being divided by the number of minimum steps for each condition.
+Table 1. p Values of Experiments 1A and 1B
+Measurements
+Comparisons Times Steps Errors
+Experiment 1A
+Main Effect < .0001 < .0001 < .0001
+I1 vs. I13 < .05 < .005 < .06
+I1 vs. I123 < .00001 < .00001 < .001
+I1 vs. I1234 < .00001 < .01 < .001
+I13 vs. I123 < .02 < .01 < .005
+I13 vs. I1234 < .005 > .6 < .01
+I123 vs. I1234 > .36 < .003 > .75
+Experiment 1B
+Main Effect < .0001 < .0001 Ñ
+I1 vs. I1-E3 < .01 < .1 Ñ
+I1 vs. I1-E23 < .0001 < .0001 Ñ
+I1 vs. I1-E234 < .00001 < .00001 Ñ
+I1-E3 vs. I1-E23 > .18 < .01 Ñ
+I1-E3 vs. I1-E234 < .0001 < .0001 Ñ
+I1-E23 vs. I1-E234 < .03 > .4 Ñ
+NOTE. Fisher PLSD test was used for the multiple comparisons.
+Distributed Cognitive Tasks
+18
+EXPERIMENT 1B: PROBLEM SPACE cover story in Figure 9). In this sense,
+STRUCTURES (EXTERNAL) Rule 2 was not a truly external rule
+with rigid physical constraints, but an
+Experiment 1B was exactly the same as
+external rule grounded in cultural
+Experiment 1A, except that Rules 2, 3,
+knowledge. Rule 3 in this condition
+and 4 were external rather than inter-
+was external because a cup could not be
+nal. There were also four conditions.
+moved if there was another cup on its
+In Condition I1 (Waitress and Oranges,
+top. In Condition I1-E234 (Waitress and
+Figure 11A), Rule 1 was the only inter-
+Tea, Figure 11D), Rule 1 was internal
+nal rule. In Condition I1-E3 (Waitress
+and Rules 2, 3, and 4 were external. All
+and Straws, Figure 11B), Rule 1 was in-
+cups were filled with tea. Rules 2 and 3
+ternal and Rule 3 was external. A
+in this condition were external for the
+smaller straw could be dropped into a
+same reason described in Condition I1-
+larger straw and a larger straw could be
+E23: a smaller cup could not be placed
+placed outside (around) a smaller straw
+on the top of a larger one (Rule 2), and
+(that is, Rule 2 was not implemented
+only the largest (topmost) cup could be
+here). However, the diameters of the
+moved (Rule 3). Rule 4 were external
+three straws were so small (1 cm, 1.5 cm,
+because the bottom of the largest cup
+and 2 cm, respectively) that a smaller
+was smaller than the top of the smallest
+straw inside a larger one could not be
+cup and the bottom of the smallest cup
+moved out without the larger straw be-
+was smaller than the top of the largest
+ing moved away first (external Rule 3).
+cup, that is, the largest cup and the
+In Condition I1-E23 (Waitress and
+smallest cup could not be placed on the
+Coffee, Figure 11C), Rule 1 was internal
+top of each other.
+and Rules 2 and 3 were external. All
+The instructions for these four
+cups were filled with coffee. A smaller
+conditions were the same as for the
+cup could not be placed on the top of a
+I1234 condition in Experiment 1A, ex-
+larger cup (external Rule 2), as this
+cept that different words for different
+would cause the coffee to spill. All sub-
+materials were used and only internal
+jects understood that spilling coffee was
+Rule 1 was stated in the instructions (all
+not a good behavior because they had to
+other rules were not stated because they
+imagine that they were waitresses or
+were external).
+waiters working in a restaurant (see the
+(A) I1 (B) I1-E3
+(C) I1-E23 (D) I1-E234
+Figure 11. The four conditions of Experiment 1B. See text for explanations. (A) I1: Rule 1 is
+internal. (B) I1-E3: Rule 1 is internal and Rule 3 is external. (C) I1-E23: Rule 1 is internal and Rules
+2 and 3 are external. (D) I1-E234: Rule 1 is internal and Rules 2, 3, and 4 are external.
+Distributed Cognitive Tasks
+19
+Method the difficulty order remained the same
+£
+Subjects (I1 < I1-E3 < I1-E23 I1-E234), but the
+The subjects were 24 undergradu- difference between I1-E23 and I1-E234 is
+ate students enrolled in introductory not statistically significant. Subjects
+psychology courses at the University of didnÕt make any errors in this experi-
+California, San Diego, who volunteered ment.
+for the experiment to earn course credit.
+Discussion
+Materials From the results of Experiments 1A and
+Materials for Condition I1 were 1B, we can see that problem space struc-
+the same as in Experiment 1A. In ture is an important factor of problem
+Condition I1-E3, the straws and tiny difficulty. For example, the solution
+plates were made from paperboard. The time difference between the easiest
+diameters and heights of the small, problem (I1) and the hardest problem
+medium, and large straws were approx- (I123) can be as large as a ratio of one to
+imately 1 cm, 1.5 cm, and 2 cm, and 3 ten. We can also see that the effect of
+cm, 6 cm, and 9 cm, respectively. In the structural change of a problem space
+Condition I1-E23, three plastic cups of on problem solving behavior depended
+different sizes (small, medium, and on the nature of the rules. When all
+large) and three paper plates were used. but one rule were external (Experiment
+All three cups were filled with coffee. 1B), a problem became more difficult
+In Condition I1-E234, three cups made when its problem space became more
+from metal cans and three paper plates constrained (more rules). However,
+were used. All three cups were filled when all rules were internal
+with tea. (Experiment 1A), the hardest problem
+was neither the most constrained one
+Design and Procedure (I1234) nor the least constrained one
+The design and procedure were the (I1), but the intermediately constrained
+same as in Experiment 1A. problem (I123).
+Two factors, working memory and
+Results problem structure, might contribute to
+The results are shown in Figure 10. The the different difficulty orders caused by
+solution times, solution steps, and er- the nature of rules. In Experiment 1A,
+rors for all four conditions were nor- all rules were internal. The working
+malized by being divided by the mini- memory load was high for both I123
+mum number of steps for each condi- and I1234 (three and four internal
+tion, as in Experiment 1A. The p values rules, respectively). One possible expla-
+of the main effects and multiple com- nation is that subjects could not do
+parisons are shown in the lower half of much planning because most of the
+Table 1. If solution times are used as working memory was loaded by the
+the difficulty measurement, the diffi- processing of the internal rules. In this
+culty order was, from easiest to hardest: case, the structure of the problem space
+£
+I1 < I1-E3 I1-E23 < I1-E234. The differ- might be the dominant factor of prob-
+ence between I1-E3 and I1-E23 is not sta- lem difficulty. Moves were to a large
+tistically significant. If solution steps extent guided by the structure of the
+are used as the difficulty measurement, problem space. I1234 was easier than
+Distributed Cognitive Tasks
+20
+I123 problem because it was more con- tributed across internal and external
+strained than I123 . In Experiment 1B, representations in different ways. In
+all but Rule 1 were external. In this the I123 (Waitress and Oranges ) condi-
+case, planning was probably the domi- tion (Figure 12A), Rules 1, 2, and 3 were
+nant factor of problem difficulty because all internal. In the I12-E3 (Waitress and
+there was little load on working mem- Donuts) condition (Figure 12B), Rules 1
+ory. This explains why I1-E23 was easier and 2 were internal, and Rule 3 was ex-
+than I1-E234, even though I1-E234 was ternal. This is the standard TOH. Rule
+more constrained than I1-E23. 3 was external because the physical con-
+All four rules in Experiment 1A straints (coupled with Rule 1) guaran-
+were internal and three of the four teed that it was followed (see the previ-
+rules in Experiment 1B were external. ous discussion in the section Rule
+Comparing the results in these two ex- Representations for more explanations).
+periments, we found that the condi- In the I1-E23 (Waitress and Coffee) con-
+tions with external rules in Experiment dition (Figure 12C), Rule 1 was internal,
+1B were easier than their corresponding and Rules 2 and 3 were external. This
+conditions with internal rules in was identical to the I1-E23 condtion in
+Experiment 1A. In other words, exter- Experiment 2B. The instructions for all
+nal rules could make problems easier. three conditions were the same as for
+This was explicitly tested in Experiment the I1234 condition in Experiment 1A,
+2, which follows. except that different words suitable for
+the materials used in the current exper-
+EXPERIMENT 2: THE DISTRIBUTED iment were used and that only internal
+REPRESENTATION OF RULES rules were stated in the current instruc-
+tions (external rules need not be stated
+In this experiment, we study isomor- explicitly).
+phic representations at the level of rule
+representations. We have shown that a Method
+problem space is constructed by a set of Subjects
+rules. Given the same set of rules, the The subjects were 18 undergradu-
+abstract problem space is fixed. ate students enrolled in introductory
+However, the rules can be distributed psychology courses at the University of
+across internal and external representa- California, San Diego who volunteered
+tions in different ways. Different distri- for the experiment to earn course credit.
+butions may have different effects on
+problem solving behavior, even if the Materials
+formal structures are the same. This The materials in the I123 condition
+experiment examines these effects. Our were the same as in the I123 condition
+hypothesis is that the more rules are in Experiment 1A. In the I12-E3 condi-
+distributed in the external representa- tion, three plastic rings of different sizes
+tion, the easier the problem. (small, medium, and large) and three
+There were three conditions in this plastic poles were used. The materials
+experiment, which all had three rules. in the I1-E23 condition were the same as
+Though the three rules were the same in the I1-E23 condition in Experiment
+in their abstract forms, they were dis- 1B.
+Distributed Cognitive Tasks
+21
+(A) I123
+(B) I12-E3 (C) I1-E23
+Figure 12. The three conditions of Experiment 2. See text for explanations. (A) I123: All three rules
+are internal. (B) I12-E3: Rules 1 and 2 are internal and Rules 3 is external. (C) I1-E23: Rule 1 is
+internal and Rules 2 and 3 are external.
+Design solution times, steps, and errors for the
+Each subject played all three games, three problems was consistent. The
+one for each of the three conditions, more rules were external, the easier the
+once in a randomized order (e.g., I1-E23, problem. The order of difficulty was,
+³
+I123, I12-E3). There were six possible from hardest to easiest: I123 > I12-E3
+permutations for the three games. Each I1-E23. The difference between I12-E3
+permutation was assigned to a subject and I1-E23 was not statistically signifi-
+randomly. There were a total of eigh- cant. All errors made were for internal
+teen subjects. Due to a limitation in the rules: none were for external rules.
+number of subjects available, the start-
+ing and ending positions were not ran- Discussion
+domized. That is, for each subject, the Two of the three conditions in the pre-
+first, the second, and the third games sent experiment, I123 and I12-E3, were
+always started at positions S1, S2, and S3 modifications of the Dish-move and
+and ended at positions E1, E2, and E3, Peg-move problems of Kotovsky, Hayes,
+respectively (see Figure 3). The starting and Simon (1985). The results from the
+and ending positions should not cause present study are consistent with their
+significant systematic deviation because results: subjects took more time to solve
+the three pairs of starting and ending I123 than I12-E3. Kotovsky, Hayes, and
+positions were exactly symmetric, and Simon only reported solution times in
+the order of the three games played by their study. The numbers of steps and
+each subject was randomized. errors in the present study are all con-
+sistent with solution times. In the pre-
+Procedure sent experiment, the more rules exter-
+The procedure was the same as in nalized, the easier the problem. In addi-
+Experiment 1A. tion, external rules seem to be error
+proof: subject did not make any errors
+Results for external rules. This effect might be
+The average solution times, solution due to the fact that the external rules
+steps, and errors are shown in Figure 13. were either perceptually available or
+The p values for the main effects and physically constrained. The errors for
+multiple comparisons are shown in internal errors might be caused by the
+Table 2. Problem difficulty measured in load of working memory.
+Distributed Cognitive Tasks
+22
+150
+B
+125
+100
+B
+75
+B
+50
+25
+0
+I123 I12-E3 I1-E23
+).ces(
+semiT
+noituloS
+25
+20 B
+15 B
+B
+10
+5
+0
+I123 I12-E3 I1-E23
+Conditions
+spetS
+noituloS
+1.5
+B
+1
+B
+0.5
+B
+0
+I123 I12-E3 I1-E23
+Conditions
+srorrE
+Conditions
+Figure 13. The results of Experiment 2. Problem difficulty decreased with the increase of the
+number of external rules.
+Table 2. The p Values of Experiment 2
+Measurements
+Comparisons Times Steps Errors
+Main Effect < .05 < .05 < .005
+I123 vs. I12-E3 < .1 < .1 < .03
+I123 vs. I1-E23 < .01 < .02 < .001
+I12-E3 vs. I1-E23 > .3 > .4 > .2
+NOTE: Fisher PLSD test was used for the multiple comparisons.
+Why did external rules make prob- solve the problem. Among the fifty-
+lems easier? There might be two fac- four games played by the eighteen sub-
+tors. The first is the checking of rules jects, the last three steps were solved in
+before each move. External rules can be three steps in fifty-two games and in
+checked by perceptual inspection, while five steps in only two games.
+internal rules must be checked men- Therefore, if either the small or the
+tally. The processing of internal rules medium object is in the final state, the
+in the mind, which demands more re- game is virtually solved. Rule 2 might
+sources of working memory, might in- be critical for the discovery of the recur-
+terfere with other processes critical for sive strategy. For the I1-E23 condition,
+problem solving, such as planning. The Rule 2 was external: a smaller cup of
+second factor is the recursive strategyÑ coffee could not be placed on the top of
+the strategy to reduce a three-object a larger one. This external representa-
+problem to a two-object problem, or in tion might have prompted the subjects
+other words, move the smallest object that the smallest cup had to be moved
+to its destination first. From the prob- to its final state first. Out of the eigh-
+lem space of the TOH (Figure 3) we can teen games for the I1-E23 condition, six-
+see that for any pair of starting and end- teen were solved by moving the small-
+ing states, as long as either the small or est cup to its final state first. The other
+the medium object is in its final state, two were solved by moving the
+only three more steps are needed to medium sized cup to its final state first.
+Distributed Cognitive Tasks
+23
+For the I123 and the I12-E3 conditions, (ordered) locations, because the ordinal
+Rule 2 was internal. Thus, the recur- relation is embedded in the physical
+sive strategy was harder to discover. properties of sizes and locations. But it
+Out of the eighteen games for the I123 is represented internally by colors, be-
+condition, only eleven were solved by cause the order of colors is arbitrary and
+moving the smallest object to its final has to be internalized. (The nominal
+state first. The other seven were solved dimension is represented externally by
+by moving the medium sized object to sizes, locations, and colors.) The second
+its final state first. Similarly, out of the factor is whether the ordinal and nom-
+eighteen games for the I12-E3 condition, inal dimensions are represented by vi-
+the numbers for the two cases were ten sual properties (sizes and colors) or spa-
+and eight, respectively. Thus, the ease tial properties (locations). The instruc-
+of discovering the recursive strategy in tions for the O(size)-N(size) condition
+the I1-E23 condition might have also are shown in Figure 15. The instruc-
+contributed to the difficulty order. tions for other conditions were the
+same as for the O(size)-N(size) condi-
+tion, except that modifications were
+EXPERIMENT 3: DIMENSIONAL made for different materials used in dif-
+REPRESENTATIONS ferent conditions.
+We hypothesize that external di-
+In this experiment, we study isomor- mensions need less mental processing
+phic representations at the level of di- than internal dimensions, and that spa-
+mensional representations. The ordi- tial dimensions support more efficient
+nal and nominal dimensions of the perceptual processing than visual di-
+TOH can be represented by any proper- mensions. Thus, we have the follow-
+ties. We chose size, location, and color ing predictions. For the ordinal dimen-
+to represent these two dimensions, sion, sizes should be better than colors
+which generated nine isomorphic rep- because the former represents the ordi-
+resentations of the TOH (Figure 14). nal dimension externally while the lat-
+(See Figure 6 as well as Figure 14 for ex- ter represents it internally, and loca-
+planations on the dimensional repre- tions should better than sizes because
+sentations and the mappings between the former is a spatial dimension while
+dimensions). the latter is a visual dimension. In ad-
+The nine isomorphs in Figure 14 dition, locations should be better than
+were the nine conditions of this exper- colors because the former is not only an
+iment, which had the same three inter- external dimension but also a spatial
+nal rules. Among these nine iso- dimension. For the nominal dimen-
+morphs, some might be easier than sion, locations should be better than
+others. We consider two factors of prob- sizes and colors because the former is a
+lem difficulty. The first factor is the na- spatial dimension while latter two are
+ture (internal or external) of the ordinal visual dimensions. Sizes and colors
+dimension. The ordinal dimension is should not differ from each other be-
+represented externally by sizes and cause they are both visual dimensions.
+Distributed Cognitive Tasks
+24
+Nominal Dimension
+Size Location Color
+R Y G
+(A) O(size)-N(size) (B) O(size)-N(location) (C) O(size)-N(color)
+Y
+R
+G
+(D) O(location)-N(size) (E) O(location)-N(location) (F) O(location)-N(color)
+G
+Y G R R Y G R Y Y R G
+(G) O(color)-N(size) (H) O(color)-N(location) (I) O(color)-N(color)
+noisnemiD
+lanidrO
+eziS
+noitacoL
+roloC
+Figure 14. Nine isomorphs at the level of dimensional representations. O = Ordinal Dimension, N
+= Nominal Dimension. For ordinal dimensions, the colors have a priority: red > green > yellow.
+All triangular cylinders can be rotated around their axes. (A) Each cylinder has three different
+sized circles on its three sides. O = sizes of the cylinders; N = sizes of the circles. (B) O = sizes of
+the balls; N = locations of the balls. (C) Each cylinder has three colors (red, green, yellow) on its
+three sides. O = sizes of the cylinders. N = colors of the sides. (D) Each cylinder has three
+different sized circles on its three sides. O = locations of the cylinders (top, middle, bottom). N =
+sizes of the circles. (E) The three disks can be moved horizontally among three locations. O =
+vertical locations (top, middle, bottom). N = horizontal locations (left, middle, right). (F) Each
+cylinder has three colors (red, green, yellow) on its three sides. O = locations of the cylinders (top,
+middle, bottom). N = colors of the sides. (G) Each cylinder has a color (red, green, or yellow) on all
+three sides. On the three sides of a cylinder there are three different sized circles. O = color
+priority. N = sizes of the circles. (H) O = color priority. N = locations of the balls. (I) Each
+cylinder has a color (red, green, or yellow) on all three sides. On the three sides of each cylinder
+there are three circles of different colors (red, green, yellow). O = the color priority of the
+cylinders. N = colors of the circles.
+Distributed Cognitive Tasks
+25
+Legend has it that in ancient India there was a Buddhist scripture in a locked
+crypt hidden in a cave. Many people tried to acquire it because it possessed the secret of
+life. However, none of them succeeded because if the crypt was not opened in a very
+short time, it would disappear. The lock of the crypt was remotely controlled by three
+magic triangular cylinders of different sizes (small, medium, and large). On the three
+sides of each cylinder, there were three different sized circles (also small, medium, and
+large). In order to open the crypt, one had to rotate the three cylinders to a specific
+configuration, strictly following a set of rules. One day, a wise monk entered the cave.
+Inspired by the wisdom of Buddha, he skillfully opened the crypt within the specified
+time. How did he do it? You are given a replica of the magic cylinders. Try to solve
+this puzzle as fast as you can. The rules are given below. The initial configuration you
+will start with and the final configuration that opens the lock will be given to you
+when you have memorized these rules.
+Rule 1: Only one cylinder can be rotated at a time.
+Rule 2: After rotating a cylinder, if the new facing side has a same sized circle
+as that of another cylinder, the size of the cylinder you rotated must be
+larger.
+Rule 3: Before rotating a cylinder, if any cylinders have matching sized circles
+facing you, only the largest cylinder can be rotated.
+Figure 15. The instructions for the O(size)-N(size) condition. The instructions for other conditions
+were the same as the one shown here, except that modifications were made for different objects in
+different conditions.
+Method within-subject factor was the ordinal
+Subjects dimension. It had three levels: size, lo-
+The subjects were 36 undergradu- cation, and color. The between-subject
+ate students at the University of factor was the nominal dimension. It
+California, San Diego who were paid for also had three levels: size, location, and
+participating in this experiment. color. There were three games across
+the three within-subject levels at each
+Materials between-subject level. Each subject
+The triangular cylinders in Figure played these three games once in a ran-
+14 were made from paperboard and domized order (e.g., O(color)-N(size),
+could be rotated around their vertical O(size)-N(size), and O(location)-
+axes. In Figures 14D and 14F, the three N(size)). For the three games at each be-
+cylinders were stacked on a vertical rod. tween-subject level, there were six pos-
+In Figure 14B, three different sized plas- sible permutations. There were a total
+tic balls were used. In Figure 14E, the of 18 possible permutations across the
+three plastic disks could only be moved three between-subject levels. Each
+horizontally. In Figure 14H, three permutation was assigned to two sub-
+sponge balls of different colors (red, jects randomly. There were a total of 36
+green, yellow) were used. subjects. Due to a limitation in the
+number of subjects available, the start-
+Design ing and ending positions were not ran-
+This was a mixed design. The domized. That is, for each subject, the
+Distributed Cognitive Tasks
+26
+first game always started at position S1 statistically better than colors, though
+and ended at position E1 (see Figure 3), the solution steps for locations were
+the second at position S2 and at position fewer than for colors. The difference of
+E2, and the third at position S3 and at solution steps between colors and sizes
+position E3. The starting and ending was not statistically significant.
+positions were not expected to cause For the nominal dimension, when
+much systematic deviation because the solution times and errors were used as
+three pairs of starting and ending posi- the difficulty measurement, locations
+tions were exactly symmetric, and the were significantly better than sizes and
+three games played by each subject were colors. The difference between sizes
+randomized. and colors was not statistically signifi-
+cant. When solution steps were used as
+Procedure the difficulty measurement, none of the
+For each game, the subjects were differences between sizes, locations, and
+asked to read the instructions aloud colors were statistically significant,
+once and given two minutes to memo- though solution steps for locations were
+rize the rules. The subjects were then fewer than for sizes and colors.
+asked to recite all the rules. If the sub-
+jects could recite all the rules without Discussion
+errors, they were shown two examples We identified two factors that might af-
+for each rule. Otherwise, the subjects fect problem solving behavior at the
+read the instructions again and were level of dimensional representations.
+again tested until they could recite all The first factor is whether the ordinal
+the rules without errors. Before the dimensional is represented internally
+subjects started the games, they were or externally. The results showed that
+given the initial and final states. The although solution times and errors for
+final state for each game was presented colors, which represent the ordinal di-
+by a set of identical objects. Subjects' mension internally, were larger than
+hand movements and speech were for sizes, which represent the ordinal
+recorded by a video camera. dimension externally, the differences
+were not statistically significant. This
+Results might be because, compared with other
+The solution times, steps, and errors are mental activities during the problem
+shown in Figure 16. The p values are solving tasks, internalizing the color
+shown in Table 3. For the ordinal di- priority (red>green>yellow) was a triv-
+mension, when solution times and er- ial task. The second factor, whether a
+rors were used as the difficulty mea- dimension is represented by visual or
+surement, locations were significantly spatial properties, played a major role in
+better than sizes and colors. Though determining problem difficulties.
+the solution times and errors for sizes Locations were much better than sizes
+were smaller than for colors, the differ- for the ordinal dimension and than
+ences were not statistically significant. sizes and colors for the nominal dimen-
+When solution steps were used as the sion. The superiority of locations over
+difficulty measurement, locations were colors for the ordinal dimension was an
+significantly better than sizes, but not effect caused by both factors.
+Distributed Cognitive Tasks
+27
+250
+B
+B
+200
+J
+J
+150
+H
+H
+100 B
+J
+H
+50
+0
+Color Size Location
+)sdnoces(
+semiT
+noituloS
+20
+J
+B 15 BH J H BJ
+H
+10
+5
+0
+Color Size Location
+Nominal Dimension
+spetS
+noituloS
+Nominal Dimension
+5 B B
+4
+J
+3 J
+H
+H
+2
+1 BJ
+H
+0
+Color Size Location
+srorrE
+Ordinal Dimension
+B Color
+J
+Size
+H
+Location
+Nominal Dimension
+Figure 16. The results of Experiment 3.
+Table 3. The p Values of Experiment 3
+Measurements
+Comparisons Times Steps Errors
+O(size) vs. O(location) < .01 < .05 < .03
+O(size) vs. O(color) > .17 > .53 > .15
+O(location) vs. O(color) < .0007 > .2 < .004
+N(size) vs. N(location) < .003 > .24 < .0001
+N(size) vs. N(color) > .66 > .62 > .96
+N(location) vs. N(color) < .016 > .17 < .007
+NOTE. The comparisons were between dimensions, not between individual conditions. For
+example, O(size) vs. O(location) was the comparison between the ordinal dimension
+represented by sizes and the ordinal dimension represented by locations. None of the
+interactions were statistically significant.
+Distributed Cognitive Tasks
+28
+Why were locations so special? In dimensions) is represented by locations,
+the analysis of the dimensional repre- an extra step of invoking location in-
+sentations of the TOH, we reviewed formation is needed to link the two
+some empirical studies showing the separate visual maps of size and color.
+important anatomical and functional In this case, the three values on the or-
+differences between visual and spatial dinal dimension and the three values
+representations (Goldman-Rakic 1992; on the nominal dimensions, as well as
+Mishkin, Ungerleider, & Macko 1983; the three locations, have to be checked
+Treisman & Gelade, 1980). Though the before an operation (moving or rotat-
+results from the present experiment do ing) can be made. If one of the two con-
+not allow us to offer a direct explana- junctive dimensions is represented by
+tion of why locations (spatial dimen- locations, the extra step of invoking the
+sion) were better than sizes and colors location information is not needed, be-
+(visual dimensions), we can compare cause the location information itself is
+our results with some perceptual tasks. in the conjunctive dimensions. In this
+The ordinal and nominal dimensions case, only the three values on the di-
+in the present experiment are conjunc- mension not represented by locations
+tive dimensions. Treisman & Gelade and the three values on the dimension
+(1980) proposed that location informa- of locations have to be checked before
+tion is necessary for the perception of an operation can be made. Thus, if one
+conjunctive stimuli. Nissen's (1985) of the ordinal and nominal dimensions
+study of conjunctive stimuli based on or both of them are represented by loca-
+visual maps is more directly related to tions, the problem is easier.
+the present study. According to her,
+color and shape are registered in sepa-
+rate maps. When a conjunctive stimu- GENERAL DISCUSSION
+lus was composed of color and location,
+she showed that selecting an item by In this paper, we developed a theoreti-
+color and reporting its location was as cal framework of distributed representa-
+accurate as selecting by location and re- tions and a methodology of representa-
+porting color. In this case, selection by tional analysis for the study of dis-
+location did not have special advantage, tributed cognitive tasksÑtasks that re-
+because location itself was part of the quire the processing of information dis-
+conjunctive stimulus. However, when tributed across the internal mind and
+a conjunctive stimulus is composed of the external environment, and applied
+color and shape, location is necessary them to the empirical studies of the
+for cross-referencing between the sepa- Tower of Hanoi problem. Our approach
+rate shape and color maps. She showed to distributed cognitive tasks demands
+that when subjects reported the shape (a) the consideration of the internal and
+and location of an item cued by its color, external representations of a task as a
+the accuracy of shape judgments de- representational system, (b) the explicit
+pended on the accuracy of locating the decomposition of the representational
+cued color. Comparing Nissen's study system into its internal and external
+with the present study, we have parallel components, and (c) the identification
+results. If neither of the two conjunc- of the different functions of internal
+tive dimensions (ordinal and nominal and external representations in cogni-
+Distributed Cognitive Tasks
+29
+tion. The traditional approach to cogni- processes. Though an representational
+tion is not appropriate for the study of analysis should be the first step for the
+distributed cognitive tasks, because it of- study of distributed cognitive tasks, a
+ten ignores the important functions of process model is also essential. In order
+external representations in cognition. to understand the nature of distributed
+In addition, it often confuses a task's cognitive tasks, we need to study all of
+distributed representation that has both the three aspects. Two interesting is-
+internal and external components with sues worth of further studies are the re-
+the task's internal representation. This lationship between representations and
+confusion often leads to unnecessarily processes and the interplay between
+complex accounts of cognition. perceptual and cognitive processes.
+Formal Structures, Representations , The Nature of External Representations
+and Processes External objects are not just peripheral
+Any distributed cognitive task can be aids to cognition, they provide a differ-
+analyzed into three aspects: its formal ent form of representationÑan external
+structure, its representation, and its pro- representation. By decomposing the
+cesses. Our present study focused on representational system of a distributed
+representations and their relation to cognitive task into its internal and ex-
+formal structures, for the following rea- ternal representations, we can separate
+sons. First, in order to understand the the functions of external representa-
+processes involved in a distributed cog- tions from those of internal representa-
+nitive task, we first have to understand tions. The empirical studies reported
+what information is processed and how here on the Tower of Hanoi problem
+the information to be processed is rep- suggest the following properties of ex-
+resented. Second, different processes ternal representations.
+are activated by different representa- 1. External representations can
+tions, but not vice versa. For example, provide memory aids. For example, in
+perceptual processes are activated by ex- all of the TOH experiments reported
+ternal representations, while cognitive here, the goal problem states didn't
+processes are usually activated by inter- need to be memorized, because they
+nal representations. Third, from a rep- were placed in front of the subjects ei-
+resentational perspective, tasks that ther by diagrams or by physical objects.
+look dramatically different may in fact This is the most acknowledged property
+have a common structure. However, if of external representations. To many
+we start our analysis with processes, we people, this is the only one.
+may fail to capture this common struc- 2. External representations can
+ture, because different representational provide information that can be directly
+formats of the common structure can perceived and used without being in-
+activate completely different processes. terpreted and formulated explicitly. For
+The three aspects of distributed example, in the I1-E23 version of the
+cognitive tasks are closely interrelated: TOH, Rules 2 and 3 were not told to the
+the same formal structure can be im- subjects: they were built into the physi-
+plemented by different isomorphic rep- cal constraints. They could be perceived
+resentations, and different isomorphic and followed directly by the subjects.
+representations can activate different When the subjects were asked to explic-
+Distributed Cognitive Tasks
+30
+itly formulate the rules after the games, Related Approaches
+few could do it. External representa- Although the mainstream approach to
+tions seem to provide affordances cognition has focused on internal repre-
+(Gibson, 1979). sentations, the role of the environment
+3. External representations can an- in cognition has long been acknowl-
+chor and structure cognitive behavior. edged by several alternative approaches.
+The physical structures in external rep- For example, Gibson (1966, 1979) argued
+resentations constrain the range of pos- that perception is the direct pickup of
+sible cognitive behaviors in the sense environmental information
+that some behaviors are allowed and (invariants) in the extended spatial and
+others prohibited. For example, in the temporal patterns of optic arrays, and
+I1-E23 version of the TOH, external that information in the environment is
+Rules 2 and 3 could not be violated. sufficient for perception and action. The
+They constructed an action space in sociohistorical approach to cognition
+which only the actions that did not vio- (Leontiev, 1981; Luria, 1976; Vygotsgy,
+late these two rules were permitted. 1978, 1986) argues that it is the continu-
+This action space is the external prob- ous internalization of the information
+lem space of the I1-E23 problem. and structure from the environment
+4. External representations change and the externalization of internal rep-
+the nature of a task. Norman (1991) resentations into the environment that
+proposed that there are two different produce high level psychological func-
+views of cognitive artifacts. From the tions.
+system's view (internal + external rep- More recently, the role of the envi-
+resentations), external representations ronment in cognition has become the
+can make a task easier; from the per- central concern in several fields of cog-
+son's view (internal representations nitive science. In the studies of the rela-
+only), external representations change tionship between images and pictures, it
+the nature of the task. For example, in has been shown that external represen-
+the I123 version of the TOH, a subject tations can give us access to knowledge
+had to process three internal rules, and skills that are unavailable from in-
+while in the I1-E23 version the subject ternal representations (e.g., Chambers &
+only had to process one internal rule. Reisberg, 1985; Reisberg, 1987). The sit-
+Though the two versions had the same uated cognition approach argues that
+abstract structure, their cognitive pro- the activities of individuals are situated
+cesses were different. Nevertheless, in the social and physical contexts
+when considered as systems, I1-E23 was around them and knowledge can be
+much easier than I123. considered as a relation between the in-
+5. External representations are an dividuals and the situation (e.g.,
+indispensable part of the representa- Barwise & Perry, 1983; Greeno, 1989;
+tional system of any distributed cogni- Lewis, 1991; Suchman, 1987). Studies
+tive task. This property is a direct re- on diagrammatic reasoning have also
+flection of the nature of distributed cog- focused on the functions of external
+nitive tasks, which require the process- representations in cognition (e.g.,
+ing of information distributed across in- Chandrasekaran & Narayanan, 1990;
+ternal and external representations. Larkin, 1989; Larkin & Simon, 1987).
+For example, Larkin & Simon (1987) ar-
+Distributed Cognitive Tasks
+31
+gue that diagrammatic representations study of cognition. It has both theoreti-
+support operators that can recognize cal and practical implications.
+features easily and make inferences di- Theoretically, it can shed light on some
+rectly. issues regarding the nature of cognition,
+Although our current approach such as whether cognition is solely in
+shares the same interest with others in the mind or distributed across the mind
+the function of the environment in and the environment and whether
+cognition, it differs in several aspects. people reason on formal structures or
+First, our approach focuses on the rep- on content-specific representations.
+resentational properties of distributed Practically, it can provide design princi-
+cognitive tasks: how the information ples for effective representations.
+needed for a distributed cognitive task is
+represented across the internal mind
+and the external environment. Second, REFERENCES
+our approach demands the considera-
+tion of the internal and external repre- Barwise, J. & Perry, J. (1983). Situations
+sentations of a distributed cognitive task and attitudes. Cambridge, MA:
+as a representational system. We argue The MIT Press.
+that external representations are an in-
+Chambers, D. & Reisberg, D. (1985). Can
+dispensable part of any distributed cog-
+mental images be ambiguous?
+nitive task. Third, our approach de-
+Journal of Experimental
+mands the explicit decomposition of the
+Psychology: Human Perception &
+representational system of a distributed
+Performance, 11, 317-328.
+cognitive task into its internal and ex-
+ternal components. With such a de-
+Chandrasekaran, B. & Narayanan, N. H.
+composition, we can identify the differ-
+(1990). Towards a theory of com-
+ent functions of internal and external
+monsense visual reasoning. In K.
+representations in cognition. Fourth,
+V. Nori & C. E. V. Madhavan
+we suggested that in order to under-
+(Eds.): Lecture notes in computer
+stand the nature of a distributed cogni-
+science 472. Berlin, Germany:
+tive task, we need to study the task's
+Springer-Verlag.
+formal structure, representation, and
+processes and the interrelations among
+Cheng, P. W. & Holyoak, K. J. (1985).
+them. Finally, the principles of dis-
+Pragmatic reasoning schemas.
+tributed representations and the
+Cognitive Psychology, 17, 391-416.
+methodology of representational analy-
+sis developed in the present study have
+Evans, J. S. B. T. (Ed.). (1983). Thinking
+been applied to several real world prob-
+and reasoning. London: Routledge
+lems, including numeration systems,
+& Kegan Paul.
+relational information displays, and
+cockpit instrument displays (Zhang, Gibson, J. J. (1966). The senses consid-
+1992). ered as perceptual systems. New
+York: Houghton Mifflin Company.
+Conclusion
+The distributed representations ap- Gibson, J. J. (1979). The Ecological
+proach offers a novel perspective for the Approach to Visual Perception.
+Distributed Cognitive Tasks
+32
+Boston: Houghton Mifflin. and other River-Crossing prob-
+lems. Cognitive Psychology, 9, 412-
+Greeno, J. G. (1974). Hobbits and Orcs: 440.
+Acquisition of a sequential concept.
+Cognitive Psychology, 6, 270-292. Kirlik, A. (1989). The organization of
+perception and action in complex
+Greeno, J. G. (1989). Situations, mental control skills. Unpublished PhD
+models, and generative knowl- Dissertation. Columbus, OH: The
+edge. In D. Klahr & K. Kotovsky Ohio State University, Department
+(Eds.), Complex information pro- of Industrial and Systems
+cessing: The impact of Herbert A. Engineering.
+Simon. Hillsdale, NJ: Lawrence
+Erlbaum Associates. Kotovsky, K. & Fallside, D. (1989).
+Representation and transfer in
+Griggs, R. A. & Newstead, S. E. (1982). problem solving. In D. Klahr & K.
+The role of problem structure in a Kotovsky (Eds.), Complex informa-
+deductive reasoning task. Journal tion processing: the impact of
+of Experimental Psychology: Herbert A. Simon. Hillsdale, NJ:
+Learning, Memory, and Cognition, Lawrence Erlbaum Associates.
+8 (4), 297-307.
+Kotovsky, K. & Simon, H. A. (1990).
+Hayes, J. R., & Simon, H. A. (1977). What makes some problems really
+Psychological differences among hard: explorations in the problem
+problem isomorphs. In N. J. space of difficulty. Cognitive
+Castellan, D. B. Pisoni, & G. R. Psychology, 22, 143-183.
+Potts (Eds.), Cognitive theory.
+Hillsdale, NJ: Lawrence Erlbaum Kotovsky, K., Hayes, J. R., & Simon, H.
+Associates. A. (1985). Why are some problems
+hard? Evidence from Tower of
+Hutchins, E. (1990). The technology of Hanoi. Cognitive Psychology, 17,
+team navigation. In J. Galegher, R. 248-294.
+E. Kraut, & C. Egido (Eds.),
+Intellectual teamwork: Social and Larkin, J. (1989). Display-based problem
+technical bases of collaborative solving. In D. Klahr & K. Kotovsky
+work. Hillsdale, NJ: Lawrence (Eds.), Complex Information
+Erlbaum Associates. Processing: The Impact of Herbert
+A. Simon. Hillsdale, NJ: Lawrence
+Hutchins, E. (in preparation). Erlbaum Associates.
+Distributed Cognition: a cognitive
+ethnography of ship navigation. Larkin, J. H. & Simon, H. A. (1987).
+San Diego: University of Why a diagram is (sometimes)
+California, Department of worth ten thousand words.
+Cognitive Science. Cognitive Science , 11, 65-99.
+Jeffries, R., Polson, P. G., Razran, L., & Leontiev, A. N. (1981). Problems in the
+Atwood, M. E. (1977). A process development of mind. Moscow:
+model for Missionaries-Cannibals Progress.
+Distributed Cognitive Tasks
+33
+make us smart. Reading, MA:
+Lewis, C. M. (1991). Representational Addison-Wesley.
+aiding. Unpublished manuscript.
+Pittsburgh, PA: University of O'Brien, D. P., Noveck, I. A., Davidson,
+Pittsburgh, Department of G. M., Fisch, S. M., Lea, R. B., &
+Information Science. Freitag, J. (1990). Sources of diffi-
+culty in deductive reasoning: The
+Luria, A. R. (1976). Cognitive develop- THOG task. Quarterly Journal of
+ment: its cultural and social foun- Experimental Psychology, 42A, 2,
+dations. Cambridge, MA: Harvard 329-351.
+University Press.
+Reisberg, D. (1987). External representa-
+Margolis, H. (1987). Patterns, thinking tions and the advantages of exter-
+and cognition: A theory of judg- nalizing one's thoughts.
+ment. Chicago, IL: The University Proceedings of the Eighth Annual
+of Chicago Press. Conference of the Cognitive
+Science Society. Hillsdale, NJ:
+Mishkin, M., Ungerleider, L. G. and
+Lawrence Erlbaum Associates.
+Macko, K. A. (1983). Object vision
+and spatial vision: Two cortical Simon, H. A. (1981). The Sciences of the
+pathways. Trends in Artificial (2nd ed.) . Cambridge,
+Neuroscience, 6, 414-417. MA: The MIT Press.
+Nickerson, R. (1988). Counting, comput- Simon, H. A. & Hayes, J. R. (1976). The
+ing, and the representation of understanding process: Problem
+numbers. Human Factors, 30, 181- isomorphs. Cognitive Psychology,
+199. 8, 165-190.
+Nissen, M. J. (1985). Accessing features Stevens, S. S. (1946). On the theory of
+and objects: is location special? In scales of measurement. Science,
+M. I. Posner & O. S. M. Martin 103 (2684), 677-680.
+(Eds.), Attention and performance
+XI. Hillsdale, NJ: Lawrence Stevens, S. S. (1951). Mathematics, mea-
+Erlbaum Associates. surement, and psychophysics. In S.
+S. Stevens (Ed.), Handbook of
+Norman, D. A. (1988). The psychology Experimental Psychology. New
+of everyday things. New York: York: Wiley.
+Basic Books.
+Suchman, L. (1987). Plans and situated
+Norman, D. A. (1991). Cognitive arti- actions: The problem of human-
+facts. In J. M. Carroll (Ed.), machine communication. New
+Designing interaction: Psychology York: Cambridge University Press.
+at the human-computer interface.
+New York: Cambridge University Thomas, J. C. (1974). An analysis of be-
+Press. havior in the Hobbits-Orcs prob-
+lem. Cognitive Psychology, 6, 257-
+Norman, D. A. (in press). Things that 269.
+Distributed Cognitive Tasks
+34
+Treisman, A. M. & Gelade, G. (1980). A
+feature-integration theory of atten-
+tion. Cognitive Psychology, 12, 97-
+136.
+Vygotsky, L. S. (1978). Mind in society.
+Cambridge, MA: Harvard
+University Press.
+Vygotsky, L. S. (1986). Thought and lan-
+guage. Cambridge, MA: The MIT
+Press.
+Wason, P. C. (1966). Reasoning. In B. M.
+Foss (Ed.), New horizons in psy-
+chology. Harmondsworth:
+Penguin.
+Wason, P. C. & Johnson-Laird, P. N.
+(1969). Proving a disjunctive rule.
+Quarterly Journal of Psychology,
+21, 14-20.
+Wason, P. C. & Johnson-Laird, P. N.
+(1972). Psychology of reasoning:
+Structure and content. Cambridge,
+MA: Harvard University Press.
+Zhang, J. (1992). Distributed representa-
+tion: The interaction between in-
+ternal and external information.
+Unpublished PhD Dissertation.
+San Diego: University of
+California, Department of
+Cognitive Science.
+Zhang, J. & Norman, D. A. (1993). A
+cognitive taxonomy of numeration
+systems. Proceedings of the
+Fifteenth Annual Conference of
+the Cognitive Science Society.
+Hillsdale, NJ: Lawrence Erlbaum
+Associates.

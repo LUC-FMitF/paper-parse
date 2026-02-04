@@ -1,0 +1,57 @@
+Source: Guanzhou_Hu_CV.pdf
+================================================================================
+
+GUANZHOU HU
+josehgz@amazon.com (cid:5) https://josehu.com
+WORK EXPERIENCE
+Applied Scientist in Amazon S3 Team, Amazon Web Services Aug 2025 - Present
+• Research+Engineer: Distributed Cloud Storage, Vector Storage & Indexing, Formal Methods Seattle, WA, USA
+Applied Scientist Intern in Amazon S3 Team, Amazon Web Services May 2024 - Aug 2024
+• Managers: James Bornholt, Andrew Warfield Seattle, WA, USA
+• Topic: Cloud Storage Systems & Automated Reasoning, Cloud Storage for AI Workloads
+Research Intern in SOLAR Lab, CSST Program, UCLA Jun 2019 - Sep 2019
+• Advisors: John Thorpe, Prof. Guoqing Harry Xu Los Angeles, CA, USA
+• Topic: Affordable & Scalable Serverless ML Training Systems (awarded Outstanding Research)
+EDUCATION
+University of Wisconsin–Madison GPA: 4.00 / 4.00 Aug 2020 - Jul 2025
+Ph.D. in Computer Sciences Madison, WI, USA
+• Advisors: Prof. Andrea Arpaci-Dusseau and Prof. Remzi Arpaci-Dusseau
+• Research area: Distributed Systems, Fault-tolerance, Cloud Infrastructure, Operating Systems
+• Dissertation title: Cloud Consensus Protocols with Optimistic Connectivity
+Massachusetts Institute of Technology GPA: 4.00 / 4.00 Sep 2019 - Jul 2020
+Special Student in Electrical Engineering & Computer Science Cambridge, MA, USA
+• Honors: Overseas Study Scholarship (2019)
+ShanghaiTech University GPA: 3.90 / 4.00 Sep 2016 - Jul 2020
+B. Eng. in Computer Science & Technology Shanghai, China
+• Honors: President’s Scholarship (2017, 2018), Dean’s Scholarship (2019)
+PUBLICATIONS
+In submn. [Title fuzzed] A consensus protocol achieving remarkably strong read semantics. G. Hu et al.
+In submn. [Title fuzzed] A replication protocol for an unaddressed type of workloads. G. Hu et al.
+SIGMOD ’26 Efficient Coordination for Autoscaling Cloud DBMS. (to appear)
+W. Hu, G. Hu, M. Balakrishnan, X. Yu.
+FAST ’23 MadFS: Per-File Virtualization for Userspace Persistent Memory Filesystems.
+S. Zhong, C. Ye, G. Hu, S. Qu, A. Arpaci-Dusseau, R. Arpaci-Dusseau, M. Swift.
+OSDI ’21 Dorylus: Affordable, Scalable, and Accurate GNN Training with Distributed CPUs and Serverless Threads.
+J. Thorpe, Y. Qiao, J. Eyolfson, S. Teng, G. Hu, Z. Jia, J. Wei, K. Vora, R. Netravali, M. Kim, and G. Xu.
+FAST ’21 The Storage Hierarchy is Not a Hierarchy: Optimizing Caching on Modern Storage Devices with Orthus.
+K. Wu, Z. Guo, G. Hu, K. Tu, R. Alagappan, R. Sen, K. Park, A. Arpaci-Dusseau, and R. Arpaci-Dusseau.
+SC ’20 BORA: A Bag Optimizer for Robotic Analysis.
+J. Zhang, T. Xie, Y. Jing, Y. Song, G. Hu, S. Chen, and S. Yin.
+Preprint A Unified and Practical Model of Non-transactional Consistency Levels in Distributed Replication.
+G. Hu, A. Arpaci-Dusseau, R. Arpaci-Dusseau. arXiv 2024.
+Preprint Foreactor: Exploiting Storage I/O Parallelism with Explicit Speculation.
+G. Hu, A. Arpaci-Dusseau, R. Arpaci-Dusseau. arXiv 2024.
+Patent A Storage System Management Policy Based on Data Content Locality.
+S. Yin and G. Hu. 2019. CN. Patent number ZL 2019 1 0499391.9, licensed November 25, 2022.
+SERVICES & AWARDS
+• ACM Student Member & ACM SIGOPS Member Sep 2021 - Present
+• Information & Computation Journal Reviewer Nov 2024
+• FAST ’23 Student Travel Grant Feb 2023
+• FAST ’22 External Reviewer Oct 2021
+• ASC Supercomputing Competition Second Prize (GeekPie HPC team leader) Mar 2019
+• Artifact Evaluation Committee: OSDI ’25, USENIX ATC ’25, FAST ’25, SOSP ’24, OSDI ’24, USENIX ATC ’24
+TEACHING EXPERIENCE
+Teaching Assistant at UW–Madison Fa 2020, Sp 2021, Sp 2025
+• Courses: Computer Architecture, Operating Systems, Advanced Distributed Systems Madison, WI, USA
+Teaching Assistant at ShanghaiTech University Sp 2018, Fa 2018, Sp 2019
+• Courses: Discrete Math, Computer Architecture, Operating Systems (awarded Outstanding TA) Shanghai, China

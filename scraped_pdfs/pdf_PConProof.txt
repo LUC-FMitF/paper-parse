@@ -1,0 +1,426 @@
+Source: PConProof.pdf
+================================================================================
+
+module PConProof
+ThisisaspecificationofavariantoftheclassicPaxos consensusalgorithmdescribedin
+AUTHOR = “Leslie Lamport”, TITLE = “The Part-Time Parliament”, journal = ACM
+TransactionsonComputingSystems,
+volume =16,
+Number =2,Month = may,Year =1998,pages = “133–169”
+ThisalgorithmwasalsodescribedwithoutproofinBrian Oki’sPh.D. thesis.
+Itdescribestheactionsthatcanbeperformedbyleaders, butdoesnotintroduceexplicitleader
+processes. More precisely, the specification is written as if there were a separate leader for each
+ballot.
+ThisvariantoftheclassicPaxos algorithmisanabstractionofanalgorithmthatisusedin
+AUTHOR = “Leslie Lamport and Dahlia Malkhi and Lidong Zhou ”, TITLE = “Vertical
+Paxos andPrimary-BackupReplication”,Conference = “ProceedingsofPODC 2009”,
+editor ={Srikanta Tirthapura and Lorenzo Alvisi},
+publisher ={ACM},YEAR=2009,PAGES = “312–313”
+andin
+CheappaxosUnitedStatesPatent7249280Inventors: Lamport,Leslie B.
+Massa,Michael T.
+FilingDate:06/18/2004
+In the classic Paxos algorithm, the leader sends a phase 2a message for a ballot b and value v
+thatinstructsacceptorstovoteforv inballotb. Intermsofimplementingthevotingalgorithm
+ofmoduleVoteProof,that2a messageservestwofunctions:
+-It asserts that value v is safe at ballot b, so the acceptor can vote for it without violating
+invariantVInv2
+-Ittellstheacceptorswhichsinglesafevaluetheycanvoteforinballotb,sotheycanvotefor
+thatvaluewithoutviolatingVInv3.
+Thevariantofthealgorithmwespecifyhereintroducesphase1c messagesthatperformthefirst
+function. Thephase2a messageservesonlythefirstfunction,beingsentonlyifa1cmessagehad
+beensentforthevalue.
+This variant of the algorithm is useful when reconfiguration is performed by using different sets
+of acceptors for different ballots. The leader propagates knowledge of what values are safe at
+ballotb sothattheacceptorsinthecurrentconfigurationarenolongerneededtodeterminethat
+information. If the ballot b leader determines that all values are safe at b, then it sends a 1c
+messageforeveryvalueandsendsaphase2a messageonlywhenithasavaluetopropose. The
+presenceofthe1c messagesremovesdependencyontheacceptorsofballotsnumberedb orlower
+for progress. (If the leader determines that only a single value is safe at b, then it sends the 1c
+and2a messagestogether.)
+In the algorithm described here, we do not include reconfiguration. Therefore, the sending of a
+1c messageservesonlyasapreconditionforthesendingofa2a messagewiththatvalue.
+Classic Paxos and its variants maintain consensus in the presence of omission faults–faults in
+whichaprocessfailstoperformsomeenabledactionoramessagethatissentfailstobereceived.
+The safety specification, which is given by the PlusCal code, does not require that any action
+need ever be performed. A process need not execute an enabled action. Receipt of a message is
+modeledbyaprocessperformingtheactionenabledbythatmessagehavingbeensent,somessage
+loss is also represented by a process not performing an enabled action. Thus, failures are never
+mentionedinthedescriptionofthealgorithm.
+1
+extends Integers, TLAPS
+TheconstantparametersandthesetBallotsarethesameasinthevotingalgorithm.
+constant Value, Acceptor, Quorum
+assume QA =∆ ∧∀Q ∈ Quorum :Q ⊆Acceptor
+∧∀Q1, Q2 ∈ Quorum :Q1∩Q2(cid:54)={}
+Ballot =∆ Nat
+Wearegoingtohavealeaderprocessforeachballotandanacceptorprocessforeachacceptor. So
+wecanusetheballotnumbersandtheacceptorsthemselvesastheidentifiersfortheseprocesses,
+weassumethatthesetofballotsandthesetofacceptorsaredisjoint. Forgoodmeasure,wealso
+assumethat −1isnotanacceptor,althoughthatisprobablynotnecessary.
+assume BallotAssump =∆ (Ballot ∪{−1})∩Acceptor ={}
+WedefineNone tobeanunspecifiedvaluethatisnotinthesetValue.
+None =∆ choose v :v ∈/ Value
+This is a message-passing algorithm, so we begin by defining the set Message of all possible
+messages. Themessagesareexplainedbelowwiththeactionsthatsendthem. Amessagem with
+m.type=“1a”iscalleda1a message,andsimilarlyfortheothermessagetypes.
+Message =∆ [type :{“1a”}, bal :Ballot]
+∪ [type :{“1b”}, acc :Acceptor, bal :Ballot,
+mbal :Ballot ∪{−1}, mval :Value∪{None}]
+∪ [type :{“1c”}, bal :Ballot, val :Value]
+∪ [type :{“2a”}, bal :Ballot, val :Value]
+∪ [type :{“2b”}, acc :Acceptor, bal :Ballot, val :Value]
+The algorithm is easiest to understand in terms of the set msgs of all messages that have ever
+been sent. A more accurate model would use one or more variables to represent the messages
+actuallyintransit,anditwouldincludeactionsrepresentingmessagelossandduplicationaswell
+asmessagereceipt.
+In the current spec, there is no need to model message loss explicitly. The safety part of the
+spec says only what messages may be received and does not assert that any message actually is
+received. Thus,thereisnodifferencebetweenalostmessageandonethatisneverreceived. The
+livenesspropertyofthespecwillmakeitclearwhatmessagesmustbereceived(andhenceeither
+notlostorsuccessfullyretransmittediflost)toguaranteeprogress.
+Anotheradvantageofmaintainingthesetofallmessagesthathaveeverbeensentisthatitallows
+ustodefinethestatefunctionvotes thatimplementsthevariableofthesamenameinthevoting
+algorithmwithouthavingtointroduceahistoryvariable.
+**********
+Inadditiontothevariablemsgs,thealgorithmusesfourvariableswhosevaluesarearraysindexed
+byacceptor,whereforanyacceptora :
+maxBal[a]Thelargestballotnumberinwhicha hasparticipated
+maxVBal[a]Thelargestballotnumberinwhichahasvoted,or −1ifithasnevervoted.
+2
+maxVVal[a]If a has voted, then this is the value it voted for in ballot maxVBal; otherwise it
+equalsNone.
+Asinthevotingalgorithm,anexecutionofthealgorithmconsistsofanexecutionofzeroormore
+ballots. Different ballots may be in progress concurrently, and ballots may not complete (and
+neednotevenstart). Aballotb consistsofthefollowingactions(whichneednotalloccurinthe
+indicatedorder).
+Phase1a : Theleadersendsa1a messageforballotb
+Phase1b :IfmaxBal[a]<b,anacceptora respondstothe1a messagebysettingmaxBal[a]to
+b and sending a 1b message to the leader containing the values of maxVBal[a] and
+maxVVal[a].
+Phase1c :Whentheleaderhasreceivedballot-b1bmessagesfromaquorum,itdeterminessome
+setofvaluesthataresafeatb andsends1c messagesforthem.
+Phase2a :Theleadersendsa2a messageforsomevalueforwhichithasalreadysentaballot-b
+1c message.
+Phase2b :Uponreceiptofthe2a message,ifmaxBal[a]≤b,anacceptora setsmaxBal[a]and
+maxVBal[a]tob,setsmaxVVal[a]tothevalueinthe2a message,andvotesforthat
+valueinballotb bysendingtheappropriate2b message.
+HereisthePlusCal codeforthealgorithm,whichwecallPCon.
+--algorithm PCon{
+variables maxBal =[a ∈ Acceptor (cid:55)→ −1],
+maxVBal =[a ∈ Acceptor (cid:55)→ −1],
+maxVVal =[a ∈ Acceptor (cid:55)→None],
+msgs ={}
+define {
+sentMsgs(t, b) =∆ {m ∈ msgs :(m.type =t)∧(m.bal =b)}
+WedefineShowsSafeAt sothatShowsSafeAt(Q,b,v)istrueforaquorumQ iffmsgscontain
+ballot-b 1b messagesfromtheacceptorsinQ showingthatv issafeatb.
+ShowsSafeAt(Q, b, v) =∆
+let Q1b =∆ {m ∈ sentMsgs(“1b”, b):m.acc ∈ Q}
+in ∧∀a ∈ Q :∃m ∈ Q1b :m.acc =a
+∧ ∨∀m ∈ Q1b :m.mbal = −1
+∨∃m1c ∈ msgs :
+∧m1c =[type (cid:55)→“1c”, bal (cid:55)→m1c.bal, val (cid:55)→v]
+∧∀m ∈ Q1b : ∧m1c.bal ≥m.mbal
+∧(m1c.bal =m.mbal)⇒(m.mval =v)
+}
+Thefollowingtwomacrossendamessageandasetofmessages,respectively. Thesemacrosare
+sosimplethatthey’rehardlyworthintroducing,buttheydomaketheprocessesalittleeasier
+toread.
+macro SendMessage(m){msgs :=msgs ∪{m}}
+macro SendSetOfMessages(S){msgs :=msgs ∪S}
+TheActions
+3
+Asbefore,wedescribeeachactionasamacro.
+The leader for process self can execute a Phase1a() action, which sends the ballot self 1a
+message.
+macro Phase1a(){SendMessage([type (cid:55)→“1a”, bal (cid:55)→self])}
+Acceptor self can perform a Phase1b(b) action, which is enabled iff b > maxBal[self]. The
+actionsetsmaxBal[self]tob andsendsaphase1b messagetotheleadercontainingthevalues
+ofmaxVBal[self]andmaxVVal[self].
+macro Phase1b(b){
+when (b >maxBal[self])∧(sentMsgs(“1a”, b)(cid:54)={});
+maxBal[self]:=b;
+SendMessage([type (cid:55)→“1b”, acc (cid:55)→self, bal (cid:55)→b,
+mbal (cid:55)→maxVBal[self], mval (cid:55)→maxVVal[self]]);
+}
+The ballot self leader can perform a Phase1c(S) action, which sends a set S of 1c messages
+indicatingthatthevalueintheval fieldofeachofthemissafeatballotb. Inpractice,S will
+either contain a single message, or else will have a message for each possible value, indicating
+thatallvaluesaresafe. Inthefirstcase,theleaderwillimmediatelysenda2a messagewiththe
+valuecontainedinthatsinglemessage. (Bothlogicalmessageswillbesentinthesamephysical
+message.) Inthelattercase,theleaderisinformingtheacceptorsthatallvaluesaresafe. (All
+thoselogicalmessageswill,ofcourse,beencodedinasinglephysicalmessage.)
+macro Phase1c(S){
+when ∀v ∈ S :∃Q ∈ Quorum :ShowsSafeAt(Q, self, v);
+SendSetOfMessages({[type (cid:55)→“1c”, bal (cid:55)→self, val (cid:55)→v]:v ∈ S})
+}
+Theballotself leadercanperformaPhase2a(v)action,sendinga2a messageforvaluev,ifit
+hasnotalreadysenta2a message(forthisballot)andithassentaballotself 1cmessagewith
+val fieldv.
+macro Phase2a(v){
+when ∧sentMsgs(“2a”, self)={}
+∧[type (cid:55)→“1c”, bal (cid:55)→self, val (cid:55)→v] ∈ msgs;
+SendMessage([type (cid:55)→“2a”, bal (cid:55)→self, val (cid:55)→v])
+}
+ThePhase2b(b)actionisexecutedbyacceptorself inresponsetoaballot-b 2a message. Note
+thisactioncanbeexecutedmultipletimesbytheacceptor,butafterthefirstone,allsubsequent
+executionsarestutteringstepsthatdonotchangethevalueofanyvariable.
+macro Phase2b(b){
+when b ≥maxBal[self];
+with (m ∈ sentMsgs(“2a”, b)){
+maxBal[self] :=b;
+maxVBal[self]:=b;
+maxVVal[self] :=m.val;
+SendMessage([type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→m.val])
+}
+4
+}
+Anacceptorperformsthebodyofitswhileloopasasingleatomicactionbynondeterministically
+choosingaballotinwhichitsPhase1borPhase2bactionisenabledandexecutingthatenabled
+action. Ifnosuchactionisenabled,theacceptordoesnothing.
+process (acceptor ∈ Acceptor){
+acc:while (true){
+with (b ∈ Ballot){either Phase1b(b)or Phase2b(b)
+}
+}
+}
+The leader of a ballot nondeterministically chooses one of its actions that is enabled (and the
+argument for which it is enabled) and performs it atomically. It does nothing if none of its
+actionsisenabled.
+process (leader ∈ Ballot){
+ldr:while (true){
+either Phase1a()
+or with (S ∈ subset Value){Phase1c(S)}
+or with (v ∈ Value){Phase2a(v)}
+}
+}
+}
+ThetranslatorproducesthefollowingTLA+specificationofthealgorithm. Someblanklineshave
+beendeleted.
+***********
+BEGINTRANSLATION
+variables maxBal, maxVBal, maxVVal, msgs
+definestatement
+sentMsgs(t, b) =∆ {m ∈ msgs :(m.type =t)∧(m.bal =b)}
+ShowsSafeAt(Q, b, v) =∆
+let Q1b =∆ {m ∈ sentMsgs(“1b”, b):m.acc ∈ Q}
+in ∧∀a ∈ Q :∃m ∈ Q1b :m.acc =a
+∧ ∨∀m ∈ Q1b :m.mbal = −1
+∨∃m1c ∈ msgs :
+∧m1c =[type (cid:55)→“1c”, bal (cid:55)→m1c.bal, val (cid:55)→v]
+∧∀m ∈ Q1b : ∧m1c.bal ≥m.mbal
+∧(m1c.bal =m.mbal)⇒(m.mval =v)
+vars =∆ (cid:104)maxBal, maxVBal, maxVVal, msgs(cid:105)
+ProcSet =∆ (Acceptor)∪(Ballot)
+Init =∆ Globalvariables
+5
+∧maxBal =[a ∈ Acceptor (cid:55)→ −1]
+∧maxVBal =[a ∈ Acceptor (cid:55)→ −1]
+∧maxVVal =[a ∈ Acceptor (cid:55)→None]
+∧msgs ={}
+acceptor(self) =∆ ∃b ∈ Ballot :
+∨ ∧(b >maxBal[self])∧(sentMsgs(“1a”, b)(cid:54)={})
+∧maxBal(cid:48) =[maxBal except ![self]=b]
+∧msgs(cid:48) =(msgs ∪{([type (cid:55)→“1b”, acc (cid:55)→self, bal (cid:55)→b,
+mbal (cid:55)→maxVBal[self], mval (cid:55)→maxVVal[self]])})
+∧unchanged (cid:104)maxVBal, maxVVal(cid:105)
+∨ ∧b ≥maxBal[self]
+∧∃m ∈ sentMsgs(“2a”, b):
+∧maxBal(cid:48) =[maxBal except ![self]=b]
+∧maxVBal(cid:48) =[maxVBal except ![self]=b]
+∧maxVVal(cid:48) =[maxVVal except ![self] =m.val]
+∧msgs(cid:48) =(msgs ∪{([type (cid:55)→“2b”, acc (cid:55)→self, bal (cid:55)→b, val (cid:55)→m.val])})
+leader(self) =∆ ∧ ∨ ∧msgs(cid:48) =(msgs ∪{([type (cid:55)→“1a”, bal (cid:55)→self])})
+∨ ∧∃S ∈ subset Value :
+∧∀v ∈ S :∃Q ∈ Quorum :ShowsSafeAt(Q, self, v)
+∧msgs(cid:48) =(msgs ∪({[type (cid:55)→“1c”, bal (cid:55)→self, val (cid:55)→v]:v ∈ S}))
+∨ ∧∃v ∈ Value :
+∧ ∧sentMsgs(“2a”, self)={}
+∧[type (cid:55)→“1c”, bal (cid:55)→self, val (cid:55)→v] ∈ msgs
+∧msgs(cid:48) =(msgs ∪{([type (cid:55)→“2a”, bal (cid:55)→self, val (cid:55)→v])})
+∧unchanged (cid:104)maxBal, maxVBal, maxVVal(cid:105)
+Next =∆ (∃self ∈ Acceptor :acceptor(self))
+∨(∃self ∈ Ballot :leader(self))
+Spec =∆ Init ∧(cid:50)[Next]
+vars
+ENDTRANSLATION
+Wenowrewritethenext-staterelationinawaythatmakesiteasiertouseinaproof. Westartby
+definingtheformulasrepresentingtheindividualactions. Wethenusethemtodefinetheformula
+TLANext,whichisthenext-staterelationwewouldhavewrittenhadwespecifiedthealgorithm
+directlyinTLA+ratherthaninPlusCal.
+Phase1a(self) =∆
+∧msgs(cid:48) =(msgs ∪{[type (cid:55)→“1a”, bal (cid:55)→self]})
+∧unchanged (cid:104)maxBal, maxVBal, maxVVal(cid:105)
+Phase1c(self, S) =∆
+∧∀v ∈ S :∃Q ∈ Quorum :ShowsSafeAt(Q, self, v)
+∧msgs(cid:48) =(msgs ∪{[type (cid:55)→“1c”, bal (cid:55)→self, val (cid:55)→v]:v ∈ S})
+6
+∧unchanged (cid:104)maxBal, maxVBal, maxVVal(cid:105)
+Phase2a(self, v) =∆
+∧sentMsgs(“2a”, self)={}
+∧[type (cid:55)→“1c”, bal (cid:55)→self, val (cid:55)→v] ∈ msgs
+∧msgs(cid:48) =(msgs ∪{[type (cid:55)→“2a”, bal (cid:55)→self, val (cid:55)→v]})
+∧unchanged (cid:104)maxBal, maxVBal, maxVVal(cid:105)
+Phase1b(self, b) =∆
+∧b >maxBal[self]
+∧sentMsgs(“1a”, b)(cid:54)={}
+∧maxBal(cid:48) =[maxBal except ![self]=b]
+∧msgs(cid:48) =msgs ∪{[type (cid:55)→“1b”, acc (cid:55)→self, bal (cid:55)→b,
+mbal (cid:55)→maxVBal[self], mval (cid:55)→maxVVal[self]]}
+∧unchanged (cid:104)maxVBal, maxVVal(cid:105)
+Phase2b(self, b) =∆
+∧b ≥maxBal[self]
+∧∃m ∈ sentMsgs(“2a”, b):
+∧maxBal(cid:48) =[maxBal except ![self]=b]
+∧maxVBal(cid:48) =[maxVBal except ![self]=b]
+∧maxVVal(cid:48) =[maxVVal except ![self] =m.val]
+∧msgs(cid:48) =(msgs ∪{[type (cid:55)→“2b”, acc (cid:55)→self,
+bal (cid:55)→b, val (cid:55)→m.val]})
+TLANext =∆
+∨∃self ∈ Acceptor :
+∃b ∈ Ballot : ∨Phase1b(self, b)
+∨Phase2b(self, b)
+∨∃self ∈ Ballot :
+∨Phase1a(self)
+∨∃S ∈ subset Value :Phase1c(self, S)
+∨∃v ∈ Value :Phase2a(self, v)
+The following theorem specifies the relation between the next-state relation Next obtained by
+translatingthePlusCal codeandthenext-staterelationTLANext.
+theorem NextDef =∆ (Next ≡TLANext)
+(cid:104)1(cid:105)2. assume new self ∈ Acceptor
+prove acceptor(self)≡TLANext!1!(self)
+by (cid:104)1(cid:105)2, BallotAssump def acceptor, ProcSet, Phase1b, Phase2b
+(cid:104)1(cid:105)3. assume new self ∈ Ballot
+prove leader(self)≡TLANext!2!(self)
+by (cid:104)1(cid:105)3, BallotAssump, Zenon def leader, ProcSet, Phase1a, Phase1c, Phase2a
+(cid:104)1(cid:105)4. qed
+by (cid:104)1(cid:105)2, (cid:104)1(cid:105)3 def Next, TLANext
+7
+Thetypeinvariant.
+TypeOK =∆ ∧maxBal ∈ [Acceptor →Ballot ∪{−1}]
+∧maxVBal ∈ [Acceptor →Ballot ∪{−1}]
+∧maxVVal ∈ [Acceptor →Value∪{None}]
+∧msgs ⊆Message
+Hereisthedefinitionofthestate-functionchosen thatimplementsthestate-functionofthesame
+nameinthevotingalgorithm.
+chosen =∆ {v ∈ Value :∃Q ∈ Quorum, b ∈ Ballot :
+∀a ∈ Q :∃m ∈ msgs : ∧m.type =“2b”
+∧m.acc =a
+∧m.bal =b
+∧m.val =v}
+We now define the refinement mapping under which this algorithm implements the specification
+inmoduleVoting.
+Asweobserved,votesareregisteredbysendingphase2b messages. Sothearrayvotes describing
+thevotescastbytheacceptorsisdefinedasfollows.
+votes =∆ [a ∈ Acceptor (cid:55)→
+{(cid:104)m.bal, m.val(cid:105):m ∈ {mm ∈ msgs : ∧mm.type =“2b”
+∧mm.acc =a}}]
+WenowinstantiatemoduleVoting,substituting:
+-The constants Value, Acceptor, and Quorum declared in this module for the corresponding
+constantsofthatmoduleVoting.
+-ThevariablemaxBal andthedefinedstatefunctionvotes forthecorrespondingly-namedvari-
+ablesofmoduleVoting.
+V =∆ instance VoteProof
+We now define PInv to be what I believe to be an inductive invariant and assert the theorems
+for proving that this algorithm implements the voting algorithm under the refinement mapping
+specified by the instance statement. Whether PInv really is an inductive invariant will be
+determinedonlybyarigorousproof.
+PAccInv =∆ ∀a ∈ Acceptor :
+∧maxBal[a]≥maxVBal[a]
+∧∀b ∈ (maxVBal[a]+1)..(maxBal[a]−1):V!DidNotVoteIn(a, b)
+∧(maxVBal[a](cid:54)= −1)⇒V!VotedFor(a, maxVBal[a], maxVVal[a])
+P1bInv =∆ ∀m ∈ msgs :
+(m.type =“1b”)⇒
+∧(maxBal[m.acc]≥m.bal)∧(m.bal >m.mbal)
+∧∀b ∈ (m.mbal +1)..(m.bal −1):V!DidNotVoteIn(m.acc, b)
+P1cInv =∆ ∀m ∈ msgs :(m.type =“1c”)⇒V!SafeAt(m.bal, m.val)
+8
+P2aInv =∆ ∀m ∈ msgs :
+(m.type =“2a”)⇒∃m1c ∈ msgs : ∧m1c.type =“1c”
+∧m1c.bal =m.bal
+∧m1c.val =m.val
+Thefollowingtheoremisinterestinginitsownright. Itessentiallyassertsthecorrectnessofthe
+definitionofShowsSafeAt.
+theorem PT1 =∆ TypeOK ∧P1bInv ∧P1cInv ⇒
+∀Q ∈ Quorum, b ∈ Ballot, v ∈ Value :
+ShowsSafeAt(Q, b, v)⇒V!SafeAt(b, v)
+PInv =∆ TypeOK ∧PAccInv ∧P1bInv ∧P1cInv ∧P2aInv
+theorem Invariance =∆ Spec ⇒(cid:50)PInv
+theorem Implementation =∆ Spec ⇒V!Spec
+Thefollowingresultshowsthatourdefinitionofchosen isthecorrectone,becauseitimplements
+thestate-functionchosen ofthevotingalgorithm.
+theorem Spec ⇒(cid:50)(chosen =V!chosen)
+ThefourtheoremsabovehavebeencheckedbyTLC foramodelwith3acceptors,2values,and
+3 ballot numbers. Theorem PT1 was checked as an invariant, therefore checking only that it is
+true for all reachable states. This model is large enough that it would most likely have revealed
+any “coding” errors in the algorithm. We believe that the algorithm is well-enough understood
+thatitisunlikelytocontainanyfundamentalerrors.
+\*ModificationHistory
+\*LastmodifiedFri May2209:20:18CEST 2020bymerz
+\*LastmodifiedFri Jul 1511:31:15PDT 2011bylamport
+(***************************************************************************)
+(* Liveness *)
+(* *)
+(*ThelivenesspropertysatisfiedbyPCon (andclassicPaxos)is: *)
+(* *)
+(*Ifthereissomeballotb andquorumQ suchthat *)
+(* *)
+(*1. Nophase1a messages(a)havebeenor(b)everwillbesentforany*)
+(* ballotnumbergreaterthanb. *)
+(* *)
+(*2. Theballotb leadereventuallysendsaphase1a messageforballot*)
+(* b. *)
+(* *)
+(*3. EachacceptorinQ eventuallyrespondstoballotb messagessent*)
+(* bytheballotb leader–whichimpliesthatiteventuallyreceives*)
+(* thosemessages. *)
+(* *)
+(*4. Theballotb leadereventuallyexecutesitsPhase2a actionfor *)
+(* ballotb ifitcan. *)
+(* *)
+9
+(*thensomevalueiseventuallychosen. *)
+(* *)
+(*NotethatPhase2a(b)isenabledifmsgs containsaballotb phase1b *)
+(*messagefromeveryacceptorinQ. Hence,4impliesthatiftheleader*)
+(*eventuallyreceivesthosemessages,thenitmustperformitsPhase2a(b)*)
+(*action. (Itmightperformthatactionbeforeitreceivesthose *)
+(*messagesifithasreceivedphase1b messagesfromalltheacceptorsin*)
+(*adifferentquorum.) *)
+(*************************************************************************** )
+theorem Liveness =∆
+Spec⇒∀b ∈Ballot,Q ∈Quorum :
+(( ∧ (*********************************************************)
+(*Assumption1a. *)
+(********************************************************* ) ∀m ∈msgs :
+(m.type=“1a”) ⇒ (m.bal <b)
+∧ (*********************************************************)
+(*Assumption1b. *)
+(********************************************************* ) ∀c ∈Ballot :
+(c>b) ⇒(cid:50)[¬Phase1a(c)] vars
+∧ (*********************************************************)
+(*Assumption2. *)
+(*********************************************************)
+WF vars(Phase1a(b))
+∧ (*********************************************************)
+(*Assumption4. *)
+(*********************************************************)
+WF vars(∃v ∈Value:Phase2a(b,v))
+∧ (*********************************************************)
+(*Assumption3. *)
+(*********************************************************)
+∀a ∈Q : ∧WF vars(Phase1b(a,b))
+∧WF vars(Phase2b(a,b))
+) (cid:59) (chosen (cid:54)={}))
+\*ThefollowingisusedtochecktheoremLiveness
+constants bb,QQ
+CSpec =∆ ∧Init
+∧(cid:50)[∧Next
+∧∀c ∈Ballot :(c>bb)⇒¬Phase1a(c)] vars
+∧WF vars(Phase1a(bb))
+∧WF vars(∃v ∈Value:Phase2a(bb,v))
+∧∀a ∈QQ : ∧WF vars(Phase1bForBallot(a,bb))
+∧WF vars(Phase2bForBallot(a,bb))
+CLiveness =∆ (∀m ∈msgs : (m.type=“1a”) ⇒ (m.bal <bb))(cid:59)(chosen (cid:54)={})
+10
