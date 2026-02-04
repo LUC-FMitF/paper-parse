@@ -2,20 +2,11 @@ Source URL: https://github.com/sudogandhi
 Final URL: https://github.com/sudogandhi
 ================================================================================
 
-# Search code, repositories, users, issues, pull requests...
-# Provide feedback
-We read every piece of feedback, and take your input very seriously.
-Cancel Submit feedback
-# Saved searches
-## Use saved searches to filter your results more quickly
-To see all available qualifiers, see our .
-Cancel Create saved search
-You signed in with another tab or window. to refresh your session. You signed out in another tab or window. to refresh your session. You switched accounts on another tab or window. to refresh your session. Dismiss alert
+Dismiss alert
 # Gaurav Gandhi sudogandhi
 # Block or report sudogandhi
 Prevent this user from interacting with your repositories and sending you notifications. Learn more about .
 You must be logged in to block users.
-## Popular repositories Loading
 1. CS5232-Fast-Paxos-Specification Public
 2. Banking-System-POC Public
 3. share Public
@@ -28,6 +19,3 @@ Something went wrong, please refresh the page to try again.
 If the problem persists, check the or .
 ### Uh oh!
 There was an error while loading. .
-(C) 2026 GitHub, Inc.
-Do not share my personal information
-You can’t perform that action at this time.

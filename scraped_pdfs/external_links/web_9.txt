@@ -2,16 +2,7 @@ Source URL: https://github.com/tlaplus/Examples/issues/9
 Final URL: https://github.com/tlaplus/Examples/issues/9
 ================================================================================
 
-# Search code, repositories, users, issues, pull requests...
-# Provide feedback
-We read every piece of feedback, and take your input very seriously.
-Cancel Submit feedback
-# Saved searches
-## Use saved searches to filter your results more quickly
-To see all available qualifiers, see our .
-Cancel Create saved search
-You signed in with another tab or window. to refresh your session. You signed out in another tab or window. to refresh your session. You switched accounts on another tab or window. to refresh your session. Dismiss alert
-You must be signed in to change notification settings
+to change notification settings
 # Overhaul Tower of Hanoi specification #9
 Overhaul Tower of Hanoi specification#9
 ## Description
@@ -37,14 +28,4 @@ IF bx[i] = 1 /\ by[i] = 1 THEN 1 ELSE 0 ]
 ## Metadata
 ## Metadata
 ### Assignees
-### Labels
-### Type
-### Projects
-### Milestone
-### Relationships
-### Development
-No branches or pull requests
-## Issue actions
-(C) 2026 GitHub, Inc.
-Do not share my personal information
-You can’t perform that action at this time.
+#

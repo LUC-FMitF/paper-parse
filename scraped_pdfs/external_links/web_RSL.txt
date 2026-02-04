@@ -2,62 +2,53 @@ Source URL: https://github.com/Azure/RSL
 Final URL: https://github.com/Azure/RSL
 ================================================================================
 
-# Search code, repositories, users, issues, pull requests...
-# Provide feedback
-We read every piece of feedback, and take your input very seriously.
-Cancel Submit feedback
-# Saved searches
-## Use saved searches to filter your results more quickly
-To see all available qualifiers, see our .
-Cancel Create saved search
-You signed in with another tab or window. to refresh your session. You signed out in another tab or window. to refresh your session. You switched accounts on another tab or window. to refresh your session. Dismiss alert
-You must be signed in to change notification settings
-Replicated State Library. RSL is the Azure Paxos implementation which is used by multiple products in Azure and Bing. It provides the traditional Paxos functionality in a real world implementation. RSL includes support for dynamic replica set reconfiguration, including dynamic growth/srinking of the cluster, and also service-healing (replica rep…
-### License
-You must be signed in to change notification settings
-# Azure/RSL
-## Folders and files
-Name| Name| Last commit message| Last commit date
-## Latest commit
-## History
-## Repository files navigation
 # Contributing
-This project welcomes contributions and suggestions. Most contributions require you to agree to a Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us the rights to use your contribution. For details, visit .
-When you submit a pull request, a CLA-bot will automatically determine whether you need to provide a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the instructions provided by the bot. You will only need to do this once across all repos using our CLA.
-This project has adopted the . For more information see the or contact with any additional questions or comments.
+
+This project welcomes contributions and suggestions.  Most contributions require you to agree to a
+Contributor License Agreement (CLA) declaring that you have the right to, and actually do, grant us
+the rights to use your contribution. For details, visit https://cla.microsoft.com.
+
+When you submit a pull request, a CLA-bot will automatically determine whether you need to provide
+a CLA and decorate the PR appropriately (e.g., label, comment). Simply follow the instructions
+provided by the bot. You will only need to do this once across all repos using our CLA.
+
+This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/).
+For more information see the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or
+contact [opencode@microsoft.com](mailto:opencode@microsoft.com) with any additional questions or comments.
+
 # How to build
+
 ## Prerequisite
-Install the latest version of for working with the repo.
-Install with Windows desktop C# and C++ support. Either Professional or Enterprise edition will work, Community edition is not tested.
-should be already installed with Visual Studio 2017. If you choose to install MSBuild / .NET SDK / Windows SDK, then install the command line version. NuGet is required to restore several packages before the build.
+
+Install the latest version of [Git for Windows](https://git-scm.com/download/win) for working with the repo.
+
+Install [Visual Studio 2017](https://www.visualstudio.com/downloads/) with Windows desktop C# and C++ support.
+Either Professional or Enterprise edition will work, Community edition is not tested.
+
+[NuGet](https://www.nuget.org/downloads) should be already installed with Visual Studio 2017. If you choose to install
+MSBuild / .NET SDK / Windows SDK, then install the command line version. NuGet is required to restore several packages
+before the build.
+
 ## Bootstrap the development environment
-In Start Menu (or whatever equivalent), find "Visual Studio 2017", open "visual Studio Tools" folder, click "Developer Command Prompt for VS 2017". A command prompt will show up, where one may run MSBuild, C# and C++ compilers.
-Change to the ossbuild directory in the repo, start PowerShell, and run ossbuild.ps1. The script will restore all required packages, generate a file for package definitions, and set several environment variables.
+
+In Start Menu (or whatever equivalent), find "Visual Studio 2017", open "visual Studio Tools" folder, click "Developer
+Command Prompt for VS 2017". A command prompt will show up, where one may run MSBuild, C# and C++ compilers.
+
+Change to the `ossbuild` directory in the repo, start PowerShell, and run `ossbuild.ps1`. The script will restore all
+required packages, generate a file for package definitions, and set several environment variables.
+
 ## Build the source code
-Go to any directory at root, src, or under src, run MSBuild like what you normally do. The binaries are saved at out directory under the repo root.
-The projects are designed to be built in parallel. If the number of processor is 8 (check the environment variable NUMBEROFPROCESSOR), the recommended command to build is:
-msbuild /m:8 /v:m /fl
+
+Go to any directory at root, `src`, or under `src`, run MSBuild like what you normally do. The binaries are saved at
+`out` directory under the repo root.
+
+The projects are designed to be built in parallel. If the number of processor is 8 (check the environment variable
+`NUMBER_OF_PROCESSOR`), the recommended command to build is:
+
+    msbuild /m:8 /v:m /fl
+
 The second argument sets the verbosity to minimal.
+
 ### Build in Visual Studio IDE
-Once in the bootstrapped PowerShell window, one can open any project or src\RSL.sln in VS IDE.
-## About
-Replicated State Library. RSL is the Azure Paxos implementation which is used by multiple products in Azure and Bing. It provides the traditional Paxos functionality in a real world implementation. RSL includes support for dynamic replica set reconfiguration, including dynamic growth/srinking of the cluster, and also service-healing (replica rep…
-### Resources
-### License
-### Code of conduct
-### Security policy
-### Uh oh!
-There was an error while loading. .
-### Stars
-### Watchers
-### Forks
-No releases published
-No packages published
-### Uh oh!
-There was an error while loading. .
-### Uh oh!
-There was an error while loading. .
-## Languages
-(C) 2026 GitHub, Inc.
-* Do not share my personal information
-You can’t perform that action at this time.
+
+Once in the bootstrapped PowerShell window, one can open any project or `src\RSL.sln` in VS IDE.

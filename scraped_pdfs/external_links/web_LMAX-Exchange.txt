@@ -2,19 +2,10 @@ Source URL: https://github.com/LMAX-Exchange
 Final URL: https://github.com/LMAX-Exchange
 ================================================================================
 
-# Search code, repositories, users, issues, pull requests...
-# Provide feedback
-We read every piece of feedback, and take your input very seriously.
-Cancel Submit feedback
-# Saved searches
-## Use saved searches to filter your results more quickly
-To see all available qualifiers, see our .
-Cancel Create saved search
-You signed in with another tab or window. to refresh your session. You signed out in another tab or window. to refresh your session. You switched accounts on another tab or window. to refresh your session. Dismiss alert
+Dismiss alert
 # LMAX Group
 Shaping the future of the global FX and crypto marketplace
 We've verified that the organization LMAX-Exchange controls the domain:
-## Popular repositories Loading
 1. disruptor Public
 High Performance Inter-Thread Messaging Library
 2. LMAXCollections Public
@@ -66,6 +57,3 @@ There was an error while loading. .
 #### Most used topics
 ### Uh oh!
 There was an error while loading. .
-(C) 2026 GitHub, Inc.
-* Do not share my personal information
-You can’t perform that action at this time.

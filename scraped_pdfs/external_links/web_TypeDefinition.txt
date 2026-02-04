@@ -2,22 +2,13 @@ Source URL: https://github.com/TypeDefinition
 Final URL: https://github.com/TypeDefinition
 ================================================================================
 
-# Search code, repositories, users, issues, pull requests...
-# Provide feedback
-We read every piece of feedback, and take your input very seriously.
-Cancel Submit feedback
-# Saved searches
-## Use saved searches to filter your results more quickly
-To see all available qualifiers, see our .
-Cancel Create saved search
-You signed in with another tab or window. to refresh your session. You signed out in another tab or window. to refresh your session. You switched accounts on another tab or window. to refresh your session. Dismiss alert
+Dismiss alert
 # Terri Lim TypeDefinition
 Here to learn.
 # Block or report TypeDefinition
 Prevent this user from interacting with your repositories and sending you notifications. Learn more about .
 You must be logged in to block users.
-## Pinned Loading
-1. NautiBuoy Public archive
+## Pinned 1. NautiBuoy Public archive
 Nauti Buoy, a Top-Down Shooter game for the original 1989 Nintendo Game Boy. By Lim En Qi Angie & Lim Zai Ciu Terri.
 2. Derpat Public archive
 A desktop pet guaranteed to reduce your productivity to an all-time low.
@@ -33,6 +24,3 @@ Something went wrong, please refresh the page to try again.
 If the problem persists, check the or .
 ### Uh oh!
 There was an error while loading. .
-(C) 2026 GitHub, Inc.
-* Do not share my personal information
-You can’t perform that action at this time.
