@@ -1,0 +1,145 @@
+Source: GitHub PDF
+File: nano-o_MultiPaxos_MultiPaxos.pdf
+================================================================================
+
+1 module MultiPaxos
+AnabstractspecificationoftheMultiPaxos algorithm. Wedonotmodelthenetworknorleaders
+explicitely. Instead,wekeepthehistoryofallvotescastandusethishistorytodescribehownew
+votesarecast. Notethat,insomeway,receivingamessagecorrespondstoreadingapaststateof
+thesender. Weproducetheeffectofhavingtheleaderbyrequiringthatnottwodifferentvalues
+canbevotedforinthesameballot.
+This specification is inspired from the abstract specification of Generalized Paxos presented in
+theGeneralizedPaxos paperbyLamport.
+17 extends MultiConsensus
+Thevariableballotmapsanacceptortoitscurrentballot.
+Givenanacceptora, aninstancei,andaballotb, vote[a][i][b]recordsthevotethatacastedin
+ballotb ofinstancei.
+variables
+25
+26 ballot, vote, propCmds
+28 Init =∆
+29 ∧ ballot =[a ∈ Acceptors (cid:55)→ −1]
+30 ∧ vote =[a ∈ Acceptors (cid:55)→
+31 [i ∈ Instances (cid:55)→
+32 [b ∈ Ballots (cid:55)→None]]]
+33 ∧ propCmds ={}
+35 TypeInv =∆
+36 ∧ ballot ∈ [Acceptors →{−1}∪Ballots]
+37 ∧ vote ∈ [Acceptors →
+38 [Instances →
+39 [Ballots →{None}∪V]]]
+40 ∧ propCmds ∈ subset V
+Nowstartsthespecificationofthealgorithm
+A ballot is conservative when all acceptors which vote in the ballot vote for the same value. In
+MultiPaxos,theleaderofaballotensuresthattheballotisconservative.
+52 Conservative(i, b) =∆
+53 ∀a1, a2 ∈ Acceptors :
+54 let v1 =∆ vote[a1][i][b]
+55 v2 =∆ vote[a2][i][b]
+56 in (v1(cid:54)=None∧v2(cid:54)=None)⇒v1=v2
+58 ConservativeVoteArray =∆
+59 ∀i ∈ Instances :∀b ∈ Ballots :
+60 Conservative(i, b)
+Themaximalballotsmallerthanmax inwhichahasvotedininstancei.
+1
+65 MaxVotedBallot(i, a, max) =∆
+66 Max({b ∈ Ballots :b ≤max ∧vote[a][i][b](cid:54)=None}∪{−1}, ≤)
+68 MaxVotedBallots(i, Q, max) =∆ {MaxVotedBallot(i, a, max):a ∈ Q}
+Thevotecastedinthemaximalballotsmallerthanmax byanacceptorofthequorumQ.
+74 HighestVote(i, max, Q) =∆
+75 if ∃a ∈ Q :MaxVotedBallot(i, a, max)(cid:54)= −1
+then
+76
+77 let MaxVoter =∆ choose a ∈ Q :
+78 MaxVotedBallot(i, a, max)=Max(MaxVotedBallots(i, Q, max), ≤)
+79 in vote[MaxVoter][i][MaxVotedBallot(i, MaxVoter, max)]
+else
+80
+81 None
+Values that are safe to vote for in ballot b according to a quorum Q whose acceptors have all
+reachedballotb.
+IfthereisanacceptorinQ thathasvotedinaballotlessthanb,thentheonlysafevalueisthe
+valuevotedforbyanacceptorinQ inthehighestballotlessthanb.
+Else,allvaluesaresafe.
+Inanimplementation,theleaderofaballotbcancomputeProvedSafeAt(i,Q,b)whenitreceives
+1b messagesfromthequorumQ.
+96 ProvedSafeAt(i, Q, b) =∆
+97 if HighestVote(i, b−1, Q)(cid:54)=None
+98 then {HighestVote(i, b−1, Q)}
+99 else V
+Theproposeaction:
+104 Propose(v) =∆
+105 ∧ propCmds(cid:48) =propCmds ∪{v}
+106 ∧ unchanged (cid:104)ballot, vote(cid:105)
+The JoinBallot action: an acceptor can join a higher ballot at any time. In an implementation,
+theJoinBallot actionistriggeredbya1a messagefromtheleaderofthenewballot.
+114 JoinBallot(a, b) =∆
+115 ∧ ballot[a]<b
+116 ∧ ballot(cid:48) =[ballot except ![a]=b]
+117 ∧ unchanged (cid:104)vote, propCmds(cid:105)
+TheVote action: anacceptorcastsavoteininstancei. Thisactionisenabledwhentheacceptor
+has joined a ballot, has not voted in its current ballot, and can determine, by reading the last
+vote cast by each acceptor in a quorum, which value is safe to vote for. If multiple values are
+safe to vote for, we ensure that only one can be voted for by requiring that the ballot remain
+conservative.
+2
+Inanimplementation,thecomputationofsafevaluesisdonebytheleaderoftheballotwhenit
+receives 1b messages from a quorum of acceptors. The leader then picks a unique value among
+thesafevaluesandsuggestsittotheacceptors.
+132 Vote(a, i) =∆
+133 ∧ ballot[a](cid:54)= −1
+134 ∧ vote[a][i][ballot[a]]=None
+135 ∧ ∃Q ∈ Quorums :
+136 ∧ ∀q ∈ Q :ballot[q]≥ballot[a]
+137 ∧ ∃v ∈ ProvedSafeAt(i, Q, ballot[a])∩propCmds :
+138 vote(cid:48) =[vote except ![a]=
+139 [@ except ![i]=[@ except ![ballot[a]]=v]]]
+140 ∧ unchanged (cid:104)ballot, propCmds(cid:105)
+141 ∧ Conservative(i, ballot[a])(cid:48)
+143 Next =∆
+144 ∨ ∃v ∈ V :Propose(v)
+145 ∨ ∃a ∈ Acceptors :∃b ∈ Ballots :JoinBallot(a, b)
+146 ∨ ∃a ∈ Acceptors :∃i ∈ Instances :Vote(a, i)
+148 Spec =∆ Init ∧(cid:50)[Next] (cid:104)ballot,vote,propCmds(cid:105)
+Some properties and invariants that help understanding the algo and would probably be needed
+inaproof.
+Themaximalballotinwhichanacceptoravotedisalwayslessthanorequaltoitscurrentballot.
+159 WellFormed =∆ ∀a ∈ Acceptors :∀i ∈ Instances :∀b ∈ Ballots :
+160 b >ballot[a]⇒vote[a][i][b]=None
+162 theorem Spec ⇒(cid:50)WellFormed
+164 ChosenAt(i, b, v) =∆
+165 ∃Q ∈ Quorums :∀a ∈ Q :vote[a][i][b]=v
+167 Chosen(i, v) =∆
+168 ∃b ∈ Ballots :ChosenAt(i, b, v)
+170 Choosable(v, i, b) =∆
+171 ∃Q ∈ Quorums :∀a ∈ Q :ballot[a]>b ⇒vote[a][i][b]=v
+173 SafeAt(v, i, b) =∆
+174 ∀b2 ∈ Ballots :∀v2 ∈ V :
+175 (b2<b∧Choosable(v2, i, b2))
+176 ⇒v =v2
+178 SafeInstanceVoteArray(i) =∆ ∀b ∈ Ballots :∀a ∈ Acceptors :
+179 let v =∆ vote[a][i][b]
+180 in v (cid:54)=None ⇒SafeAt(v, i, b)
+3
+182 SafeVoteArray =∆ ∀i ∈ Instances :SafeInstanceVoteArray(i)
+184 theorem Spec ⇒(cid:50)SafeVoteArray
+If the vote array is well formed and the vote array is safe, then for each instance only a unique
+valuecanbechosen.
+190 theorem TypeInv ∧WellFormed ∧SafeVoteArray ⇒∀i ∈ Instances :
+191 ∀v1, v2 ∈ V :Chosen(i, v1)∧Chosen(i, v2)⇒v1=v2
+Inawell-formed,safe,andconservativevotearray,allvaluesthatareprovedsafearesafe.
+197 theorem TypeInv ∧WellFormed ∧SafeVoteArray ∧ConservativeVoteArray
+198 ⇒ ∀v ∈ V :∀i ∈ Instances :
+199 ∀Q ∈ Quorums :∀b ∈ Ballots :
+200 ∧ ∀a ∈ Q :ballot[a]≥b
+201 ∧ v ∈ ProvedSafeAt(i, Q, b)
+202 ⇒SafeAt(v, i, b)
+203 Correctness =∆
+204 ∀i ∈ Instances :∀v1, v2 ∈ V :
+205 Chosen(i, v1)∧Chosen(i, v2)⇒v1=v2
+207 theorem Spec ⇒(cid:50)Correctness
+209
+\*ModificationHistory
+\*LastmodifiedThu Jan 2101:21:39EST 2016bynano
+\*CreatedMon Nov 0209:08:37EST 2015bynano
+4

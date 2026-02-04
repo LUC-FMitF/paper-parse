@@ -1,0 +1,33 @@
+Source: GitHub PDF
+File: mryndzionek_tlaplus_specs_GameOfLife.pdf
+================================================================================
+
+module GameOfLife
+extends Integers
+constant N
+variable grid
+assume N ∈ Nat
+vars =∆ grid
+recursive Sum( , )
+Sum(f, S) =∆ if S ={} then 0
+else let x =∆ choose x ∈ S :true
+in f[x]+Sum(f, S\{x})
+Pos =∆ {(cid:104)x, y(cid:105):x, y ∈ 1..N}
+TypeOK =∆ grid ∈ [Pos →boolean ]
+sc[(cid:104)x, y(cid:105) ∈ (0..N +1)×
+(0..N +1)] =∆ case ∨x =0 ∨y =0
+∨x >N ∨y >N
+∨¬grid[(cid:104)x, y(cid:105)]→0
+(cid:50) other →1
+score(p) =∆ let nbrs =∆ {x ∈ {−1, 0, 1}×
+{−1, 0, 1}:x (cid:54)=(cid:104)0, 0(cid:105)}
+points =∆ {(cid:104)p[1]+x, p[2]+y(cid:105):(cid:104)x, y(cid:105) ∈ nbrs}
+in Sum(sc, points)
+Init =∆ grid ∈ [Pos →boolean ]
+Next =∆ grid(cid:48) =[p ∈ Pos (cid:55)→if ∨ (grid[p] ∧score(p) ∈ {2, 3})
+∨(¬grid[p]∧score(p)=3)
+then true
+else false]
+Spec =∆ Init ∧(cid:50)[Next]
+vars
+1

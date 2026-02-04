@@ -1,0 +1,55 @@
+Source: GitHub PDF
+File: mryndzionek_tlaplus_specs_Chameneos.pdf
+================================================================================
+
+module Chameneos
+A specification of a ’concurrency game’ requiring concurrent and symmetrical cooperation -
+https://cedric.cnam.fr/fichiers/RC474.pdf
+extends Integers
+N -numberoftotalmeetingafterwhichchameneoses fade
+M -numberofchameneoses
+constant N, M
+assume N ∈ (Nat\{0})∧M ∈ (Nat\{0})
+variable chameneoses, meetingPlace, numMeetings
+vars =∆ (cid:104)chameneoses, meetingPlace, numMeetings(cid:105)
+Color =∆ {“blue”, “red”, “yellow”}
+Faded =∆ choose c :c ∈/ Color
+ChameneosID =∆ 1..M
+MeetingPlaceEmpty =∆ choose e :e ∈/ ChameneosID
+recursive Sum( , )
+Sum(f, S) =∆ if S ={} then 0
+else let x =∆ choose x ∈ S :true
+in f[x]+Sum(f, S\{x})
+TypeOK =∆ ∧chameneoses ∈ [ChameneosID →(Color ∪{Faded})×(0..N)]
+∧meetingPlace ∈ ChameneosID ∪{MeetingPlaceEmpty}
+Complement(c1, c2) =∆ if c1=c2
+then c1
+else choose cid ∈ Color\{c1, c2}:true
+Meet(cid) =∆ if meetingPlace =MeetingPlaceEmpty
+then if numMeetings <N
+chameneosentersmeetingemptymeetingplace
+then ∧meetingPlace(cid:48) =cid
+∧unchanged (cid:104)chameneoses, numMeetings(cid:105)
+chameneostakesonfadedcolor
+else ∧chameneoses(cid:48) =[chameneoses except ![cid]=(cid:104)Faded, @[2](cid:105)]
+∧unchanged (cid:104)meetingPlace, numMeetings(cid:105)
+meetingplaceisnotempty-twochameneoses mutate
+else ∧meetingPlace (cid:54)=cid
+∧meetingPlace(cid:48) =MeetingPlaceEmpty
+∧chameneoses(cid:48) =
+let newColor =∆ Complement(chameneoses[cid][1],
+chameneoses[meetingPlace][1])
+in [chameneoses except ![cid]=(cid:104)newColor, @[2]+1(cid:105),
+1
+![meetingPlace]=(cid:104)newColor, @[2]+1(cid:105)]
+∧numMeetings(cid:48) =numMeetings +1
+Init =∆ ∧chameneoses ∈ [ChameneosID →Color ×{0}]
+∧meetingPlace =MeetingPlaceEmpty
+∧numMeetings =0
+repeatedlytrytoentermeetingplaceforchameneoses thatarenotfadedyet
+Next =∆ ∧∃c ∈ {x ∈ ChameneosID :chameneoses[x][1](cid:54)=Faded}:Meet(c)
+Spec =∆ Init ∧(cid:50)[Next]
+vars
+SumMet =∆ numMeetings =N ⇒let f[c ∈ ChameneosID] =∆ chameneoses[c][2]
+in Sum(f, ChameneosID)=2∗N
+2

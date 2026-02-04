@@ -1,0 +1,21 @@
+Source: GitHub PDF
+File: mryndzionek_tlaplus_specs_CheckRequirements.pdf
+================================================================================
+
+module CheckRequirements
+variables inputs1, output1
+variables inputs2, output2
+vars1 =∆ (cid:104)inputs1, output1(cid:105)
+vars2 =∆ (cid:104)inputs2, output2(cid:105)
+Requirements1 =∆ instance Requirements
+with inputs ←inputs1,
+output ←output1
+Requirements2 =∆ instance Requirements
+with inputs ←inputs2,
+output ←output2
+Init =∆ Requirements1!Init ∧Requirements2!Init
+Next =∆ Requirements1!Next ∧Requirements2!Next
+RequirementsNotConflicting =∆ inputs1=inputs2⇒output1=output2
+EndsInSteadyState =∆ (cid:51)(cid:50)[output1=output2]
+(cid:104)output1,output2(cid:105)
+1

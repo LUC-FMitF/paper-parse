@@ -1,0 +1,36 @@
+Source: GitHub PDF
+File: mryndzionek_tlaplus_specs_CigaretteSmokers.pdf
+================================================================================
+
+module CigaretteSmokers
+A specification of the cigarette smokers problem, originally described in 1971 by Suhas Patil.
+https://en.wikipedia.org/wiki/Cigarette smokers problem
+extends Integers, FiniteSets
+constant Ingredients
+variable smokers, dealer
+’Ingredients’ is a set of ingredients, originally {matches,paper,tobacco}. ’Offers’ is a subset of
+subsetsofingredients,eachmissingjustoneingriedent
+Offers =∆ fi 2 subset Ingredients :
+Cardinality(i)=Cardinality(Ingredients)(cid:0)1g
+’smokers’ is a function from the ingredient the smoker has infinite supply of, to a boolean flag
+signifyingsmoker’sstate(smoking/notsmoking)’dealer’isanelementof’Offers’,oranemptyset
+TypeOK =∆ ^smokers 2 [Ingredients ![smoking :boolean ]]
+^dealer 2 Offers _dealer =fg
+vars =∆ hsmokers, dealeri
+Init =∆ ^smokers =[r 2 Ingredients 7![smoking 7!false]]
+^dealer 2 Offers
+startSmoking =∆ ^dealer 6=fg
+^smokers′ =[r 2 Ingredients 7![smoking 7!frg[
+dealer =Ingredients]]
+^dealer′ =fg
+stopSmoking =∆ ^dealer =fg
+^smokers′ =[r 2 Ingredients 7![smoking 7!false]]
+^dealer′ 2 Offers
+Next =∆ startSmoking _stopSmoking
+Spec =∆ Init ^2[Next]
+vars
+FairSpec =∆ Spec^WF (Next)
+vars
+Aninvariantcheckingthatatmostonesmokersmokesatanyparticularmoment
+AtMostOne =∆ Cardinality(fr 2 Ingredients :smokers[r].smokingg)(cid:20)1
+1

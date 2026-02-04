@@ -1,5 +1,5 @@
 Source URL: https://github.com/nano-o/MultiPaxos
-Final URL: https://github.com/nano-o/MultiPaxos
+Final URL: https://github.com/nano-o/MultiPaxos/blob/master/MultiPaxos.pdf
 ================================================================================
 
 # MultiPaxos

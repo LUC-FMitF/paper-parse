@@ -1,0 +1,50 @@
+[
+  {
+    "name": "MultiPaxos.pdf",
+    "path": "MultiPaxos.pdf",
+    "url": "https://raw.githubusercontent.com/nano-o/MultiPaxos/master/MultiPaxos.pdf",
+    "repo": "nano-o/MultiPaxos"
+  },
+  {
+    "name": "Blinker.pdf",
+    "path": "Blinker.pdf",
+    "url": "https://raw.githubusercontent.com/mryndzionek/tlaplus_specs/master/Blinker.pdf",
+    "repo": "mryndzionek/tlaplus_specs"
+  },
+  {
+    "name": "Chameneos.pdf",
+    "path": "Chameneos.pdf",
+    "url": "https://raw.githubusercontent.com/mryndzionek/tlaplus_specs/master/Chameneos.pdf",
+    "repo": "mryndzionek/tlaplus_specs"
+  },
+  {
+    "name": "CheckRequirements.pdf",
+    "path": "CheckRequirements.pdf",
+    "url": "https://raw.githubusercontent.com/mryndzionek/tlaplus_specs/master/CheckRequirements.pdf",
+    "repo": "mryndzionek/tlaplus_specs"
+  },
+  {
+    "name": "CigaretteSmokers.pdf",
+    "path": "CigaretteSmokers.pdf",
+    "url": "https://raw.githubusercontent.com/mryndzionek/tlaplus_specs/master/CigaretteSmokers.pdf",
+    "repo": "mryndzionek/tlaplus_specs"
+  },
+  {
+    "name": "GameOfLife.pdf",
+    "path": "GameOfLife.pdf",
+    "url": "https://raw.githubusercontent.com/mryndzionek/tlaplus_specs/master/GameOfLife.pdf",
+    "repo": "mryndzionek/tlaplus_specs"
+  },
+  {
+    "name": "Requirements.pdf",
+    "path": "Requirements.pdf",
+    "url": "https://raw.githubusercontent.com/mryndzionek/tlaplus_specs/master/Requirements.pdf",
+    "repo": "mryndzionek/tlaplus_specs"
+  },
+  {
+    "name": "SlidingPuzzles.pdf",
+    "path": "SlidingPuzzles.pdf",
+    "url": "https://raw.githubusercontent.com/mryndzionek/tlaplus_specs/master/SlidingPuzzles.pdf",
+    "repo": "mryndzionek/tlaplus_specs"
+  }
+]

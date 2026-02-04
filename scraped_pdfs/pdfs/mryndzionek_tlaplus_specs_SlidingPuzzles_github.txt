@@ -1,0 +1,40 @@
+Source: GitHub PDF
+File: mryndzionek_tlaplus_specs_SlidingPuzzles.pdf
+================================================================================
+
+module SlidingPuzzles
+extends Integers
+variable board
+W =∆ 4H =∆ 5
+Pos =∆ (0..W −1)×(0..H −1)
+Piece =∆ subset Pos
+Klotski =∆ {{(cid:104)0, 0(cid:105), (cid:104)0, 1(cid:105)},
+{(cid:104)1, 0(cid:105), (cid:104)2, 0(cid:105), (cid:104)1, 1(cid:105), (cid:104)2, 1(cid:105)},
+{(cid:104)3, 0(cid:105), (cid:104)3, 1(cid:105)}, {(cid:104)0, 2(cid:105), (cid:104)0, 3(cid:105)},
+{(cid:104)1, 2(cid:105), (cid:104)2, 2(cid:105)}, {(cid:104)3, 2(cid:105), (cid:104)3, 3(cid:105)},
+{(cid:104)1, 3(cid:105)}, {(cid:104)2, 3(cid:105)}, {(cid:104)0, 4(cid:105)}, {(cid:104)3, 4(cid:105)}}
+KlotskiGoal =∆ {(cid:104)1, 3(cid:105), (cid:104)1, 4(cid:105), (cid:104)2, 3(cid:105), (cid:104)2, 4(cid:105)} ∈ board
+ChooseOne(S, P( )) =∆ choose x ∈ S :P(x)∧∀y ∈ S :P(y)⇒y =x
+TypeOK =∆ board ∈ subset Piece
+GivenapositionandasetofemptypositionsreturnasetofappropriatelyfilteredvonNeumann
+neighborhoodpoints
+dir(p, es) =∆ let dir =∆ {(cid:104)1, 0(cid:105), (cid:104)0, 1(cid:105), (cid:104)−1, 0(cid:105), (cid:104)0, −1(cid:105)}
+in {d ∈ dir : ∧(cid:104)p[1]+d[1], p[2]+d[2](cid:105) ∈ Pos
+∧(cid:104)p[1]+d[1], p[2]+d[2](cid:105) ∈/ es}
+Givenapositionandaunittranslationvectorreturnapairofpieces,beforeandaftertranslation
+inoppositethisvectordirection
+move(p, d) =∆ let s =∆ (cid:104)p[1]+d[1], p[2]+d[2](cid:105)
+pc =∆ ChooseOne(board, lambda pc :s ∈ pc)
+in (cid:104)pc, {(cid:104)q[1]−d[1], q[2]−d[2](cid:105):q ∈ pc}(cid:105)
+Givenspecificfreepositionandasetofallfreepositionsreturnasetofboardsupdatedbymoving
+appropriatepiecestothatfreeposition
+update(e, es) =∆ let dirs =∆ dir(e, es)
+moved =∆ {move(e, d):d ∈ dirs}
+free =∆ {(cid:104)pc, m(cid:105) ∈ moved :
+∧m∩(union (board\{pc}))={}
+∧∀p ∈ m :p ∈ Pos}
+in {(board\{pc})∪{m}:(cid:104)pc, m(cid:105) ∈ free}
+Init =∆ board =Klotski
+Next =∆ let empty =∆ Pos\union board
+in ∃e ∈ empty :board(cid:48) ∈ update(e, empty)
+1

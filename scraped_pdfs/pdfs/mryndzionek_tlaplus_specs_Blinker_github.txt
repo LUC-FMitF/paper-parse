@@ -1,0 +1,44 @@
+Source: GitHub PDF
+File: mryndzionek_tlaplus_specs_Blinker.pdf
+================================================================================
+
+module Blinker
+extends Integers, Sequences
+BC isasequenceofblinkerconfigurations-inthiscasejustanaturalnumbersignifyingtheblink
+periodinsometimeunit
+constant BC
+variables bState
+assume ∧BC ∈ Seq(Nat)
+vars =∆ bState
+States =∆ {“Active Off”, “Active On”}
+Blinker =∆ [timer :Nat, state :States]
+TypeOK =∆ ∧bState ∈ [domain BC →Blinker]
+Init =∆
+∧bState ∈ {[n ∈ domain BC (cid:55)→[timer (cid:55)→BC[n],
+state (cid:55)→“Active Off”]
+]}
+Transition(n) =∆ ∧bState[n].timer =0
+∧bState[n].state =“Active Off”
+∧bState(cid:48) =[bState except ![n].timer =BC[n],
+![n].state =“Active On”]
+∨
+∧bState[n].timer =0
+∧bState[n].state =“Active On”
+∧bState(cid:48) =[bState except ![n].timer =BC[n],
+![n].state =“Active Off”]
+Tick =∆ ∧∀n ∈ domain BC :bState[n].timer >0
+∧bState(cid:48) =[n ∈ domain BC (cid:55)→[timer (cid:55)→bState[n].timer −1,
+state (cid:55)→bState[n].state]]
+Next =∆ Tick ∨∃n ∈ domain BC :Transition(n)
+Spec =∆ Init ∧(cid:50)[Next]
+vars
+FairSpec =∆ Spec∧WF (Next)
+vars
+LEDsWillTurnOn =∆
+∀n ∈ domain BC :
+(bState[n].state =“Active Off”)(cid:59)(bState[n].state =“Active On”)
+LEDsWillTurnOff =∆
+∀n ∈ domain BC :
+(bState[n].state =“Active On”) (cid:59)(bState[n].state =“Active Off”)
+1
+2

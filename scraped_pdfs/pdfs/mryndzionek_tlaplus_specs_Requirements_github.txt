@@ -1,0 +1,31 @@
+Source: GitHub PDF
+File: mryndzionek_tlaplus_specs_Requirements.pdf
+================================================================================
+
+module Requirements
+extends Integers
+variables inputs, output
+We have two buttons - A and B - and an indicator light. Spec like this can help with disam-
+biguatingwrittenrequirementsinsituationswheremultiplerequirementsconcernsameresource.
+In this case requirements say only what needs to be done if one of the button is pressed, or not
+totallyignoringthesituationwherebotharepressed
+Inputs =∆ subset {“a button pressed”, “b button pressed”}
+Output =∆ {“off”, “red”, “green”, “yellow”}
+TypeOK =∆ ∧inputs ∈ Inputs
+∧output ∈ Output
+Initiallyindicatorlightisoffandbuttonscanbepushedornot
+Init =∆ ∧inputs ∈ Inputs
+∧output =“off”
+FirstrequirementsaysthatwesignalwithgreenlightthefactthatbuttonAispushed. Ifit’snot
+thenthelightshouldbeyellow
+Requirement1 =∆ ∧if “a button pressed” ∈ inputs then output(cid:48) =“green”
+else output(cid:48) =“yellow”
+∧unchanged (cid:104)inputs(cid:105)
+SecondrequirementsaysthatwesignalwithredlightthefactthatbuttonB ispushed. Ifit’snot
+thenthelightshouldbeyellow
+Requirement2 =∆ ∧if “b button pressed” ∈ inputs then output(cid:48) =“green”
+else output(cid:48) =“yellow”
+∧unchanged (cid:104)inputs(cid:105)
+Wewanttocheckallrequirements
+Next =∆ Requirement1∨Requirement2
+1
