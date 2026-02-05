@@ -1,0 +1,721 @@
+
+--- Page 1 ---
+Summary of TLA+
+Module-Level Constructs
+The Constant Operators
+Miscellaneous Constructs
+Action Operators
+Temporal Operators
+User-Deﬁnable Operator Symbols
+Precedence Ranges of Operators
+Operators Deﬁned in Standard Modules.
+ASCII Representation of Typeset Symbols
+
+-
+
+--- Page 2 ---
+Module-Level Constructs
+Begins the module or submodule named M .
+module M
+extends M 1, . . . , M n
+Incorporates the declarations, deﬁnitions, assumptions, and theorems from
+the modules named M 1, . . . , M n into the current module.
+constants C 1, . . . , C n
+(1)
+Declares the C j to be constant parameters (rigid variables). Each C j is either
+an identiﬁer or has the form C(
+, . . . ,
+), the latter form indicating that C
+is an operator with the indicated number of arguments.
+variables x 1, . . . , x n
+(1)
+Declares the x j to be variables (parameters that are ﬂexible variables).
+assume P
+Asserts P as an assumption.
+F(x 1, . . . , x n)
+∆=
+exp
+Deﬁnes F to be the operator such that F(e1, . . . , en) equals exp with each
+identiﬁer x k replaced by ek. (For n = 0, it is written F
+∆= exp.)
+f [x ∈S]
+∆=
+exp (2)
+Deﬁnes f to be the function with domain S such that f [x] = exp for all x
+in S. (The symbol f may occur in exp, allowing a recursive deﬁnition.)
+(1) The terminal s in the keyword is optional.
+(2) x ∈S may be replaced by a comma-separated list of items v ∈S, where v is either a
+comma-separated list or a tuple of identiﬁers.
+instance M with p1 ←e1, . . . , pm ←em
+For each deﬁned operator F of module M , this deﬁnes F to be the operator
+whose deﬁnition is obtained from the deﬁnition of F in M by replacing each
+declared constant or variable pj of M with ej. (If m = 0, the with is omitted.)
+
+-
+
+--- Page 3 ---
+N (x 1, . . . , x n)
+∆=
+instance M with p1 ←e1, . . . , pm ←em
+For each deﬁned operator F of module M , this deﬁnes N (d1, . . . , dn)!F to be
+the operator whose deﬁnition is obtained from the deﬁnition of F by replacing
+each declared constant or variable pj of M with ej, and then replacing each
+identiﬁer x k with dk. (If m = 0, the with is omitted.)
+theorem P
+Asserts that P can be proved from the deﬁnitions and assumptions of the
+current module.
+local def
+Makes the deﬁnition(s) of def (which may be a deﬁnition or an instance
+statement) local to the current module, thereby not obtained when extending
+or instantiating the module.
+Ends the current module or submodule.
+
+-
+
+--- Page 4 ---
+The Constant Operators
+Logic
+∧
+∨
+¬
+⇒
+≡
+true
+false
+boolean [the set {true, false}]
+∀x ∈S : p
+(1)
+∃x ∈S : p
+(1)
+choose x ∈S : p
+[An x in S satisfying p]
+Sets
+=
+̸=
+∈
+/∈
+∪
+∩
+⊆
+\ [set diﬀerence]
+{e1, . . . , en}
+[Set consisting of elements ei]
+{x ∈S : p} (2)
+[Set of elements x in S satisfying p]
+{e : x ∈S} (1)
+[Set of elements e such that x in S]
+subset S
+[Set of subsets of S]
+union S
+[Union of all elements of S]
+Functions
+f [e]
+[Function application]
+domain f
+[Domain of function f ]
+[x ∈S 7→e] (1)
+[Function f such that f [x] = e for x ∈S]
+[S →T]
+[Set of functions f with f [x] ∈T for x ∈S]
+[f except ![e1] = e2] (3)
+[Function bf equal to f except bf [e1] = e2]
+Records
+e.h
+[The h-ﬁeld of record e]
+[h1 7→e1, . . . , hn 7→en]
+[The record whose hi ﬁeld is ei]
+[h1 : S 1, . . . , hn : S n]
+[Set of all records with hi ﬁeld in S i]
+[r except !.h = e] (3)
+[Record br equal to r except br.h = e]
+Tuples
+e[i]
+[The ith component of tuple e]
+⟨e1, . . . , en ⟩
+[The n-tuple whose ith component is ei]
+S 1 × . . . × S n
+[The set of all n-tuples with ith component in S i]
+(1) x ∈S may be replaced by a comma-separated list of items v ∈S, where v is either a
+comma-separated list or a tuple of identiﬁers.
+(2) x may be an identiﬁer or tuple of identiﬁers.
+(3) ![e1] or !.h may be replaced by a comma separated list of items !a1 · · · an, where each
+ai is [ei] or .hi .
+
+-
+
+--- Page 5 ---
+Miscellaneous Constructs
+if p then e1 else e2
+[e1 if p true, else e2]
+case p1 →e1 2 . . . 2 pn →en
+[Some ei such that pi true]
+case p1 →e1 2 . . . 2 pn →en 2 other →e
+[Some ei such that pi true,
+or e if all pi are false]
+let d1
+∆= e1 . . . dn
+∆= en in e
+[e in the context of the deﬁnitions]
+∧p1
+...
+∧pn
+[the conjunction p1 ∧. . . ∧pn]
+∨p1
+...
+∨pn
+[the disjunction p1 ∨. . . ∨pn]
+Action Operators
+e′
+[The value of e in the ﬁnal state of a step]
+[A]e
+[A ∨(e′ = e)]
+⟨A⟩e
+[A ∧(e′ ̸= e)]
+enabled A
+[An A step is possible]
+unchanged e
+[e′ = e]
+A · B
+[Composition of actions]
+Temporal Operators
+2F
+[F is always true]
+3F
+[F is eventually true]
+WFe(A) [Weak fairness for action A]
+SFe(A)
+[Strong fairness for action A]
+F ; G
+[F leads to G]
+
+-
+
+--- Page 6 ---
+User-Deﬁnable Operator Symbols
+Inﬁx Operators
++ (1)
+−
+(1)
+∗
+(1)
+/
+(2)
+◦(3)
+++
+÷ (1)
+%
+(1)
+^
+(1,4)
+. .
+(1)
+. . .
+−−
+⊕(5)
+⊖
+(5)
+⊗
+⊘
+⊙
+∗∗
+< (1)
+>
+(1)
+≤
+(1)
+≥
+(1)
+⊓
+//
+≺
+≻
+⪯
+⪰
+⊔
+^^
+≪
+≫
+< :
+: >(6)
+&
+&&
+<
+=
+⊑
+(5)
+⊒
+|
+%%
+⊂
+⊃
+⊇
+⋆
+@@ (6)
+⊢
+⊣
+|=
+=|
+•
+##
+∼
+≃
+≈
+∼=
+$
+$$
+⃝
+::=
+≍
+.=
+??
+! !
+∝
+≀
+⊎
+Postﬁx Operators (7)
+^+
+^∗
+^#
+(1) Deﬁned by the Naturals, Integers, and Reals modules.
+(2) Deﬁned by the Reals module.
+(3) Deﬁned by the Sequences module.
+(4) x^y is printed as x y.
+(5) Deﬁned by the Bags module.
+(6) Deﬁned by the TLC module.
+(7) e^+ is printed as e+, and similarly for ^∗and ^#.
+
+-
+
+--- Page 7 ---
+Precedence Ranges of Operators
+The relative precedence of two operators is unspeciﬁed if their ranges overlap.
+Left-associative operators are indicated by (a).
+Preﬁx Operators
+¬
+4–4
+enabled
+4–15
+unchanged
+4–15
+2
+4–15
+3
+4–15
+subset
+8–8
+union
+8–8
+domain
+9–9
+−
+12–12
+Inﬁx Operators
+⇒
+1–1
++−▷
+2–2
+≡
+2–2
+;
+2–2
+∧
+3–3 (a)
+∨
+3–3 (a)
+̸=
+5–5
+⊣
+5–5
+::=
+5–5
+: =
+5–5
+<
+5–5
+=
+5–5
+=|
+5–5
+>
+5–5
+≈
+5–5
+≍
+5–5
+∼=
+5–5
+.=
+5–5
+≥
+5–5
+≫
+5–5
+∈
+5–5
+/∈
+5–5
+≤
+5–5
+≪
+5–5
+≺
+5–5
+⪯
+5–5
+∝
+5–5
+∼
+5–5
+≃
+5–5
+<
+5–5
+⊑
+5–5
+=
+5–5
+⊒
+5–5
+⊂
+5–5
+⊆
+5–5
+≻
+5–5
+⪰
+5–5
+⊃
+5–5
+⊇
+5–5
+⊢
+5–5
+|=
+5–5
+·(1)
+5–14 (a)
+@@
+6–6 (a)
+: >
+7–7
+< :
+7–7
+\
+8–8
+∩
+8–8
+(a)
+∪
+8–8
+(a)
+. .
+9–9
+. . .
+9–9
+! !
+9–13
+##
+9–13 (a)
+$
+9–13 (a)
+$$
+9–13 (a)
+??
+9–13 (a)
+⊓
+9–13 (a)
+⊔
+9–13 (a)
+⊎
+9–13 (a)
+≀
+9–14
+⊕
+10–10 (a)
++
+10–10 (a)
+++
+10–10 (a)
+%
+10–11
+%%
+10–11 (a)
+|
+10–11 (a)
+∥
+10–11 (a)
+⊖
+11–11 (a)
+−
+11–11 (a)
+−−
+11–11 (a)
+&
+13–13 (a)
+&&
+13–13 (a)
+⊙
+13–13 (a)
+⊘
+13–13
+⊗
+13–13 (a)
+∗
+13–13 (a)
+∗∗
+13–13 (a)
+/
+13–13
+//
+13–13
+⃝
+13–13 (a)
+•
+13–13 (a)
+÷
+13–13
+◦
+13–13 (a)
+⋆
+13–13 (a)
+^
+14–14
+^^
+14–14
+.(2)
+17–17 (a)
+Postﬁx Operators
+^+
+15–15
+^*
+15–15
+^#
+15–15
+′
+15–15
+(1) Action composition (\cdot).
+(2) Record ﬁeld (period).
+
+-
+
+--- Page 8 ---
+Operators Deﬁned in Standard Modules.
+Modules Naturals, Integers, Reals
++
+−(1)
+∗
+/ (2)
+^ (3)
+. .
+Nat
+Real (2)
+÷
+%
+≤
+≥
+<
+>
+Int (4)
+Inﬁnity (2)
+(1) Only inﬁx −is deﬁned in Naturals.
+(2) Deﬁned only in Reals module.
+(3) Exponentiation.
+(4) Not deﬁned in Naturals module.
+Module Sequences
+◦
+Head
+SelectSeq
+SubSeq
+Append
+Len
+Seq
+Tail
+Module FiniteSets
+IsFiniteSet
+Cardinality
+Module Bags
+⊕
+BagIn
+CopiesIn
+SubBag
+⊖
+BagOfAll
+EmptyBag
+⊑
+BagToSet
+IsABag
+BagCardinality
+BagUnion
+SetToBag
+Module RealTime
+RTBound
+RTnow
+now (declared to be a variable)
+Module TLC
+:>
+@@
+Print
+Assert
+JavaTime
+Permutations
+SortSeq
+
+-
+
+--- Page 9 ---
+ASCII Representation of Typeset Symbols
+∧
+/\ or \land
+¬
+~ or \lnot or \neg
+∈
+\in
+⟨
+<<
+<
+<
+≤
+\leq or =< or <=
+≪
+\ll
+≺
+\prec
+⪯
+\preceq
+⊆
+\subseteq
+⊂
+\subset
+<
+\sqsubset
+⊑
+\sqsubseteq
+⊢
+|-
+|=
+|=
+→
+->
+∩
+\cap or \intersect
+⊓
+\sqcap
+⊕
+(+) or \oplus
+⊖
+(-) or \ominus
+⊙
+(.) or \odot
+⊗
+(\X) or \otimes
+⊘
+(/) or \oslash
+∃
+\E
+∃
+\EE
+]v
+]_v
+WFv WF_v
+∨
+\/ or \lor
+≡
+<=> or \equiv
+/∈
+\notin
+⟩
+>>
+>
+>
+≥
+\geq or >=
+≫
+\gg
+≻
+\succ
+⪰
+\succeq
+⊇
+\supseteq
+⊃
+\supset
+=
+\sqsupset
+⊒
+\sqsupseteq
+⊣
+-|
+=|
+=|
+←
+<-
+∪
+\cup or \union
+⊔
+\sqcup
+⊎
+\uplus
+×
+\X or \times
+≀
+\wr
+∝
+\propto
+“s” "s" (1)
+∀
+\A
+∀
+\AA
+⟩v
+>>_v
+SFv SF_v
+⇒=>
+∆=
+==
+̸=
+# or /=
+2
+[]
+3
+<>
+; ~>
++−▷-+->
+7→|->
+÷
+\div
+·
+\cdot
+◦
+\o or \circ
+•
+\bullet
+⋆
+\star
+⃝\bigcirc
+∼
+\sim
+≃
+\simeq
+≍
+\asymp
+≈
+\approx
+∼=
+\cong
+.=
+\doteq
+x y x^y (2)
+x + x^+ (2)
+x ∗x^* (2)
+x# x^# (2)
+′
+’
+-------- (3)
+-------- (3)
+-------- (3)
+======== (3)
+(1) s is a sequence of characters.
+(2) x and y are any expressions.
+(3) a sequence of four or more - or = characters.
+
+-

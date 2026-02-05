@@ -1,0 +1,1340 @@
+
+--- Page 1 ---
+The Tower of Hanoi: A Bibliography
+Paul K. Stockmeyer
+Department of Computer Science
+College of William and Mary
+stockmeyer@cs.wm.edu
+Version 2.2
+September 12, 2005
+Corrected October 22, 2005
+This is a substantially enlarged edition of the Tower of Hanoi bibliography ﬁrst
+posted in 1997. In this edition, an attempt has been made to include every rele-
+vant document published during the ﬁrst 100 years of the tower’s history, from 1883
+through 1983. Coverage is more selective in recent years. In particular, recent articles
+in psychological journals that discuss uses of the puzzle in testing of subjects, and
+articles in artiﬁcial intelligence that serve similar purposes, are generally not included,
+nor are textbooks in discrete mathematics or computer science that provide routine
+presentations of standard basic information.
+The notation MR in a citation, when present, is followed by the new style 7-
+digit accession number in Mathematical Reviews, with the old style review citation
+in parentheses. Full descriptions of most of the journals cited can be found in the
+journal index at the end of the bibliography.
+As always, readers are encouraged to send additions, comments, corrections, and
+suggestions to the author.
+Bibliography
+[1] Irving Adler, Magic House of Numbers, The John Day Company, New York,
+1957, pp. 91–94. Revised Edition, 1974.
+[2] S. N. Afriat, The Ring of Linked Rings, Duckworth, London, 1982, pp. 93–116.
+[3] Hugh Aguilar, Basic recursive techniques, Computer Language 2 (1985), no. 5
+(May), 43–46.
+
+--- Page 2 ---
+Paul K. Stockmeyer
+B.2
+[4] Alfred V. Aho, John E. Hopcroft, and Jeﬀrey D. Ullman, The Design and Anal-
+ysis of Computer Algorithms, Addison-Wesley, Reading, Mass., 1974, pp. 71–72.
+[5] W. Ahrens, Mathematische Unterhaltungen und Spiele, B. G. Teubner, Leipzig,
+1901, pp. 31–32. Second edition, in two volumes, 1910 and 1918; Third edition
+of volume I, 1921.
+[6] W. Ahrens, Mathematische Spiele, B. G. Teubner, Leipzig, 1907, pp. 59–63,
+116. Second Edition, 1911; Third Edition, 1916; Fourth Edition, 1919; Fifth
+Edition, 1927.
+[7] R. E. Allardice and A. Y. Fraser, La Tour d’Hano¨ı, Proceedings of the Edin-
+burgh Mathematical Society 2 (1884), 50–53.
+[8] Jean-Paul Allouche, Tours de Hanoi et automates ﬁnis, Groupe de travail en
+th´eorie analytique et ´el´ementaire des nombres, 1986–1987, Publ. Math. Orsay,
+vol. 88, Univ. Paris XI, Orsay, 1988, pp. 1–3.
+[9] Jean-Paul Allouche, Note on the cyclic Towers of Hanoi, Theoret. Comput. Sci.
+123 (1994), 3–7. MR1257199 (94k:05019).
+[10] Jean-Paul Allouche, Dan Astoorian, Jim Randall, and Jeﬀrey [O.] Shallit,
+Morphisms, squarefree strings, and the Tower of Hanoi puzzle, Amer. Math.
+Monthly 101 (1994), 651–658. MR1289274 (95g:68090).
+[11] Jean-Paul Allouche and Roland Bacher, Toeplitz sequences, paperfolding, Tow-
+ers of Hanoi and progression-free sequences of integers, Enseign. Math. (2) 38
+(1992), 315–327. MR1189010 (93j:11017).
+[12] J[ean]-P[aul] Allouche, J. Betrema, and J[eﬀrey] O. Shallit, Sur des points ﬁxes
+de morphismes d’un mono¨ıde libre, RAIRO Inform. Th´eor. Appl. 23 (1989),
+135–249. MR1020473 (91a:68154).
+[13] J[ean]-P[aul] Allouche and F. Dress, Tours de Hano¨ı et automates, RAIRO
+Inform. Th´eor. Appl. 24 (1990), 1–15. MR1060463 (91g:68060).
+[14] J[ean]-P[aul] Allouche and M. Mend`es France, Automata and automatic se-
+quences, Beyond Quasicrystals (Fran¸coise Axel and Denis Gratias, eds.),
+Springer-Verlag, 1995, pp. 293–367. MR1420422 (97m:11029).
+[15] Jean-Paul Allouche and Amir Sapir, Restricted Towers of Hanoi and Mor-
+phisms, Developments in Language Theory (Clelia De Felice and Antonio
+Restivo, eds.), Lecture Notes in Computer Science, no. 3572, Springer, 2005,
+pp. 1–10.
+
+--- Page 3 ---
+Paul K. Stockmeyer
+B.3
+[16] A. V. Anisimov and S. V. Safronyuk, Modeling recursion with the aid of itera-
+tive algorithms, Program. Comput. Software 12 (1987), no. 3, 128–138. (Trans-
+lated from the Russian journal Programmirovanie 12 (1986), no. 3, 38–50.)
+MR0858684 (87j:68014).
+[17] Anonymous, Der Zauberer im Familienkreise. Eine Sammlung leicht aus-
+f¨uhrbarer Experimente, Kunstst¨ucke, Belustigungen und Aufgaben aus der
+Physik, Mechanik, Arithmetik und Taschenspielerei. Zur Unterhaltung in
+Familien- und Gesellschaftskreisen, Julius Bagel, M¨ulheim a. d. Ruhr, 1889,
+pp. 26–28.
+[18] Anonymous, Les tours de Hanoi, Pentamino (1976), no. 2, 23.
+[19] Anonymous, The Tower of Brahma, Creative Computing 2 (1976), no. 1 (Jan-
+uary/February), 25.
+[20] Anonymous (´Edouard Lucas?), Les jeux scientiﬁques, Le Cosmos; Revue des
+sciences et de leurs applications, Nouvelle S´erie XV (39e ann´ee), no. 259 (11
+Janvier 1890), 156–159.
+Dan Astoorian, see [10].
+[21] M. D. Atkinson, The cyclic Towers of Hanoi, Inform. Process. Lett. 13 (1981),
+no. 3, 118–119. MR0645457 (83f:68004).
+Moshe J. Augenstein, see [345].
+[22] Bonnie Averbach and Orin Chein, Mathematics: Problem Solving Through
+Recreational Mathematics, W. H. Freeman, New York, 1980, pp. 274–279.
+Roland Bacher, see [11].
+[23] Roland Backhouse and Maarten Fokkinga, The associativity of equivalence and
+the Tower of Hanoi, Inform. Process. Lett. 77 (2001), no. 2–4, 71–76.
+[24] R. M. Baer, A biological model solution to the Towers of Hanoi problem, Com-
+put. J. 29 (1986), no. 4, 381–382.
+Theodore P. Baker, see [272].
+R.-A. Bakhtiar, see [188].
+[25] J. W. de Bakker and L. G. L. T. Meertens, On the completeness of the induc-
+tive assertion method, J. Comput. System Sci. 11 (1975), 323–357. MR0428755
+(55:1775).
+
+--- Page 4 ---
+Paul K. Stockmeyer
+B.4
+[26] W. W. Rouse Ball, Mathematical Recreations and Problems of Past and
+Present Times, Macmillan and Co., London, 1892, pp. 78–79. Fourth (1905)
+and later editions published under the title Mathematical Recreations and Es-
+says. Eleventh (1939) and later editions co-authored with H. S. M. Coxeter.
+[27] D. St. P. Barnard, Adventures in Mathematics, Pelham Books, London, 1965,
+pp. 52–55.
+[28] David T. Barnard, The Towers of Hanoi: An Exercise in Non-Recursive Algo-
+rithm Development, Tech. Report 80-103, Queen’s University, 1980.
+[29] David T. Barnard and Robert G. Crawford, Pascal programming problems and
+applications, Reston Publishing Company, Reston, VA, 1982, pp. 203–215.
+C. Douglass Bateman see [340].
+[30] Anatole Beck, Michael N. Bleicher, and Donald W. Crowe, The n-dimensional
+cube and the tower of Hanoi, Excursions into Mathematics, Worth Publishers,
+Inc., New York, 1969, pp. 40–54.
+[31] Hermann Becker, 150 Denkaufgaben, Kesselringsche Verlagsbuchhandlung,
+Wiesbaden, 1952, pp. 58–59.
+[32] Catherine Becquaert, Les tours de Hano¨ı, Pentamino (1977), no. 3, 55–71.
+[33] J. Bendisch, Generalized sequencing problem “Towers of Hanoi”, Z. Oper. Res.
+Ser. A 29 (1985), no. 1 (March), 31–45. MR0793549 (86f:90098).
+[34] Elwyn R. Berlekamp, John H. Conway, and Richard K. Guy, Winning Ways
+for your mathematical plays, Academic Press, London, 1982, pp. 753–754.
+MR0654502 (84h:90091b).
+J. Betrema, see [12].
+[35] Albrecht Beutelspacher, Luftschl¨osser und Hirngespinste, Friedr. Vieweg &
+Sohn, Braunschweig/Wiesbaden, 1986, pp. 80–86.
+[36] Graham Birtwistle, The coroutines of Hanoi, SIGPLAN Notices 20 (1985), no. 1
+(January), 9–10.
+Somenath Biswas, see [203].
+[37] Gerald M. Blair, A simple digital circuit for the Towers of Hanoi problem, IEEE
+Trans. Ed. 40 (1997), no. 4 (November), 287–288.
+
+--- Page 5 ---
+Paul K. Stockmeyer
+B.5
+[38] Marc Blanchard, G`en`eralisation du jeu: “La Tour de Hano¨ı”, Ludi-Math (Com-
+mission J.E.M.) 2 (sept. 1979), no. 4, 19–29.
+Michael N. Bleicher, see [30].
+[39] J. T. Boardman, C. Garrett, and G. C. A. Robson, A recursive algorithm for the
+optimal solution of a complex allocation problem using a dynamic programming
+formulation, Comput. J. 29 (1986), no. 2, 182–186.
+[40] J. T. Boardman and G. C. A. Robson, Towards a problem-solving methodology
+for coping with increasing complexity: an engineering approach, Comput. J. 29
+(1986), no. 2, 161–166.
+[41] Jens-P. Bode and Andreas M. Hinz, Results and open problems on the Tower
+of Hanoi, Congr. Numer. 139 (1999), 113–122. (Proceedings of the Thirtieth
+Southeastern Conference on Combinatorics, Graph Theory, and Computing)
+MR1744234 (2000k:05030).
+[42] Al Borchers and Prosenjit Gupta, Extending the quadrangle inequality to speed-
+up dynamic programming, Inform. Process. Lett. 49 (1994), no. 6, 287–290.
+Jack Botermans, see [69] and [330].
+[43] Gaston Boucheny, Curiosit´es et R´ecr´eations Math´ematiques, Librairie Larousse,
+Paris, 1939, pp. 123–124.
+[44] Brother Alfred Brousseau, Tower of Hanoi with more pegs, J. Recreational
+Math. 8 (1975-1976), no. 3, 169–176. Reprinted in Mathematical Solitaires &
+Games, Benjamin L. Schwartz, ed., Baywood Publishing Co., Inc., Farmingdale,
+NY, 1980, pp. 29–36.
+G. Brousseau, see [123].
+[45] Peter Brucker, ¨Uber gewisse Prinzipien des Entwurfs eﬃzienter Algorithmen,
+15th Styrian Mathematical Symposium (Graz, 1984), Berichte, Forschungszen-
+trum Graz, Graz, 1984, pp. 1–21 of Ber. No. 233. MR0807801 (87c:90136).
+[46] P[eter] Buneman and L[eon] S. Levy, Gray code gleanings, Proceedings of the
+1978 Conference on Information Sciences and Systems, Johns Hopkins Univer-
+sity, 1978, pp. 199–202.
+[47] Peter Buneman and Leon [S.] Levy, The Towers of Hanoi problem, Inform.
+Process. Lett. 10 (1980), no. 4-5, 243–244. MR0585392 (81j:68043).
+[48] Otto Cato, Unterhaltungsspiele f¨ur Einen, Philipp Reclam, Leipzig, no year,
+pp. 22–30.
+
+--- Page 6 ---
+Paul K. Stockmeyer
+B.6
+[49] Joe Celko, Mutants of Hanoi, ABACUS 1 (1984), no. 3 (Spring), 54–57.
+[50] Joe Celko, Addendum to “Mutants of Hanoi”, ABACUS 5 (1988), no. 2 (Win-
+ter), 72.
+P. P. Chakrabarti, see [146].
+[51] Tat-Hung Chan, A statistical analysis of the Towers of Hanoi problem, Internat.
+J. Comput. Math. 28 (1989), 57–65.
+[52] Fouad B. Chedid and Toshiya Mogi, A simple iterative algorithm for the Towers
+of Hanoi problem, IEEE Trans. Ed. 39 (May 1996), no. 2, 274–275.
+Orin Chein, see [22].
+Rong-Jaye Chen, see [362] and [363].
+[53] Xiao Chen and Jian Shen, On the Frame-Stewart conjecture about the Towers of
+Hanoi, SIAM J. Comput. 33 (2004), no. 3, 584–589. MR2066643 (2003e:68179).
+S. C. Chiemeke, see [177] and [178].
+[54] I-Ping Chu and Richard Johnsonbaugh, The four-peg Tower of Hanoi puzzle,
+SIGCSE Bull. 23 (1991), no. 3 (September), 2–4.
+James W. Clark, see [340].
+[55] N. Claus (pseudonym for ´Edouard Lucas), La Tour d’Hano¨ı: V´eritable Casse-
+tˆete Annamite, 1883. Original instruction sheet printed by Paul Bousrez, Tours.
+[56] N. Claus (pseudonym for ´Edouard Lucas), La Tour d’Hano¨ı: Jeu de Calcul,
+Science et Nature 1 (1884), no. 8 (January 19), 127–128.
+M. Clint, see [136].
+[57] Brian Cohen, The mechanical discovery of certain problem symmetries, Artiﬁ-
+cial Intelligence 8 (1977), 119–131. MR0455580 (56:13817).
+[58] A. W. Colijn, A note on the multics command language, Software — Practice
+and Experience 11 (1981), no. 7, 741–744.
+John H. Conway, see [34].
+Nicole Cookson, see [176].
+Edward Corwin, see [144].
+H. S. M. Coxeter, see [26].
+Robert G. Crawford, see [29].
+
+--- Page 7 ---
+Paul K. Stockmeyer
+B.7
+[59] D[onald] W. Crowe, The n-dimensional cube and the Tower of Hanoi, Amer.
+Math. Monthly 63 (1956), 29–30. MR0074841 (17:655h).
+Donald W. Crowe, see also [30].
+[60] W. D. Crowe and P. E. D. Strain-Clark, A concurrent approach to the Towers
+of Hanoi, Occam and the Transputer—Research and Applications (Proceedings
+of the 9th Occam User Group Techical Meeting) (Amsterdam) (Charlie Askew,
+ed.), IOS Press, 1988, pp. 13–22.
+[61] W. D. Crowe and P. E. D. Strain-Clark, A concurrent approach to the Towers of
+Hanoi, Speciﬁcation and Veriﬁcation of Concurrent Systems (C. Rattray, ed.),
+British Computer Society, Springer-Verlag, 1990, pp. 595–610.
+[62] Paul Cull and E. F. Ecklund, Jr., On the Towers of Hanoi and generalized Tow-
+ers of Hanoi problems, Congr. Numer. 35 (1982), 229–238. (Proceedings of the
+13th Southeastern Conference on Combinatorics, Graph Theory and Comput-
+ing.) MR0725883 (85a:68059).
+[63] Paul Cull and E. F. Ecklund, Jr., Towers of Hanoi and analysis of algorithms,
+Amer. Math. Monthly 92 (1985), 407–420. MR0795250 (87a:68069).
+[64] Paul Cull and Colin Gerety, Is Towers of Hanoi really hard?, Congr. Numer. 47
+(1985), 237–242. (Proceedings of the 16th Southeastern International Conference
+on Combinatorics, Graph Theory and Computing.)
+[65] Paul Cull and Ingrid Nelson, Error-correcting codes on the towers of Hanoi
+graphs, Discrete Math. 208/209 (1999), 157–175. MR1725528 (2001a:94048).
+[66] Paul Cull and Ingrid Nelson, Perfect codes, NP-Completeness, and Towers
+of Hanoi graphs, Bull. Inst. Combin. Appl. 26 (1999), 13–38. MR1683817
+(2000h:94059).
+Paul Cull, see also [141].
+[67] I. Danicic, Lisp Programming, Blackwell, Oxford, 1983, pp. 3–6, 22–25.
+[68] Jean-Paul Delahaye, Jeux math´ematiques, et math´ematiques des Jeux, Bib-
+lioth`eque Pour la Science, Paris, 1998, p. 91.
+[69] Pieter van Delft and Jack Botermans, Creative Puzzles of the World, Harry N.
+Abrams, Inc., New York, 1978, pp. 175,199.
+[70] Claude Delmez, Les tours de Hano¨ı, Math. P´ed. 9 (1983), no. 44, 23–39.
+
+--- Page 8 ---
+Paul K. Stockmeyer
+B.8
+[71] R. M. DeSantis, P. Souphandavong, C. Ratzimbazafy, and R. Hureau, Robo-
+tization of the hanoi tower puzzle via visual feedback, Proceedings of the 1987
+Summer Computer Simulation Conference (San Diego) (Jordan Q. B. Chou,
+ed.), SCS, 1987, pp. 822–825.
+[72] A. K. Dewdney, Computer Recreations: Yin and yang: recursion and iteration,
+the Towers of Hanoi and the Chinese Rings, Sci. Amer. 251 (1984), no. 5
+(November), 19–28. Reprinted, with Addendum, in The Armchair Universe:
+An Exploration of Computer Worlds, W. H. Freeman and Co., New York, 1988,
+pp. 186–199.
+[73] Leroy J. Dickey, Grey codes, Towers of Hanoi, Hamiltonian paths on the N-
+cube, and Chinese rings, APL Quote Quad 24 (1993), no. 2 (December), 18–24.
+[74] Edsger W. Dijkstra, EWD316: A Short Introduction to the Art of Program-
+ming, (circulated privately), 1971, pp. 71–75. Unpublished, but available from
+the E. W. Dijkstra Archives at
+http://www.cs.utexas.edu/users/EWD/welcome.html. A preliminary version
+also exists as EWD287 (undated, but probably 1970).
+T. S. Dillon, see [232], [233], and [234].
+[75] A. P. Domoryad, Mathematical Games and Pastimes (Russian), Pergamon
+Press Ltd., Oxford, 1964, pp. 75–76. English translation by Halina Moss of
+Matematicheskiye igry i razvlecheniya, Fizmatgiz, Moscow, 1961. MR0123435
+(23:A761).
+[76] Eric Doubleday, Test your wits, Vol. 2, Ace Books, New York, 1971, pp. 91–92.
+F. Dress, see [13].
+[77] R. G. Dromey, How to solve it by computer, Prentice Hall International, Inc.,
+London, 1982, pp. 391–403.
+[78] Vladimir Dubrovsky, Nesting puzzles, Part I: Moving oriental towers, Quantum
+6 (1996), no. 3 (January/Febrary), 53–57, 49–51.
+[79] Henry E[rnest] Dudeney, The Canterbury Puzzles: Some adventures of the fa-
+mous pilgrims now recorded for the ﬁrst time, London Mag. 8 (1902), no. 46
+(May), 367–371. Solutions appear in [80]. This article reprinted in [81].
+[80] Henry E[rnest] Dudeney, The Canterbury Puzzles: Sequels to the adventures
+(recorded in our last number) that befell the famous pilgrims, London Mag.
+8 (1902), no. 47 (June), 480–482. Contains solutions to the puzzles in [79].
+Modiﬁed versions of these solutions appear in [81].
+
+--- Page 9 ---
+Paul K. Stockmeyer
+B.9
+[81] Henry Ernest Dudeney, The reve’s puzzle, The Canterbury Puzzles (and other
+curious problems), Thomas Nelson and Sons, Ltd., London, 1907. Second Edi-
+tion, 1919. Contains the material of [79] and [80] in book form.
+[82] Henry Ernest Dudeney, Modern Puzzles and how to solve them, Frederick A.
+Stokes Company, New York, 1926, pp. 61, 151.
+[83] Henry Ernest Dudeney, Puzzles and Curious Problems, Thomas Nelson and
+Sons, Ltd., London, 1931, pp. 74, 165. Revised edition, edited by Martin Gard-
+ner, published by Charles Scribner’s Sons, New York, 1967, pp.133–134, 339.
+[84] Otto Dunkel, Editorial note concerning advanced problem 3918, Amer. Math.
+Monthly 48 (1941), 219.
+[85] Daniel S. Eavarone and George W. Ernst, A program that generates good dif-
+ference orderings and tables of connections for GPS, Systems for the seventies;
+Proceedings of the 1970 IEEE Systems Science and Cybernetics Conference,
+1970, pp. 226–233.
+E. F. Ecklund, Jr., see [62] and [63].
+[86] Bleicke Eggers, The Towers of Hanoi: Yet another nonrecursive solution, SIG-
+PLAN Notices 20 (1985), no. 9 (September), 32–42.
+[87] Harry Edwin Eiss, Dictionary of mathematical games, puzzles, and amusements,
+Greenwood Press, Inc., Westport, CT, 1988, pp. 251–254.
+[88] Joost Engelfriet, The Trees of Hanoi, Tech. Report 325, Twente University of
+Technology, Enschede, The Netherlands, 1981.
+[89] Harald Englisch and Renate Englisch, T¨urme in S¨udostasien und die Dimension
+log 3/log 2, MNU 49/3 (15 April 1996), 138–140.
+Renate Englisch, see [89].
+[90] Susanna S. Epp, Discrete Matheamtics with Applications, Wadsworth Publish-
+ing Company, Belmont, CA, 1990, pp. 476–480, 488–89, Appendix B.
+[91] M. C. Er, A representation approach to the Tower of Hanoi problem, Comput.
+J. 25 (1982), no. 4, 442–447.
+[92] M. C. Er, An iterative solution to the generalized Towers of Hanoi problem,
+BIT 23 (1983), 295–302. MR0704996 (84g:68019).
+[93] M. C. Er, An analysis of the generalized Towers of Hanoi problem, BIT 23
+(1983), 429–435. MR0721193 (85a:68060).
+
+--- Page 10 ---
+Paul K. Stockmeyer
+B.10
+[94] M. C. Er, The cyclic Towers of Hanoi: A Generalization, Egypt. Comput. J.
+11 (1983), 91–99.
+[95] M. C. Er, The colour Towers of Hanoi: A generalization, Comput. J. 27 (1984),
+no. 1, 80–82.
+[96] M. C. Er, The cyclic Towers of Hanoi: A representation approach, Comput. J.
+27 (1984), no. 2, 171–175.
+[97] M. C. Er, The generalized colour Towers of Hanoi: An iterative algorithm,
+Comput. J. 27 (1984), no. 3, 278–282. MR0761594 (86c:68030).
+[98] M. C. Er, The Tower of Hanoi as a trivial problem—a reply, Comput. J. 27
+(1984), no. 3, 285.
+[99] M. C. Er, A generalization of the cyclic Towers of Hanoi: An iterative solution,
+Internat. J. Comput. Math. 15 (1984), 129–140. MR0747513 (86a:68031).
+[100] M. C. Er, On the complexity of recursion in problem-solving, Internat. J. Man-
+Machine Studies 20 (1984), 537–544.
+[101] M. C. Er, An iterative algorithm for the cycle Towers of Hanoi problem, Inter-
+nat. J. Comput. Inform. Sci. 13 (1984), no. 2, 123–129. MR0761295 (86c:68029).
+[102] M. C. Er, The generalized Towers of Hanoi problem, J. Inform. Optim. Sci. 5
+(1984), no. 1, 89–94.
+[103] M. C. Er, The colour Towers of Hanoi—An iterative solution, J. Inform. Optim.
+Sci. 5 (1984), no. 2, 95–104.
+[104] M. C. Er, The Tower of Hanoi problem—a further reply, Comput. J. 28 (1985),
+no. 5, 543–544.
+[105] M. C. Er, The complexity of the generalized cyclic Towers of Hanoi problem, J.
+Algorithms 6 (1985), 351–358. MR0800725 (86k:68035).
+[106] M. C. Er, Towers of Hanoi with black and white discs, J. Inform. Optim. Sci. 6
+(1985), no. 1, 87–94. MR0793864 (86k:68036).
+[107] M. C. Er, The Towers of Hanoi and binary numerals, J. Inform. Optim. Sci. 6
+(1985), no. 2, 147–152. MR0796981 (86m:68058).
+[108] M. C. Er, Performance evaluations of recursive and iterative algorithms for
+the Towers of Hanoi problem, Computing 37 (1986), 93–102. MR0854579
+(87j:68051).
+
+--- Page 11 ---
+Paul K. Stockmeyer
+B.11
+[109] M. C. Er, A loopless approach for constructing a fastest algorithm for the Towers
+of Hanoi problem, Internat. J. Comput. Math. 20 (1986), 49–54.
+[110] M. C. Er, The cyclic Towers of Hanoi and pseudo ternary codes, J. Inform.
+Optim. Sci. 7 (1986), no. 3, 271–277.
+[111] M. C. Er, A time and space eﬃcient algorithm for the cyclic Towers of Hanoi
+problem, J. Inform. Process. 9 (1986), no. 3, 163–165.
+[112] M. C. Er, A general algorithm for ﬁnding a shortest path between two n-
+conﬁgurations, Inform. Sci. 42 (1987), 137–141.
+[113] M. C. Er, A loopless and optimal algorithm for the cyclic Towers of Hanoi
+problem, Inform. Sci. 42 (1987), 283–287.
+[114] M. C. Er, Counter examples to adjudicating a Towers of Hanoi contest, Internat.
+J. Comput. Math. 21 (1987), 123–131.
+[115] M. C. Er, An algorithmic solution to the multi-tower Hanoi problem, J. Inform.
+Optim. Sci. 8 (1987), no. 1, 91–100.
+[116] M. C. Er, An optimal algorithm for Reve’s puzzle, Inform. Sci. 45 (1988), 39–49.
+[117] M. C. Er, A minimal space algorithm for solving the Towers of Hanoi problem,
+J. Inform. Optim. Sci. 9 (1988), 183–191. MR0964408 (90g:68107).
+[118] M. C. Er, A linear space algorithm for solving the Towers of Hanoi problem by
+using a virtual disc, Inform. Sci. 47 (1989), 47–52. MR0976714 (89k:68064).
+[119] M. C. Er, A note on the optimality of a Reve algorithm, Comput. J. 34 (1991),
+no. 6, 513.
+[120] George W. Ernst, Suﬃcient conditions for the success of GPS, J. ACM 16
+(1969), no. 4, 517–533.
+[121] George W. Ernst and Allen Newell, Some issues of representation in a gen-
+eral problem solver, AFIPS Conference Proceedings, vol. 30, Thompson Books,
+Washington, D. C., 1967, pp. 583–600.
+[122] George W. Ernst and Allen Newell, GPS: A Case Study in Generality and
+Problem Solving, Academic Press, New York, 1969, pp. 150–164.
+George W. Ernst, see also [85].
+
+--- Page 12 ---
+Paul K. Stockmeyer
+B.12
+[123] J.-C. Eyheraguibel and G. Brousseau, Appareillage du mesure automatique des
+strat´egies d’apprentissage, Mesures - r´egulation - automatisme 43 (1978), no. 1,
+43–55.
+Cyrus R. Eyster, see [340].
+[124] Peter Fellgett, Letter to the editor, Comput. J. 27 (1984), no. 4, 378–379.
+[125] Anthony S. Filipiak, 100 Puzzles - How to make and how to solve them, A. S.
+Barnes and Company, Inc., New York, 1942, pp. 114–115. Also published as
+M athematical Puzzles nad Other Brain Twisters by Bell Publishing Co., New
+York.
+[126] Peter J. Floriani, Letter to the editor, SIGPLAN Notices 19 (1984), no. 12
+(December), 7–10.
+Maarten Fokkinga, see [23].
+[127] Gary Ford, A framework for teaching recursion, SIGCSE Bull. 14 (1982), no. 2
+(June), 32–39.
+[128] J.-C. Fournier, Pour en ﬁnir avec la d´er´ecursivation du probl`eme des Tours de
+Hano¨ı, RAIRO Inform. Th´eor. Appl. 24 (1990), 17–35.
+[129] J. S. Frame, Solution to advanced problem 3918, Amer. Math. Monthly 48
+(1941), 216–217.
+[130] Wm. Randolph Franklin, A simpler iterative solution to the Towers of Hanoi
+problem, SIGPLAN Notices 19 (1984), no. 8 (August), 87–88.
+A. Y. Fraser, see [7].
+Henry Frith, see [347].
+[131] Jean Fromentin, A propos d’un jeu: “La Tour de Hano¨ı”, Ludi-Math (Com-
+mission J.E.M.) 2 ((sept. 1979)), no. 2, 9–17.
+[132] Artur F¨urst and Alexander Moszkowski, Das Buch der 1000 Wunder, Albert
+Langen, M¨unchen, 1920, pp. 203–204.
+[133] George Gamow, One two three . . . inﬁnity, Viking Press, New York, 1947, pp. 9–
+11.
+[134] Martin Gardner, Mathematical Games: About the remarkable similarity between
+the Icosian Game and the Tower of Hanoi, Sci. Amer. 196 (1957), no. 5 (May),
+150–156. Reprinted, with Addendum, as Chapter 6 of The Scientiﬁc American
+
+--- Page 13 ---
+Paul K. Stockmeyer
+B.13
+Book of Mathematical Puzzles & Diversions, Simon and Schuster, New York,
+1959. A later edition, with Afterword and new Bibliography, was published as
+Hexaﬂexagons and other Mathematical Diversions, University of Chicago Press,
+Chicago, 1988.
+[135] Martin Gardner, Mathematical Games: The curious properties of the Gray code
+and how it can be used to solve puzzles, Sci. Amer. 227 (1972), no. 2 (August),
+106–109. Reprinted, with Answer, Addendum, and Bibliography, as Chapter 2
+of Knotted Doughnuts and Other Mathematical Entertainments, W. H. Freeman
+and Co., New York, 1986.
+Martin Gardner, see also [83] and [198].
+C. Garrett, see [39].
+[136] D. Gault and M. Clint, A fast algorithm for the Towers of Hanoi problem,
+Comput. J. 30 (1987), no. 4, 376–378.
+[137] Thomas D. Gedeon, Guided tour to the Towers of Hanoi, SIGPLAN Notices
+21 (1986), no. 6 (June), 11–12.
+[138] Thomas D. Gedeon, Letter to the editor, SIGPLAN Notices (1986), no. 12
+(December), 14.
+[139] T[homas] D. Gedeon, The Reve’s puzzle: An iterative solution produced by
+transformation, Comput. J. 35 (1992), no. 2, 186–187.
+[140] T[homas] D. Gedeon, The cyclic Towers of Hanoi: An iterative solution pro-
+duced by transformation, Comput. J. 39 (1996), no. 4, 353–356.
+Thomas D. Gedeon, see also [307] and [308].
+Frank H. George, see [328].
+[141] Colin Gerety and Paul Cull, Time complexity of the Towers of Hanoi problem,
+SIGACT News 18 (1986), no. 1 (Summer), 80–88.
+Colin Gerety, see also [64].
+[142] Italo Ghersi, Mathematica Dilettevole e Curiosa, Ulrico Hoepli, Milan, 1913,
+pp. 709–711.
+S. Ghose, see [146].
+[143] Arthur Gill, Machine and Assembly Language Programming of the PDP-11,
+Prentice-Hall, Englewood Cliﬀs, NJ, 1978, pp. 74–79.
+
+--- Page 14 ---
+Paul K. Stockmeyer
+B.14
+[144] Arthur Gill, Edward Corwin, and Antonette Logar, Assembly Language Pro-
+gramming for the 68000, Prentice-Hall, Englewood Cliﬀs, NJ, 1987, pp. 81–85.
+F. G¨obel, see [322].
+Arthur Good, see [348].
+[145] Ronald L. Graham, Donald E. Knuth, and Oren Patashnik, Concrete math-
+ematics: A foundation for computer science, Addison-Wesley, Reading, MA,
+1989. Second Edition, 1994.
+Martin Harry Greenberg, see [311].
+P. M. Grundy, see [324].
+[146] P. Gupta, P. P. Chakrabarti, and S. Ghose, The Towers of Hanoi: Generaliza-
+tions, specializations, and algorithms, Internat. J. Comput. Math. 46 (1992),
+149–161.
+Prosenjit Gupta, see [42].
+Richard K. Guy, see [34].
+A. Halder, see [258].
+Matthew T. Harrison, see [340].
+J. R. Hayes, see [200].
+[147] P. J. Hayes, A note on the Towers of Hanoi problem, Comput. J. 20 (1977),
+no. 3, 282–285.
+[148] R. J. Heard, The Tower of Hanoi as a trivial problem, Comput. J. 27 (1984),
+90.
+[149] R. J. Heard, Further remarks on the trivial nature of the Tower of Hanoi prob-
+lem, Comput. J. 28 (1985), no. 5, 543.
+[150] R. J. Heard, The Tower of Hanoi—again, Comput. J. 29 (1986), no. 4, 381.
+Lorenz Hempel, see [184].
+[151] K. Hemprich, Spielpeterle und Ratefritze, D¨urr, Leipzig, 1926, pp. 33–35.
+[152] A. H´eraud, Jeux et R´ecr´eations Scientiﬁques – Chimie, Histoire Naturelle,
+Math´ematiques., J.-B. Bailli`ere et Fils, Paris, 1903, pp. 299–302 and 305–307.
+Not in 1884 edition. Lifted almost entirely from [56]
+
+--- Page 15 ---
+Paul K. Stockmeyer
+B.15
+[153] Hermann Hering, Zur Mathematisierung des “Turm von Hano¨ı”-Spiels, MNU
+26 (1973), 408–411.
+[154] Hermann Hering, Minimalstrategien in endlichen Systemen, MU 23 (1977),
+no. 4, 19–35.
+[155] H[ermann] Hering, Varianten zum “Turm von Hanoi-Spiel” – ein Weg zu ein-
+fachen Funktionalgleichungen, MU 25 (1979), no. 2, 82–92.
+[156] George F. Hervey, Tower of Hanoy, Teach yourself card games for one: patiences
+— solitaires, The English Universities Press Ltd., London, 1965, pp. 63–65.
+[157] George F. Hervey, Tower of Hanoy, The Illustrated book of Card Games for
+One, Hamlyn, London, 1977, pp. 60–61.
+[158] Margarete und Heinz Heß, Hamiltonsche Linien, MU 24 (1978), no. 3, 5–40.
+[159] Teruo Hikita, On a class of recursive procedures and equivalent iterative ones,
+Acta Inform. 12 (1979), 305–320. MR0553780 (80k:68020).
+[160] A[ndreas] M. Hinz, An iterative algorithm for the Tower of Hanoi with four
+pegs, Computing 42 (1989), 133–140. MR1014293 (91b:05025).
+[161] Andreas M. Hinz, The Tower of Hanoi, Enseign. Math. (2) 35 (1989), 289–321.
+MR1039949 (91k:05015).
+[162] Andreas M. Hinz, Pascal’s Triangle and the Tower of Hanoi, Amer. Math.
+Monthly 99 (1992), 538–544. MR1166003 (93f:05004).
+[163] Andreas M. Hinz, Shortest paths between regular states on the Tower of Hanoi,
+Inform. Sci. 63 (1992), 173–181. MR1163725 (93b:05001).
+[164] Andreas M. Hinz, Square-free Tower of Hanoi sequences, Enseign. Math. (2)
+42 (1996), no. 3-4, 257–264. MR1426439 (98f:05017).
+[165] Andreas M. Hinz, The Tower of Hanoi, Algebras and Combinatorics (An In-
+ternational Congress, ICAC ’99, Hong Kong (Kar-Ping Shum, Earl J. Taft,
+and Zhe-Xian Wan, eds.), Springer-Verlag, Singapore, 1999, pp. 277–289.
+MR1733183 (2000j:05015).
+[166] Andreas M. Hinz, Sandi Klavˇzar, Uroˇs Milutinovi´c, Daniele Parisse, and Ciril
+Petr, Metric propeties of the Tower of Hanoi graphs and Stern’s diatomic se-
+quence, European J. Comb. 26 (2005), 693–708.
+[167] Andreas M. Hinz and Daniele Parisse, On the planarity of Hanoi graphs, Expo.
+Math. 20 (2002), no. 3, 263–268. MR1924112 (2003f:05034).
+
+--- Page 16 ---
+Paul K. Stockmeyer
+B.16
+[168] Andreas M. Hinz and Andreas Schief, The average distance on the Sierpi´nski
+gasket,
+Probab. Theory Relat. Fields 87 (1990),
+129–138.
+MR1076960
+(92b:58129).
+Andreas M. Hinz, see also [41].
+Yuji Hirayama, see [279] and [280].
+[169] Professor Hoﬀmann (pseudonym for Angelo John Lewis), Puzzles old and new,
+Frederick Warne, London, 1893, pp. 333–334, 361–364.
+[170] Douglas R. Hofstadter, Metamagical Themas: Tripping the light recursive in
+lisp, the language of artiﬁcial intelligence, Sci. Amer. 248 (1983), no. 3 (March),
+22–33. Reprinted as Chapter 18, Lisp: Lists and Recursion, in [172].
+[171] Douglas R. Hofstadter, Metamagical Themas: In which a discourse on the lan-
+guage Lisp concludes with a gargantuan Italian feast, Sci. Amer. 248 (1983),
+no. 4 (April), 14–28. Reprinted as Chapter 19, Lisp: Recursion and Generality
+in [172].
+[172] Douglas R. Hofstadter, Metamagical Themas: Questing for the Essence of Mind
+and Pattern, Basic Books, New York, 1985. Contains reprints of [170] and [171].
+John E. Hopcroft, see [4].
+[173] Sherwood Hoyt, Solve the pagoda puzzle using recursive assembly, MICRO
+(1982), no. 54, 53–57.
+[174] Wen Jing Hsu, Two arms are faster than one, International Journal of Robotics
+Resesarch 13 (1994), no. 4, 364–368.
+[175] Thomas F. Hudson, Jr., Letter to the editor, SIGPLAN Notices 19 (1984), no. 8
+(August), 18–20.
+[176] George E. Humes, Marilyn C. Welsh, Paul Retzlaﬀ, and Nicole Cookson, Towers
+of Hanoi and London: Reliability and validity of two executive function tasks,
+Assessment 4 (1997), 249–257.
+R. Hureau, see [71].
+[177] F. O. Ikpotokin, S. C. Chiemeke, and E. O. Osaghae, Alternative approach to
+the optimal solution of tower of Hanoi, J. Inst. Math. Comput. Sci. 15 (2004),
+229–244.
+
+--- Page 17 ---
+Paul K. Stockmeyer
+B.17
+[178] F. O. Ikpotokin, S. C. Chiemeke, and E. O. Osaghae, Generalized recursive
+optimal solution for the multi-peg towers of Hanoi, J. Inst. Math. Comput. Sci.
+15 (2004), 297–309.
+Katsushi Inoue, see [344].
+Richard Johnsonbaugh, see [54].
+[179] P. Jullien, Trois jeux, La Mathematique et ses Applications (Paris) (E. Galion,
+ed.), CEDIC, 1972, pp. 23–43.
+[180] Helmut J¨urgensen and Derick Wood, The multiway trees of Hanoi, Internat. J.
+Comput. Math. 14 (1983), 137–153. MR0723554 (84k:68026).
+[181] Tetsu Kaizuka, On the distance minimizing function of Hanoi-4-Tower, Bull.
+Centre Inform. 12 (1991), 61–66.
+[182] Tetsu Kaizuka, On the steps minimizing function of general Hanoi-m-Tower,
+Bull. Centre Inform. 13 (1991), 58–63.
+[183] Tetsu Kaizuka, On the moment minimizing function of Hanoi-4-Tower, Bull.
+Centre Inform. 14 (1992), 61–66.
+[184] Lutz K¨ammerer and Lorenz Hempel, The Towers of Hanoi and pileproblems,
+Operations Research Proceedings 1996 (Braunsweig) (Berlin) (Uwe Zimmer-
+mann, Ulrich Derigs, Wolfgang Gaul, Rolf H.M¨ohring, and Karl-Peter Schuster,
+eds.), Springer, 1997, pp. 84–89.
+Abraham Kandel, see [272].
+[185] John Karat, A model of problem solving with incomplete constraint knowledge,
+Cognitive Psychology 14 (1982), no. 4, 538–559.
+[186] Edward Kasner and James Newman, Pastimes of past and present times, Mathe-
+matics and the Imagination, Simon and Schuster, Inc., New York, 1940, pp. 156–
+192. Reprinted in Volume Four of The World of Mathematics, edited by James
+R. Newman, Simon and Schuster, Inc., New York, 1956, pp. 2416–2438.
+[187] Mohammad Kaykobad, Towers of Hanoi with 4 pegs, J. Bangladesh Acad. Sci.
+13 (1989), no. 1, 85–90.
+[188] M[ohammad] Kaykobad, S. T.-U. Rahman, R.-A. Bakhtiar, and A. A. K. Ma-
+jumdar, A recursive algorithm for the multi-peg Tower of Hanoi problem, Inter-
+nat. J. Comput. Math. 57 (1995), 67–73.
+M[ohammad] Kaykobad, see [259].
+
+--- Page 18 ---
+Paul K. Stockmeyer
+B.18
+[189] Clark Kinnaird (ed.), Encyclopedia of puzzles and pastimes, Grosset & Dunlap,
+New York, 1946, pp. 387–388.
+[190] David Klahr and Mitchell Robinson, Formal Assessment of Problem-Solving
+and Planning Processes in Preschool Children, Cognitive Psychology 13 (1981),
+113–148.
+[191] Sandi Klavˇzar and Uroˇs Milutinovi´c, Graphs S(n, k) and a variant of the Tower
+of Hanoi problem, Czech. Math. J. 47 (1997), no. 122, 95–104. MR1435608
+(97k:05061).
+[192] Sandi Klavˇzar and Uroˇs Milutinovi´c, Simple explicit formulas for the Frame-
+Stewart numbers,
+Ann. Comb. 6 (2002),
+no. 2,
+157–167.
+MR1955516
+(2003k:05004).
+[193] Sandi Klavˇzar, Uroˇs Milutinovi´c, and Ciril Petr, Combinatorics of topmost
+discs of multi-peg Tower of Hanoi problem, Ars Combin. 59 (2001), 55–64.
+MR1832197 (2002b:05013).
+[194] Sandi Klavˇzar, Uroˇs Milutinovi´c, and Ciril Petr, 1-Pefect Codes in Sierpi´nski
+Graphs, Bull. Autral. Math. Soc. 66 (2002), 369–384.
+[195] Sandi Klavˇzar, Uroˇs Milutinovi´c, and Ciril Petr, On the Frame-Stewart algo-
+rithm for the multi-peg Tower of Hanoi problem, Discrete Appl. Math. 120
+(2002), no. 1–3, 141–157. MR1912864 (2003c:05028).
+Sandi Klavˇzar, see [166].
+[196] Carole S. Klein and Steven Minsker, The super Towers of Hanoi problem:
+large rings on small rings, Discrete Math. 114 (1993), 283–295. MR1217759
+(94e:05032).
+Cargill G. Knott, see [348].
+Donald E. Knuth, see [145].
+[197] Milos Konopasek, The Towers of Hanoi from a diﬀerent viewpoint, SIGPLAN
+Notices 20 (1985), no. 12 (December), 39–46.
+[198] Boris A. Kordemsky (Kordemski˘ı), The Moscow Puzzles, Charles Scribner’s
+Sons, New York, 1972, pp. 42, 216. A translation by Albert Parry of the Russian
+book Matematicheska⁀ia Smekalka. Edited by Martin Gardner.
+[199] Richard E. Korf, Toward a model of representation changes, Artiﬁcial Intelli-
+gence 14 (1980), 41–78. MR0587851 (81h:68093).
+
+--- Page 19 ---
+Paul K. Stockmeyer
+B.19
+[200] K. Kotovsky, J. R. Hayes, and H. A. Simon, Why are some problems hard?
+evidence from tower of Hanoi, Cognitive Psychology 17 (1985), no. 2, 248–294.
+[201] M. Kraitchik, La math`ematique des jeux, ou R`ecr`eations math`ematiques,
+Stevens Fr`eres, Bruxelles, 1930, pp. 238–240. Second French edition 1953.
+[202] Maurice Kraitchik, Mathematical Recreations, W. W. Norton and Company,
+New York, 1942, pp. 91–93. English Edition, Georege Allen & Unwin, Ltd,
+London, 1943. Second edition, Dover Publications, New York, 1953.
+[203] M. S. Krishnamoorthy and Somenath Biswas, The generalized Towers of Hanoi,
+SIGACT News 10 (Winter 1979), 49.
+[204] Robert L. Kruse, Data Structures and Program Design, Prentice-Hall, Edgle-
+wood Cliﬀs, New Jersey, 1984. Second Edition, 1987
+[205] Kees van der Laan, Tower of Hanoi, revisited, TUGboat 13 (1992), no. 1, 91–94.
+[206] B[ernard] Lang, La “Tour de Hano¨ı”: une application de la r´ecursivit´e, Micro
+Systemes (1981), no. 19, 201–203.
+[207] M. F. Lanz and P. Martin, Les 1-graphes ﬁnis et leurs morphismes, Math. Sci.
+Humaines (13e ann´ee, 1975), no. 51, 51–75, 89. MR0401485 (53:5312).
+[208] Claude-Marcel Laurent, Le savoir-s’amuser, Tome II: Jeux d’Int´erieur, Femmes
+d’Aujourd’hui, 1962, p. 125.
+[209] Ivan Lavall[´e]e, Note sur le probl`eme des Tours de Hano¨ı, Acta Math. Vietnam.
+7 (1982), no. 2, 131–137. MR0762495 (86b:68018).
+[210] Ivan Lavall´ee, Note sur le probl`eme des Tours de Hano¨ı, Rev. Roumaine Math.
+Pures Appl. 30 (1985), 433–438. MR0802766 (86k:05012).
+[211] Bruce Leban, A solution to the tower of Hanoi problem using TEX, TUGboat
+6 (1985), no. 3, 151–154.
+[212] Joseph Leeming, Fun with puzzles, J. B. Lippincott, Philadelphia, 1946, p. 79.
+[213] Ernst [L.] Leiss, Solving the “Towers of Hanoi” on graphs, J. Combin. Inform.
+System Sci. 8 (1983), no. 1, 81–89.
+[214] Ernst L. Leiss, On restricted Hanoi problems, J. Combin. Inform. System Sci.
+8 (1983), no. 4, 277–285.
+[215] Ernst L. Leiss, Finite Hanoi problems: how many discs can be handled?, Congr.
+Numer. 44 (1984), 221–229. (Proceedings of the 15th Southeastern Conference
+of Combinatorics, Graph Theory and Computing.) MR0777543 (87b:05062).
+
+--- Page 20 ---
+Paul K. Stockmeyer
+B.20
+[216] Leon S. Levy, Discrete Structures of Computer Science, John Wiley & Sons,
+New York, 1980, pp. 9–18, 21–22.
+[217] Leon S. Levy, Letter to the editor, SIGPLAN Notices 21 (1986), no. 12 (De-
+cember), 12–13.
+Leon S. Levy, see also [46] and [47].
+Angelo John Lewis, see [169].
+[218] Chi-Kwong Li and Ingrid Nelson, Perfect codes on the Towers of Hanoi graph,
+Bull. Austral. Math. Soc. 57 (1998), 367–376. MR1623231 (99f:94018).
+[219] Appie van de Liefvoort, An iterative solution to the four-peg Tower of Hanoi
+problem, Proceedings of the 18th Annual ACM Computer Science Conference,
+1990, pp. 70–75.
+[220] A[ppie] van de Liefvoort, An iterative algorithm for the Reve’s puzzle, Comput.
+J. 35 (1992), no. 1, 91–92.
+[221] Walther Lietzmann, Lustiges und Merkw¨urdiges von Zahlen und Formen, Fer-
+dinand Hirt, Breslau, 1922.
+[222] Norman F. Lindquist, Solution to problem 1350, Math. Mag. 64 (1991), 200.
+[223] Andy Liu and Steve Newman, Problem 1169, Crux Mathematicorum 12 (1986),
+no. 7 (September), 179.
+[224] Andy Liu and Steve Newman, Solution to problem 1169, Crux Mathematicorum
+13 (1987), no. 10 (December), 328–332.
+Nicholas A. Loehr, see [340].
+Antonette Logar, see [144].
+[225] G. de Longchamps, Vari´et´es, Journal de Math´ematiques Sp´eciales (2e s´erie) 2
+(1883), 286–287.
+[226] L. H. Longley-Cook, New Math Puzzle Book, Van Nostrand Reinhold, New
+York, 1974, pp. 29–30, 37.
+Julio L´opez, see [263].
+[227] Sam Loyd, Cyclopedia of Puzzles, Morningside Press, New York, 1914, pp. 223,
+368.
+
+--- Page 21 ---
+Paul K. Stockmeyer
+B.21
+[228] Xue-Miao Lu, Towers of Hanoi graphs, Internat. J. Comput. Math. 19 (1986),
+23–38.
+[229] Xue-Miao Lu, Towers of Hanoi problem with arbitrary k ≥3 pegs, Internat. J.
+Comput. Math. 24 (1988), 39–54.
+[230] Xue-Miao Lu, An iterative solution for the 4-peg Towers of Hanoi, Comput. J.
+32 (1989), no. 2, 187–189.
+[231] Xue-Miao Lu, A loopless approach to the multipeg Towers of Hanoi, Internat.
+J. Comput. Math. 33 (1990), 13–29.
+[232] X[ue]-M[iao] Lu and T. S. Dillon, A note on parallelism for the Towers of Hanoi,
+Math. Comput. Modelling 20 (1994), no. 3, 1–6. MR1288492 (95h:68075).
+[233] X[ue]-M[iao] Lu and T. S. Dillon, Parallelism for mutipeg Towers of Hanoi,
+Math. Comput. Modelling 21 (1995), no. 3, 3–17. MR316115 (96c:68078).
+[234] X[ue]-M[iao] Lu and T. S. Dillon, Nonrecursive solution to parallel multipeg
+Towers of Hanoi: A decomposition approach, Math. Comput. Modelling 24
+(1996), no. 3, 29–35. MR1404429 (97d:05025).
+[235] ´Edouard Lucas, Le calcul et les machines `a calculer, Revue Scientiﬁque (3e s´erie)
+8 (1884), no. 16 (October 18), 482–496. An abridged version of [236] below.
+[236] ´Edouard Lucas, Le calcul et les machines `a calculer, Compte Rendu de la 13e
+Session, Association Fran¸caise pour l’Avancement des Sciences, 1885, pp. 111–
+141. An address presented 8 September 1884 at the Congr`es de l’Association
+held in Blois.
+[237] ´Edouard Lucas, Nouveaux jeux scientiﬁques de M. ´Edouard Lucas, La Nature,
+17th year, 2nd semester (1889), no. 855 (October 5), 301–303.
+[238] ´Edouard Lucas, R´ecr´eations Math´ematiques, Gauthier-Villars, Paris, 1893.
+Reprinted several times by Albert Blanchard, Paris. Contains the material in
+[236].
+[239] ´Edouard Lucas, L’Arithm´etique Amusante: Introduction aux R´ecr´eations Ma-
+th´ematiques, Gauthier-Villars, Paris, 1895, pp. 179–183. Reprinted several
+times by Albert Blanchard, Paris. Contains essentially the same Tower of Hanoi
+material as [238].
+´Edouard Lucas, see also [20], [55], and [56].
+[240] Fabrizio Luccio, Spunti di algoritmica concreta, Boll. Un. Mat. Ital. A 6 3
+(1984), no. 1, 57–80. MR0739192 (86a:01037).
+
+--- Page 22 ---
+Paul K. Stockmeyer
+B.22
+[241] George F. Luger, The use of the state space to record the behavioral eﬀects
+of subproblems and symmetries in the Tower of Hanoi problem, Internat. J.
+Man-Machine Studies 8 (1976), 411–421.
+[242] George F. Luger, A state-space description of transfer eﬀects in isomorphic
+problem situations, Internat. J. Man-Machine Studies 10 (1978), 613–623.
+[243] George F. Luger and Michael Steen, Using the state space to record the be-
+havioral eﬀects of symmetry in the Tower of Hanoi problem and an isomorph,
+Internat. J. Man-Machine Studies 14 (1981), 449–460.
+[244] W. F. Lunnon, All you ever wanted to know about the Towers of Hanoi but
+were afraid to ask (on the centenary of the Tower of Bramah), Unpublished
+manuscript., 1982.
+[245] W. F. Lunnon, The Reve’s puzzle, Comput. J. 29 (1986), 478.
+[246] A. A. K. Majumdar, On the generalized Tower of Hanoi problem, J. Bangladesh
+Acad. Sci. 15 (1991), no. 2, 173–183.
+[247] A. A. K. Majumdar, A note on the iterative algorithm for the Reve’s puzzle,
+Comput. J. 37 (1994), no. 5, 463–464.
+[248] A. A. K. Majumdar, Frame’s conjecture and the Tower of Hanoi problem with
+four pegs, Indian J. Math. 36 (1994), no. 3, 215–227. MR134572(96d:90112).
+[249] A. A. K. Majumdar, A note on the iterative algorithm for the four-peg Tower
+of Hanoi problem, J. Bangladesh Acad. Sci. 18 (1994), no. 2, 241–250.
+[250] A. A. K. Majumdar, The generalized four-peg Tower of Hanoi problem, Opti-
+mization 29 (1994), 349–360. MR1278238 (95b:90151).
+[251] A. A. K. Majumdar, A note on the divide-and-conquer approach to the four-peg
+tower of Hanoi problem, J. Math. & Math. Sci. 10 (1995), 1–10.
+[252] A. A. K. Majumdar, A recursive algorithm for the 4-peg Tower of Hanoi prob-
+lem, J. Bangladesh Acad. Sci. 19 (1995), no. 1, 123–126.
+[253] A. A. K. Majumdar, The generalized p-peg Tower of Hanoi problem, Optimiza-
+tion 32 (1995), 175–183. MR1314373 (95j:90087).
+[254] A. A. K. Majumdar, The divide-and-conquer approach to the generalized p-peg
+Tower of Hanoi problem, Optimization 34 (1995), 373–378.
+[255] A. A. K. Majumdar, A note on the bottleneck Reve’s puzzle, Jahangirnagar
+University Journal of Science 20 (1996), 115–124.
+
+--- Page 23 ---
+Paul K. Stockmeyer
+B.23
+[256] A. A. K. Majumdar, Generalized multi-peg Tower of Hanoi problem, J. Austral.
+Math. Soc. Ser. B 38 (1996), no. 2, 201–208. MR1414361 (97h:05018).
+[257] A. A. K. Majumdar, A note on the steps minimizing function of general Hanoi-
+m-tower, J. Bangladesh Acad. Sci. 20 (1996), no. 1, 1–7.
+[258] A. A. K. Majumdar and A. Halder, A recursive algorithm for the bottle-
+neck Reve’s puzzle, S¯urikaisekikenky¯usho K¯oky¯uroku (1996), no. 947, 150–161.
+MR1435538 (98a:90128).
+[259] A. A. K. Majumdar and M. Kaykobad, An iterative algorithm for the 5-peg
+Tower of Hanoi problem, J. Bangladesh Acad. Sci. 20 (1996), no. 2, 119–128.
+[260] Abdulla-Al-KaﬁMajumdar, The bottleneck Tower of Hanoi problem with four
+pegs, Proc. Pakistan Acad. Sci. 33 (1996), no. 1-2, 127–128.
+[261] Abdulla-Al-KaﬁMajumdar, A note on the cyclic Towers of Hanoi, Proc. Pak-
+istan Acad. Sci. 33 (1996), no. 1-2, 131–132.
+[262] Abdullah-Al-KaﬁMajumdar, A note on the generalized multi-peg Tower of
+Hanoi problem, Proc. Pakistan Acad. Sci. 33 (1996), no. 1-2, 129–130.
+A. A. K. Majumdar, see also [188], [298], and [299].
+[263] Cristi´an Mallol, Julio L´opez, and Dany Serrato, Hanoi Towers: Study of a
+class of algorithms, Nova J. Math. Game Theory Algebra 5 (1996), 383–388.
+MR1455831 (98:90150).
+P. Martin, see [207].
+[264] Stephen B. Maurer and Anthony Ralston, Discrete algorithmic mathematics,
+Addison-Wesley, Reading, MA, 1991.
+[265] Herbert Mayer and Don Perkins, Towers of Hanoi revisited: A nonrecursive
+surprise, SIGPLAN Notices 19 (1984), no. 2 (February), 80–84.
+[266] Stepan Maziar, Solution of the Tower of Hanoi problem using a binary tree,
+SIGPLAN Notices 20 (1985), no. 5 (May), 16–20.
+[267] A. J. Mcintosh, Binary and the Towers of Hanoi, Math. Teaching (Summer
+1972), no. 59, 15.
+L. G. L. T. Meertens, see [25].
+M. Mend`es France, see [14].
+
+--- Page 24 ---
+Paul K. Stockmeyer
+B.24
+[268] Bertrand Meyer, A note on iterative Hanoi, SIGPLAN Notices 19 (1984), no. 12
+(December), 38–40.
+Uroˇs Milutinovi´c, see [166], [191], [192], [193], [194], and [195].
+[269] Steven Minsker, The Towers of Hanoi rainbow problem: Coloring the rings, J.
+Algorithms 10 (1989), 1–19. MR0987094 (90i:05012).
+[270] Steven Minsker, The towers of Antwerpen problem, Inform. Process. Lett. 38
+(1991), 107–111. MR1113343 (92d:68065).
+Steven Minsker, see [196].
+[271] Caesar Mitis, Rechnerische Scherze, Otto Maier, Ravensburg, no year, pp. 17–
+18.
+Toshiya Mogi, see [52].
+Halina Moss, see [75].
+Alexander Moszkowski, see [132].
+[272] Joe L. Mott, Abraham Kandel, and Theodore P. Baker, Discrete Mathematics
+for Computer Scientists, Reston Publishing Co., Reston, Virginia, 1983.
+[273] Sheldon S. Myers, Applications: An inductive-deductive experiment with the
+Tower of Hanoi puzzle, Math. Teacher 44 (1951), no. 7 (November), 505.
+[274] Sheldon S. Myers, Applications: An application of mathematical induction to
+the Tower of Hanoi, Math. Teacher 45 (1952), no. 7 (November), 522–523.
+[275] Robert Neale, The Temple of Hanoi–an old puzzler with a new twist, Games 6
+(1982), no. 7 (November), 70.
+Ingrid Nelson, see [65], [66], and [218].
+Allen Newell, see [121] and [122].
+James Newman, see [186].
+Steve Newman, see [223] and [224].
+[276] Seizaburo Niizuma, On the concept of “diﬀerence” in the analysis of GPS,
+Transactions of the Institute of Electronics and Communication Engineers of
+Japan, Section E. E63 (1980), no. 8, 602. (Abstract only. Full letter in volume
+J63, pages 525–526 in Japanese)
+
+--- Page 25 ---
+Paul K. Stockmeyer
+B.25
+[277] Hugh Noland, Problem 1350, Math. Mag. 63 (1990), 189.
+[278] Eugene P. Northrop, Riddles in Mathematics—A Book of Paradoxes, D. Van
+Nostrand Company, Inc., New York, 1942, pp. 25–27.
+[279] Shigeru Obara and Yuji Hirayama, The “Red and white Towers of Hanoi”
+puzzle, J. Hokkaido Univ. Ed. Sect. II A 46 (1995), no. 1 (August), 61–69.
+[280] Shigeru Obara and Yuji Hirayama, The “Distribution of the Tower of Hanoi”
+puzzle, J. Hokkaido Univ. Ed. Sect. II A 47 (1997), no. 2 (February), 175–179.
+MR1441984 (97k:00002).
+[281] Anton Ohlert, Toy, August 19, 1884, United States Patent Oﬃce, Patent No.
+303946.
+E. O. Osaghae, see [177] and [178].
+Ivor Page, see [349].
+Daniele Parisse, see [166] and [167].
+Albert Parry, see [198].
+[282] Helmut Partsch and Peter Pepper, A family of rules for recursion removal,
+Inform. Process. Lett. 5 (1976), no. 6 (December), 174–177. MR0443407
+(56:1777).
+[283] Henri de Parville, Revue des Sciences, Journal des D´ebats Politiques et
+Litt´eraires (December 27, 1883), 1–2.
+[284] Henri de Parville, R´ecr´eations math´ematiques: La tour d’Hano¨ı et la question
+du Tonkin, La Nature, 12th year, 1st semester, no. 565 (March 29, 1884), 285–
+286. A modiﬁed version of item [283] above, with ﬁgures.
+Oren Patashnik, see [145].
+[285] Marvin C. Paull, Algorithm design; a recursion transformation framework, John
+Wiley & Sons, Inc., New York, 1988. MR0939368 (90i:68001).
+[286] D. S. Peckett, Going forth, Computing Today 4 (1982), no. 2, 91–95.
+[287] Howard A. Peelle, Towers of Hanoi, simpliﬁed in J, VECTOR 12 (Jan. 1996),
+no. 3, 27–32.
+[288] Howard A. Peelle, Towers of Hanoi generalized in J, VECTOR 15 (Jan. 1999),
+no. 3, 38–46.
+Peter Pepper, see [282].
+
+--- Page 26 ---
+Paul K. Stockmeyer
+B.26
+[289] J. I. Perelman, Mathematik im Spiel, Der Kinderbuchverlag, Berlin, 1951,
+pp. 24–27.
+[290] J. I. Perelman, Heitere Mathematik, Der Kinderbuchverlag, Berlin, no year,
+pp. 83–89.
+Don Perkins, see [265].
+Ciril Petr, see [166], [193], [194], and [195].
+[291] Alberto Pettorossi, Towers of Hanoi problems: Deriving iterative solutions by
+program transformations, BIT 25 (1985), 327–334. MR9787093 (86d:68030).
+[292] Alberto Pettorossi, Transformation strategies for deriving on line programs,
+CAAP ’86 — Proceedings of the 11th Colloquium on Trees in Algebra and Pro-
+gramming (P. Franchi-Zannettacci, ed.), Lecture Notes in Computer Science,
+no. 214, Springer Verlag, 1986, pp. 127–141.
+[293] Alberto Pettorossi, Derivation of eﬃcient programs for computing sequences of
+actions, Theoret. Comput. Sci. 53 (1987), 151–167. MR0923330 (91e:68022).
+[294] Jean Piaget, The Grasp of Consciousness: Action and Concept in the Young
+Child, Harvard University Press, Cambridge, Massachusetts, 1976, pp. 287–299.
+Translation by Susan Wedgwod of 1974 original
+[295] David G. Poole, Solution to problem 1350, Math. Mag. 64 (1991), 200–201.
+[296] David [G.] Poole, The bottleneck Towers of Hanoi problem, J. Recreational
+Math. 24 (1992), no. 3, 203–207.
+[297] David G. Poole, The towers and triangles of Professor Claus (or, Pascal knows
+Hanoi), Math. Mag. 67 (1994), 323–344. MR1307797 (95m:05023).
+S. T.-U. Rahman, see [188].
+Anthony Ralston, see [264].
+Jim Randall, see [10].
+C. Ratzimbazafy, see [71].
+[298] G. C. Ray and A. A. K. Majumdar, A note on the bottleneck Tower of Hanoi
+problem, Chittagong Univ. Stud. Part II Sci. 19 (1995), 27–34.
+[299] G. C. Ray and A. A. K. Majumdar, A note on the cyclic Tower of Hanoi
+problem, Chittagong Univ. Stud. Part II Sci. 19 (1995), 75–81.
+Paul Retzlaﬀ, see [176].
+
+--- Page 27 ---
+Paul K. Stockmeyer
+B.27
+[300] Trevor Rice, Mathematical Games and Puzzles, St. Martin’s Press, New York,
+1973, pp. 55–56.
+[301] Robert L. Ripley, The New Believe It or Not Book—2nd Series, Simon and
+Schuster, New York, 1931, pp. 72–73.
+[302] Lorenzo Robbiano, Algebra e computer, Atti Accad. Ligure Sci. Lett. 43 (1986),
+75–81. MR0955543 (98i:00010).
+[303] Eric Roberts, Thinking Recursively, John Wiley & Sons, Inc., New York, 1986,
+pp. 63–74.
+Mitchell Robinson, see [190].
+G. C. A. Robson, see [39] and [40].
+Patrick J. Rodriguez, see [340].
+[304] J. S. Rohl, The Towers of Hanoi problem, Comput. J. 28 (1985), no. 3, 350.
+[305] J. S. Rohl, Towers of Hanoi: The derivation of some iterative versions, Comput.
+J. 30 (1987), no. 1, 70–76.
+[306] J. S. Rohl, The Towers of Hanoi–a representation-free solution, SIGPLAN No-
+tices 22 (1987), no. 3 (March), 126.
+[307] J. S. Rohl and T[homas] D. Gedeon, Four-tower Hanoi and beyond, Austral.
+Comput. Sci. Comm. 5 (1983), 156–162. (Proceedings of the 6th Australian
+Computer Conference, Sidney)
+[308] J. S. Rohl and T[homas] D. Gedeon, The Reve’s puzzle, Comput. J. 29 (1986),
+no. 2, 187–188. Corrigendum, 31 (1988), no. 2, 190
+[309] Hamzeh H. Roomany, Letter to the editor, SIGPLAN Notices 20 (1985), no. 4
+(April), 15–16.
+[310] Ted Roth, The Tower of Brahma revisited, J. Recreational Math. 7 (1974), no. 2
+(Spring), 116–119. Reprinted in Mathematical Solitaires & Games, Benjamin L.
+Schwartz, ed., Baywood Publishing Co., Inc., Farmingdale, NY, 1980, pp. 26–
+29.
+[311] Eric Frank Russell, Now inhale, Astounding Science Fiction 63 (1959), no. 2
+(April), 31–53. Reprinted in TV: 2000, edited by Isaac Asimov, Fawcett Crest,
+1982. (ﬁction).
+S. V. Safronyuk, see [16].
+
+--- Page 28 ---
+Paul K. Stockmeyer
+B.28
+[312] A. Sainte-Lagu¨e, G´eom´etrie de situation et jeux, M´emorial des Sciences Math´e-
+matiques, no. XLI, Gauthier-Villars, Paris, 1929, pp. 39–40.
+[313] Andr´e Sainte-Lagu¨e, Avec des nombres et des lignes (R´ecr´eations math-
+´ematiques), Librairie Vuibert, Paris, 1937, pp. 71–89. Second Edition 1940;
+Third Edition 1946.
+[314] Amir Sapir, The Tower of Hanoi with Forbidden Moves, Comput. J. 47 (2004),
+no. 1, 20–24.
+Amir Sapir, see also [15].
+[315] U. K. Sarkar, On the design of a constructive algorithm to solve the multi-
+peg towers of Hanoi problem, Theoret. Comput. Sci. 237 (2000), 407–421.
+MR1756218 (2001k:05025).
+[316] U. K. Sarkar, On uniqueness of solution to the multi-peg Towers of Hanoi,
+Internat. J. Comput. Math. 78 (2001), no. 1, 57–72. MR1893857 (2003a:68105).
+[317] F. Scarioni and H. G. Speranza, A probabilistic analysis of an error-correcting
+algorithm for the Towers of Hanoi puzzle, Inform. Process. Lett. 18 (1984),
+99–103. MR0757972 (87j:68057).
+[318] F. Scarioni and M. G. Speranza, The density function of the number of moves
+to complete the Towers of Hanoi puzzle, Ann. Oper. Res. 1 (1984), 291–303.
+[319] William L. Schaaf, Number games and other mathematical recreations, The New
+Encyclopædia Britannica, vol. 25, Encyclopædia Britannnica, Inc., Chicago,
+15th ed., 1974, pp. 1–13.
+Andreas Schief, see [168].
+[320] P. H. Schoute, De Ringen van Brahma, Eigen Haard (1884), no. 22 and 23,
+274–276 and 286–287.
+[321] Fred. Schuh, Spelen met Getallen: Een Fascinerend Boek voor Jong en Oud,
+W. J. Thieme & Cie, Zutphen, 1951, pp. 89–93.
+[322] Fred. Schuh, The Master Book of Mathematical Recreations, Dover Publica-
+tions, Inc., New York, 1968, pp. 119–121. An English translation by F. G¨obel
+of Wonderlijke Problemen; Leerzaam Tijdverdrijf Door Puzzle en Spel, W. J.
+Thieme & Cie, Zutphen, 1943.
+[323] Allen J. Schwenk, Solution to problem 1350, Math. Mag. 64 (1991), 202–203.
+[324] R. S. Scorer, P. M. Grundy, and C. A. B. Smith, Some binary games, Math.
+Gaz. 28 (1944), no. 280 (July), 96–103.
+
+--- Page 29 ---
+Paul K. Stockmeyer
+B.29
+[325] Joseph & Lenore Scott, Pencil pushers — Great puzzles #2, Ace Books, New
+York, 1973, pp. 137–138.
+[326] Jiˇr´ı Sedl´aˇcek, Keine Angst vor Mathematik, VEB Fachbuchverlag, Leipzig,
+1965, pp. 19–21.
+[327] Raymond S´eroul, Programming for mathematicians, Springer-Verlag, Berlin,
+2000, pp. 345–348. Translated from the 1995 French original by Donal O’Shea
+MR1740388 (2001a:68001).
+Dany Serrato, see [263].
+Jeﬀrey O. Shallit, see [10] and [12].
+Jian Shen, see [53].
+[328] Masamichi Shimura and Frank H. George, Rule-oriented methods in problem
+solving, Artiﬁcial Intelligence 4 (1973), 203–223. MR0341957 (49:6703).
+[329] Michael Shwarger, Another look at the Tower of Hanoi, Math. Teacher 70
+(1977), no. 6 (September), 528–533.
+Joseph R. Simmons, III., see [340].
+H. A. Simon, see [200].
+[330] Jerry Slocum and Jack Botermans, Puzzles Old & New—How to Make and
+Solve Them, University of Washington Press, Seattle, 1986, p. 135.
+C. A. B. Smith, see [324].
+P. Souphandavong, see [71].
+M. G. Speranza, see [318] and [317].
+[331] Manfred Stadel, Another nonrecursive algorithm for the Towers of Hanoi, SIG-
+PLAN Notices 19 (1984), no. 9 (September), 34–36.
+[332] Edmund Staples, The Tower of Hanoi problem with arbitrary start and end
+positions, SIGACT News 18 (1987), no. 3 (Spring), 61–64.
+Michael Steen, see [243].
+[333] B. M. Stewart, Advanced problem 3918, Amer. Math. Monthly 46 (1939), 363.
+[334] B. M. Stewart, Solution to advanced problem 3918, Amer. Math. Monthly 48
+(1941), 217–219.
+
+--- Page 30 ---
+Paul K. Stockmeyer
+B.30
+[335] Ian Stewart, Visions math´ematiques: Le lion, le lama et la laitue, Pour la
+Science (August 1989), no. 142, 102–107. English version, The Lion, the Llama,
+and the Lettuce, is Chapter 1 of Another Fine Math You’ve Got Me Into ...,
+W. H. Freeman and Company, New York, 1992. MR1179655 (93i:00003).
+[336] Ian Stewart, Four encounters with Sierpi´nski’s gasket, Math. Intell. 17 (1995),
+no. 1 (Winter), 52–64. MR1319993 (96e:58083).
+[337] Ian Stewart, Mathematical Recreations:
+Sierpinski’s ubiquitous gasket, Sci.
+Amer. 281 (1999), no. 2, 90–91.
+[338] Paul K. Stockmeyer, Variations on the four-post Tower of Hanoi puzzle, Congr.
+Numer. 102 (1994), 3–12. (Proceedings of the 25th Southeastern International
+Conference on Combinatorics, Graph Theory and Computing)
+[339] Paul K. Stockmeyer, The average distance between nodes in the cyclic Tower
+of Hanoi digraph, Combinatorics, Graph Theory, and Algorithms (Kalamazoo,
+Michigan) (Y. Alavi, D. R. Lick, and A. Schwenk, eds.), vol. II, New Issues
+Press, 1999, pp. 799–808. Proceedings of the Eight Quadrennial International
+Conference on Graph Theory, Combinatorics, Algorithms, and Applications.
+[340] Paul K. Stockmeyer, C. Douglas Bateman, James W. Clark, Cyrus R. Eyster,
+Matthew T. Harrison, Nicholas A. Loehr, Patrick J. Rodriguez, and Joseph
+Simmons III, Exchanging disks in the Tower of Hanoi, Internat. J. Comput.
+Math. 59 (1995), 37–47.
+[341] Roger G. Stone, Points recurring: The history of a railway problem, SIGPLAN
+Notices 17 (1982), no. 9 (September), 88–94.
+[342] Peter Storme and Paul Stryfe, How to torture your friends, Simon and Schuster,
+New York, 1941, pp. 75–76, 149.
+R. Stowasser, see [358].
+P. E. D. Strain-Clark, see [61].
+Paul Stryfe, see [342].
+[343] Mario Szegedy, In how many steps the k peg version of the Towers of Hanoi
+game can be solved?, STACS 99 (Proceedings of the 16th Annual Symposium
+on Theoretical Aspects of Computer Science, Trier, 1999) (Berlin) (Christoph
+Meinel and Sophie Tison, eds.), Lecture Notes in Computer Science, no. 1563,
+Springer, 1999, pp. 356–361. MR1734064 (2000m:68124).
+
+--- Page 31 ---
+Paul K. Stockmeyer
+B.31
+[344] Itsuo Takanami and Katsushi Inoue, A note on algorithms for tower of Hanoi,
+Mathematical foundations for computer science (Proceedings of a Symposium
+held at the Research Institute for Mathematical Sciences, Kyoto University),
+Kyoto University, Kyoto, Japan, 1978, pp. 218–229. MR0544622 (80f:68003).
+[345] Aaron M. Tenenbaum and Moshe J. Augenstein, Data Structures Using Pascal,
+Prentice-Hall, Englewood Cliﬀs, New Jersey, 1981, pp. 124–129, 133, 149–154.
+[346] Gaston Tissandier, Les R´ecr´eations Scientiﬁques, ou l’enseignement par les jeux,
+G. Masson, Paris, ﬁfth ed., 1888, pp. 223–228. Sixth ed., 1892; seventh ed., 1894;
+eighth ed., 1897. Essentially the same as [284]. An English translation can be
+found in [347].
+[347] Gaston Tissandier, Half-Hours of Scientiﬁc Amusements; or, Practical Physics
+and Chemistry without Apparatus, Ward, Lock, & Co., London, 1890, pp. 106–
+111. An English translation of [346] by Henry Frith.
+[348] Tom Tit (pseudonym for Arthur Good), Scientiﬁc Amusements, Thomas Nelson
+and Sons, Ltd., London, 1918, pp. 382–383. Translated from the French and
+adapted by Cargill G. Knott.
+Jeﬀrey D. Ullman, see [4].
+[349] Jeyakesavan Veerasamy and Ivor Page, On the Towers of Hanoi problem with
+multiple spare pegs, Internat. J. Comput. Math. 52 (1994), 17–22.
+[350] T[imothy] R. Walsh, The Towers of Hanoi revisited: Moving the rings by count-
+ing the moves, Inform. Process. Lett. 15 (1982), no. 2, 64–67. MR0675870
+(83j:68039).
+[351] T[imothy] R. Walsh, A case for iteration, Congr. Numer. 40 (1983), 409–417.
+(Proceedings of the 14th Southeastern Conference on Combinatorics, Graph
+Theory and Computing.) MR0734387 (85a:68066).
+[352] T[imothy] R. Walsh, Iteration strikes back—at the cyclic Towers of Hanoi, In-
+form. Process. Lett. 16 (1983), 91–93. MR0696846 (84g:68022).
+[353] Timothy R. Walsh, The generalized Towers of Hanoi for space-deﬁcient com-
+puters and forgetful humans, Math. Intell. 20 (1998), no. 1 (Winter), 32–38.
+[354] Ming Wang, Two theorems on the Towers of Hanoi problem (chinese), Math.
+Appl. (Wuhan) 12 (1999), no. 2, 112–114.
+[355] X. Wang and Y.-J. Wu, Dynamic programming algorithm for the generalized
+towers of Hanoi problem, Minimicro Systems 26 (2005), 869–872.
+
+--- Page 32 ---
+Paul K. Stockmeyer
+B.32
+Yu-Kuo Wang, see [364].
+Charles B. Waugh, see [311].
+Marilyn C. Welsh, see [176].
+[356] Richard L. Wexelblat, Editorial, SIGPLAN Notices 20 (1985), no. 9 (Septem-
+ber), 1.
+[357] Niklaus Wirth, Algorithms + Data Structures = Programs, Prentice-Hall, En-
+glewood Cliﬀs, NJ, 1976, p. 159.
+[358] A. Witzel and R. Stowasser, Stellenwertsysteme — Einstiegs- Anwendungs-
+probleme, MU 23 (1977), no. 1, 88–101.
+[359] Derick Wood, The Towers of Brahma and Hanoi revisited, J. Recreational Math.
+14 (1981-1982), no. 1, 17–24. MR0629340 (82i:68031).
+[360] D[erick] Wood, Adjudicating a Towers of Hanoi contest, Internat. J. Comput.
+Math. 14 (1983), 199–207. MR0727008 (85b:68019).
+Derick Wood, see also [180].
+[361] W. Hugh Woodin, The tower of Hanoi, Truth in Mathematics (H. G. Dales
+and G. Oliveri, eds.), Oxford Univ. Press, New York, 1998, pp. 329–351. Papers
+from the conference held in Mussomeli, September 13–20, 1995 MR1688333
+(2000j:03008).
+[362] Jer-Shyan Wu and Rong-Jaye Chen, The Towers of Hanoi problem with parallel
+moves, Inform. Process. Lett. 44 (1992), 241–243. MR1202348 (93k:68041).
+[363] Jer-Shyan Wu and Rong-Jaye Chen, The Towers of Hanoi problem with cyclic
+parallel moves, Inform. Process. Lett. 46 (1993), 1–6. MR1216038 (94a:68043).
+[364] Jer-Shyan Wu and Yu-Kuo Wang, An optimal algorithm to implement the
+Hanoi towers with parallel moves, Inform. Process. Lett. 86 (2003), 289–293.
+MR1978209 (2004c:05022).
+Y.-J. Wu, see [355].
+Chuan Xu, see [365].
+[365] Hai Yang and Chuan Xu, Preliminary exploration of the 4-peg Hanoi tower (chi-
+nese), Beijing Daxue Xuebao Ziran Kexue Ban 40 (2004), 99–106. MR2056463
+(2005a:05021).
+
+--- Page 33 ---
+Paul K. Stockmeyer
+B.33
+[366] A. J. van Zanten, Lineaire Diﬀerentievergelijkingen in de Informatica, CWI
+Syllabus (Centrum voor Wiskunde en Informatica) 18 (1988), 65–79.
+[367] A. J. van Zanten, The complexity of an optimal algorithm for the generalized
+Tower of Hanoi problem, Internat. J. Comput. Math. 36 (1990), 1–8.
+[368] A. J. van Zanten, An optimal algorithm for the twin-tower problem, Delft Progr.
+Report 15 (1991), 33–50. MR1103419 (92a:05001).
+[369] A. J. van Zanten, An iterative optimal algorithm for the generalized Tower of
+Hanoi problem, Internat. J. Comput. Math. 39 (1991), 163–168.
+Index of Journals Cited
+ABACUS; Springer; New York, NY; ISSN 0724-6722.
+Acta Inform. = Acta Informatica; Springer; Heidelberg, Germany; ISSN 0001-5903.
+Acta Math. Vietnam. = Acta Mathematica Vietnamica; National Center for Scientiﬁc
+Research; Hanoi, Vietnam; ISSN 0251-4184.
+AI Expert; Miller Freeman; San Francisco, CA; ISSN 0888-3785.
+Amer. Math. Monthly = The American Mathematical Monthly; Mathematical Asso-
+ciation of America; Washington, DC; ISSN 0002-9890.
+Ann. Comb. = Annals of Combinatorics; Berkh¨auser; Basel, Switzerland; ISSN 0218-
+0006.
+Ann. Oper. Res. = Annals of Operations Research; Baltzer Science Publishers; Am-
+sterdam, The Netherlands; ISSN 0254-5330.
+APL Quote Quad; Association for Computing Machinery; New York, NY; ISSN 0163-
+6006.
+Ars Combin. = Ars Combinatoria; Charles Babbage Research Centre; Winnipeg,
+Canada; ISSN 0381-0732.
+Artiﬁcial Intelligence; North-Holland Publishing Co.; Amsterdam, The Netherlands;
+ISSN 0004-3702.
+Assessment; Psychological Assessment Resources, Inc.; Odessa, FL; ISSN 1073-1911.
+Astounding Science Fiction; Street & Smith Publications, Inc.; New York, NY.
+Atti Accad. Ligure Sci. Lett. = Atti della Accademia Ligure di Scienze e Lettere;
+Genoa, Italy; ISSN 0365-0278.
+Austral. Comput. Sci. Comm. = Australian Computer Science Communications;
+Queensland Univ. Tech.; Brisbane, Australia; ISSN 0157-3055.
+
+--- Page 34 ---
+Paul K. Stockmeyer
+B.34
+Austral. Math. Teacher = The Australian Mathematics Teacher; Australian Associ-
+ation of Mathematics Teachers; Adelaide, Australia; ISSN 0045-0685.
+Boll. Un. Mat. Ital. A 6 = Unione Mathematica Italiana. Bollettino. A. Serie VI;
+Bologna, Italy.
+BIT; The BIT Foundation; Copenhagen, Denmark; ISSN 0006-3835.
+Bull. Austral. Math. Soc. = Bulletin of the Australian Mathematical Society; Aus-
+tralian Mathmatical Society; Queensland, Australia; ISSN 0004-9727.
+Bull. Centre Inform. = Bulletin of the Centre for Informatics; Waseda University;
+Tokyo, Japan; ISSN 0911-3622.
+Bull. Inst. Combin. Appl. = Bulletin of the Institute of Combinatorics and its Appli-
+cations; Inst. Combin. Appl.; Winnipeg, Canada; ISSN 1183-1278.
+Chittagong Univ. Stud. Part II Sci. = Chittagong University studies Part II: Science;
+University of Chittagong; Chittagong, Bangladesh; ISSN 0253-5459.
+Cognitive Psychology; Academic Press, Inc.; New York NY; ISSN 0010-0285.
+Comput. J. = The Computer Journal; British Computer Society; ISSN 0010-4620.
+Computer Language; Computer Language Publishing, Ltd.; San Francisco, CA; ISSN
+0749-2839.
+Computing; Springer; Vienna, Austria; ISSN 0010-485X.
+Congr. Numer. = Congressus Numerantium; Utilitas Mathematica; Winnipeg, Man-
+itoba, Canada; ISSN 0316-1382.
+Crux Mathematicorum; Canadian Mathematical Society; Ottawa, Ontario, Canada;
+ISSN 0705-0348.
+Czech. Math. J. = Czechoslovak Mathematical Journal; Academia; Prague, Czech
+Republic; ISSN 0011-4642.
+Delft Progr. Report = Delft Progress Report; Delft University Press; Delft, The
+Netherlands; ISSN 0304-985X.
+Discrete Appl. Math. = Discrete Applied Mathematics; Elsevier; Amsterdam, The
+Netherlands; ISSN 0166-218X.
+Discrete Math. = Discrete Mathematics; Elsevier (North-Holland); Amsterdam, The
+Netherlands; ISSN 0012-365X.
+Egypt. Comput. J. = The Egyptian Computer Journal; Institute of Statistical Studies
+and Research; Cairo, Egypt; ISSN 0377-7154.
+Engineering Applications of AI = Engineering Applications of Artiﬁcial Intellegence;
+Pergamon Press Ltd.; Exeter, England; ISSN 0952-1976.
+
+--- Page 35 ---
+Paul K. Stockmeyer
+B.35
+Enseign. Math. = L’Enseignement Math´ematique: Revue Internationale, IIe S´erie;
+Commission Internationale de l’Enseignement Math´ematique; Geneva, Switzerland;
+ISSN 0013-8584.
+European J. Combin. = European Journal of Combinatorics; Elsevier; Amsterdam,
+The Netherlands; ISSN 0195-6698.
+Expo. Math. = Expositiones Mathematicae; Elsevier; Jena, Germany; ISSN 0723-
+0869.
+Games; Playboy Enterprises; Chicago, IL; ISSN 0199-9788.
+IEEE Trans. Ed. = IEEE Transactions on Education; Institute of Electrical and
+Electronics Engineers; New York, NY; ISSN 0018-9359.
+IEEE Trans. Soft. Engin. = IEEE Transactions on Software Engineering; Institute of
+Electrical and Electronics Engineers; New York, NY; ISSN 0098-5589.
+Indian J. Math. = Indian Journal of Mathematics; Allahabad Mathematical Society;
+Allahabad, India; ISSN 0019-5324.
+Inform. Process. Lett. = Information Processing Letters; Elsevier (North-Holland);
+Amsterdam, The Netherlands; ISSN 0020-0190.
+Inform. Sci. = Information Sciences; an international journal; Elsevier; New York,
+NY; ISSN 0020-0255.
+Internat. J. Comput. Inform. Sci. = International Journal of Computer and Informa-
+tion Sciences; Plenum Press; New York, NY; ISSN 0091-7036.
+Internat. J. Comput. Math. = International Journal of Computer Mathematics; Gor-
+don & Breach; ISSN 0020-7160.
+Internat. J. Man-Machine Studies = International Journal of Man-Machine Studies;
+Academic Press; London, England; ISSN 0020-7373.
+Internat. J. Math. Ed. Sci. Tech. = International Journal of Mathematical Education
+in Science and Technology; Taylor & Francis; England; ISSN 0020-739X.
+Izv. Nats. Akad. Nauk Respub. Kazakhstan Ser. Fiz.=Mat. = Natsionalnaya Aka-
+demiya Nauk Respubliki Kazakhstan. Izvestiya. Seriya Fiziko-Matematicheskaya; Al-
+maty, Kazakhstan; ISSN 0002-3191.
+J. ACM = Journal of the ACM; Association for Computing Machinery; New York,
+NY; ISSN 0004-5411.
+J. Algorithms = Journal of Algorithms; Academic Press; Orlando, FL; ISSN 0196-
+6774.
+J. Austral. Math. Soc. Ser. B = Journal of the Australian Mathematical Society, Se-
+ries B–Applied Mathematics; Australian Mathematical Society; Canberra, Australia;
+ISSN 0334-2700.
+
+--- Page 36 ---
+Paul K. Stockmeyer
+B.36
+J. Bangladesh Acad. Sci. = Journal of Bangladesh Academy of Sciences; Bangladesh
+Academy of Sciences; Dhaka, Bangladesh; ISSN 0378-8121.
+J. Combin. Inform. System Sci. = Journal of Combinatorics, Information & System
+Sciences; Forum for Interdisciplinary Mathematics; New Delhi, India; ISSN 0250-
+9628.
+J. Comput. System Sci. = Journal of Computer and System Sciences; Academic Press;
+Orlando, FL; ISSN 0022-0000.
+J. Hokkaido Univ. Ed. Sect. II A = Journal of Hokkaido University of Education,
+Section II A; Hokkaido University of Education; Sapporo, Japan; ISSN 0367-5939.
+J. Inform. Optim. Sci. = Journal of Information & Optimization Sciences; Analytic
+Publishing; Delhi, India; ISSN 0252-2667.
+J. Inform. Process. = Journal of Information Processing; Information Processing So-
+ciety of Japan; Tokyo, Japan; ISSN 0387-6101.
+J. Inst. Math. Comput. Sci. Comput. Sci. Ser. ; Journal of the Institute of Mathe-
+matics & Computer Sciences (Computer Science Series); Inst. Math. Comut. Sci.;
+Calcutta, India.
+J. Recreational Math. = Journal of Recreational Mathematics; Baywood Publishing;
+Amityville, NY; ISSN 0022-412x.
+London Mag. = The London Magazine (Harmsworth London Magazine); Harmsworth
+Brothers Limited; London, England.
+Math. Appl. = Mathematica Applicata; China Int. Book Trading Corp.; Beijing,
+China; ISSN 1001-9847.
+Math. Comput. Modelling = Mathematical and Computer Modelling; Pergamon (El-
+sevier); Oxford, England; ISSN 0895-7177.
+Math. Gaz. = The Mathematical Gazette; The Mathematical Association; London,
+England; ISSN 0025-5572.
+Math. Intell. = The Mathematical Intelligencer; Springer; New York, NY; ISSN 0343-
+6993.
+Math. Reviews = Mathematical Reviews; American Matheamtical Society; Provi-
+dence, RI; ISSN 0025-5629.
+Math. in School = Mathematics in School; The Mathematical Association; London,
+England; ISSN 0305-7259.
+Math. Mag. = Mathematics Magazine; Mathematical Association of America; Wash-
+ington, DC; ISSN 0025-570X.
+Math. Teacher = The Mathematics Teacher; National Council of Teachers of Math-
+ematics; Reston, VA; ISSN 0025-5769.
+
+--- Page 37 ---
+Paul K. Stockmeyer
+B.37
+Math. Teaching = Mathematics Teaching; Association of Teachers of Mathematics;
+Nelson, Lancashire, England; ISSN 0025-5785.
+MNU = Der Mathematische und Naturwissenschaftliche Unterricht; Ferd. D¨ummlers;
+Bonn, Germany; ISSN 0025-5866.
+MU = Der Mathematik-Unterricht; E. Klett; Stuttgart, Germany; ISSN 0025-5807.
+Math. Sci. Humaines = Math´ematiques et Sciences Humaines; ´Ecole Hautes ´Etudes
+Sci. Soc.; Paris, France; ISSN 0025-5815.
+Mesures - r´egulation - automatisme; Paris, France; ISSN 0026-0193.
+MICRO = MICRO - The 6502/6809 Journal; MICRO INK; Chelmsford, MA; ISSN
+0271-9002.
+MICRO-SYSTEMES; Soci´et´e Parisienne d’Edition; Paris, France; ISSN 0183-5084.
+Nova J. Math. Game Theory Algebra = Nova Journal of Mathematics, Game Theory,
+and Algebra; Nova Science Publishers, Inc.; New York, NY; ISSN 1060-9881.
+Optimization; Gordon & Breach; ISSN 0233-1934.
+Pour la Science; Soci´et´e pour la Science; Paris, France; ISSN 0153-4092.
+Probab. Theory Relat. Fields = Probability Theory and Related Fields; Springer;
+Berlin, Germany; ISSN 0178-8051.
+Proc. Pakistan Acad. Sci. = Proceedings of the Pakistan Academy of Sciences; Pak-
+istan Academy of Sciences; Islamabad, Pakistan; ISSN 0377-2969.
+Program. Comput. Software = Programming and Computer Software (A translation
+of signiﬁcant articles from Programmirovanie; Consultants Bureau; New York, NY;
+ISSN 0361-7688.
+Programmirovanie; Akademiya Nauk SSSR; Moscow, USSR; ISSN 0132-3474.
+Quantum; Springer; New York, NY; [National Science Teachers Association; Wash-
+ington, DC]; ISSN 1048-8820.
+RAIRO Inform. Th´eor. Appl. = RAIRO Informatique Th´eorique et Applications/
+Theoretical Informatics and Applications; Paris, France; ISSN 0988-3754; 0296-1598.
+Rev. Roumaine Math. Pures Appl. = Revue Roumaine de Math´ematiques Pures et
+Appliqu´ees; Acad´emie de la R´epublique Roumaine; Bucharest, Romania; ISSN 0035-
+3965.
+Sci. Amer. = Scientiﬁc American; Scientiﬁc American Incorporated; New York, NY;
+ISSN 0036-8733.
+SIAM J. Comput. = SIAM Journal on Computing; Society for Industrial and Applied
+Mathematics; Philadelphia, PA; ISSN 1095-7111.
+
+--- Page 38 ---
+Paul K. Stockmeyer
+B.38
+SIGACT News; Association for Computing Machinery; New York, NY; ISSN 0163-
+5700.
+SIGCSE Bull. = SIGCSE Bulletin; Association for Computing Machinery; New York,
+NY; ISSN 0097-8418.
+SIGPLAN Notices = ACM SIGPLAN Notices; Association for Computing Machinery;
+New York, NY; ISSN 0362-1340.
+Systems and Computers in Japan; Scripta Technica, Inc.; New York, NY; ISSN 0882-
+1666.
+S¯urikaisekikenky¯usho K¯oky¯uroku; Kyoto University; Kyoto, Japan;
+Theoret. Comput. Sci. = Theoretical Computer Science; Elsevier (North-Holland);
+Amsterdam, The Netherlands; ISSN 0304-3975.
+TUGboat; TeX Users Group; Portland, OR; ISSN 0896-3207.
+VECTOR; British APL Association, The British Computing Society; Wiltshire, United
+Kingdom.
+Z. Oper. Res. Ser. A = Zeitschrift f¨ur Operations Research, Serie A; Physica; Heidel-
+berg, Germany; ISSN 0340-9422.

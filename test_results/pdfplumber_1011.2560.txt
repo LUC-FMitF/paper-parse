@@ -1,0 +1,312 @@
+
+--- Page 1 ---
+0102
+voN
+11
+]OL.sc[
+1v0652.1101:viXra
+Verifying Safety Properties With the TLA+ Proof System
+KaustuvChaudhuri1,DamienDoligez2,LeslieLamport3,andStephanMerz4
+1 INRIASaclay,France,kaustuv.chaudhuri@inria.fr
+2 INRIARocquencourt,France,damien.doligez@inria.fr
+3 MicrosoftResearchSiliconValley,USA,http://lamport.org
+4 INRIANancy,France,stephan.merz@inria.fr
+1 Overview
+TLAPS, the TLA+ proof system, is a platform for the development and mechanical
+verificationofTLA+ proofs.TheTLA+ prooflanguageisdeclarative,andunderstand-
+ing proofs requires little background beyond elementary mathematics. The language
+supportshierarchicalandnon-linearproofconstructionandverification,anditisinde-
+pendentofanyverificationtoolorstrategy.Proofsarewritteninthesamelanguageas
+specifications;engineersdo nothave to translatetheir high-leveldesignsinto the lan-
+guage of a particularverificationtool. A proof manager interpretsa TLA+ proofas a
+collection of proof obligationsto be verified, which it sends to backend verifiers that
+includetheoremprovers,proofassistants,SMTsolvers,anddecisionprocedures.
+ThefirstpublicreleaseofTLAPSisavailablefrom[1],distributedwithaBSD-like
+license. It handles almost all the non-temporalpart of TLA+ as well as the temporal
+reasoningneededtoprovestandardsafetyproperties,inparticularinvarianceandstep
+simulation,butnotlivenessproperties.Intuitively,asafetypropertyassertswhatisper-
+mitted to happen; a liveness property asserts what must happen; for a more formal
+overview,see[3,10].
+2 Foundations
+TLA+ isaformallanguagebasedonTLA(theTemporalLogicofActions)[12].Itwas
+designedforspecifyingthehigh-levelbehaviorofconcurrentanddistributedsystems,
+but it can be used to specify safety and liveness properties of any discrete system or
+algorithm.Abehaviorisasequenceofstates,whereastateisanassignmentofvalues
+tostatevariables.Safetypropertiesareexpressedbydescribingtheallowedsteps(state
+transitions) in terms of actions,which are first-orderformulasinvolvingtwo copiesv
+and v′ of each state variable, where v denotes the value of the variable at the current
+state andv′ itsvalueatthe nextstate. Thesepropertiesareprovedbyreasoningabout
+actions, using a small and restricted amount of temporal reasoning. Proving liveness
+propertiesrequirespropositionallinear-timetemporallogicreasoningplusafewTLA
+proofrules.
+IthasalwaysbeenpossibletoassertcorrectnesspropertiesofsystemsinTLA+,but
+nottowritetheirproofs.Wehaveaddedproofconstructsbasedonahierarchicalstyle
+forwritinginformalproofs[11].Thecurrentversionofthelanguageisessentiallythe
+1
+--- Page 2 ---
+sameastheversiondescribedelsewhere[7].Here,wedescribeonlytheTLAPSproof
+system.Hierarchicalproofsareastylisticvariantofnaturaldeductionwithlemmasand
+havebeenusedinotherdeclarativeprooflanguages[8,14,15].Ahierarchicalproofis
+eitherasequenceofstepstogetherwiththeirproofs,oraleaf(lowest-level)proofthat
+simplystatestheknownfacts(previousstepsandtheorems)anddefinitionsfromwhich
+thedesiredconclusionfollows.Thehumanreaderorabackendverifiermustensurethat
+theleafproofsarecorrectintheirinterpretationofTLA+ tobelievetheentireproof.
+The TLAPS proof manager, TLAPM, reads a (possibly incomplete) hierarchical
+proofandinvokesthebackendverifierstoverifytheleafproofs.Oneimportantback-
+endisIsabelle/TLA+,whichisanimplementationofTLA+ asanIsabelleobjectlogic
+(see Section 4.1). Isabelle/TLA+ can be used directly with Isabelle’s generic proof
+methods,orothercertifyingbackendverifierscanproduceproofsthatarecheckedby
+Isabelle/TLA+.Currently,theonlycertifyingbackendistheZenontheoremprover[4].
+Among the non-certifying backends is a generic SMT-LIB-based backend for SMT
+solvers, and a decision procedurefor Presburger arithmetic. We plan to replace these
+withcertifyingimplementationssuchastheSMTsolververiT[5]andcertifyingimple-
+mentationsofdecisionprocedures[6].
+TLAPS is intended for avoiding high-level errors in systems, not for providing a
+formalfoundationformathematics.Itisfarmorelikelyforasystemerrortobecaused
+byanincompleteorincorrectspecificationthanbyanincorrectproofinadvertentlyac-
+ceptedascorrectduetobugsinTLAPS.Althoughweprefercertifyingbackendswhen-
+everpossible,weincludenon-certifyingbackendsforautomatedreasoninginimportant
+theoriessuchasarithmetic.
+3 Proofmanagement
+A TLA+ specification consists of a root module that can (transitively) import other
+modulesbyextensionandparametricinstantiation.Eachmoduleconsistsofanumber
+of parameters (state variables and uninterpreted constants), definitions, and theorems
+thatmayhaveproofs.TLAPSisrunbyinvokingtheProofManager(TLAPM)onthe
+rootmoduleandtellingitwhichproofstocheck.Inthecurrentversion,weusepragmas
+to indicate the proofs that are not to be checked, but this will change when TLAPS
+is integrated into the TLA+ Toolbox IDE [2]. The design of TLAPM for the simple
+constant expressions of TLA+ was described in [7]; this section explains the further
+processingrequiredtosupportmoreofthefeaturesofTLA+.TLAPMfirstflattensthe
+module structure, since the module language of TLA+ is not supported by backend
+verifiers,whichwilllikelyremainsointhefuture.
+Non-constant reasoning: A TLA+ module parameter is either a constant or a (state)
+variable.Constantsareindependentofbehaviorsandhavethesamevalueineachstate
+ofthebehavior,whileavariablecanhavedifferentvaluesindifferentstates.Following
+the tradition of modal and temporal logics, TLA+ formulas do not explicitly refer to
+states.Instead,actionformulasarebuiltfromtwocopiesvandv′ofvariablesthatrefer
+to the values beforeand after the transition. More generally,the prime operator′ can
+beappliedtoanentireexpressione,withe′representingthevalueofeatthestateafter
+2
+--- Page 3 ---
+a step. A constant expression e is one that does not involve any state variables, and
+is thereforeequalto e′. (Double primingis notallowed in TLA+; the TLA+ syntactic
+analyzercatchessucherrors.)
+Currently,allTLAPSbackendssupportlogicalreasoningonlyonconstantexpres-
+sions. The semantics of the prime operatoris thereforesyntactically approximatedas
+follows:itiscommutedwithallordinaryoperatorsofmathematicsandisabsorbedby
+constantparameters.Thus,ifeistheexpression(u=v+2∗c)whereuandvarevari-
+ablesandcaconstant,thene′ equalsu′ = v′+2∗c.TLAPMcurrentlyperformssuch
+rewritesanditsrewriteengineistrusted.
+Operatorsandsubstitutivity: Atanypointinthescopeofitsdefinition,auser-defined
+operatorisinoneoftwostates:usableorhidden.Ausableoperatorisonewhosedefi-
+nitionmaybeexpandedinaproof;forexample,iftheoperatorPdefinedbyP(x,y) =∆
+x+2∗y is usable, then TLAPM may replace P(2,20)with 2+2∗20 (but not with
+42,whichrequiresprovingthat2+2∗20 = 42).Auser-definedoperatorishiddenby
+default;itismadeusableinaparticularleafproofbyexplicitlycitingitsdefinition,or
+fortherestofthecurrentsubproofbyausestep(see[7]forthesemanticsofuse).
+BecauseTLA+isamodallogic,itcontainsoperatorsthatdonotobeysubstitutivity,
+whichunderliesLeibniz’sprincipleofequality.Forexample,from(u=42)=trueone
+cannotdeduce(u = 42)′ = true′,i.e.,u′ = 42.AunaryoperatorO(_)issubstitutiveif
+e= f impliesO(e)=O(f),forallexpressionseand f.Thisdefinitionisextendedinthe
+obviouswaytooperatorswithmultiplearguments.Mostofthemodalprimitiveopera-
+torsofTLA+ arenotsubstitutive;andanoperatordefinedintermsofnon-substitutive
+operatorscanbenon-substitutive.Ifanon-substitutiveoperatorisusable,thenTLAPM
+expandsitsdefinitionduringpreprocessing,asdescribedinthepreviousparagraph;ifit
+ishidden,thenTLAPMreplacesitsapplicationsbycryptographichashesofitstextto
+preventunsoundinferencesbybackendverifiers.Thisisaconservativeapproximation:
+forexample,itpreventsprovingO(e∧ f) =O(f ∧e)forahiddennon-substitutiveop-
+eratorO.Usersrarelydefinenon-substitutiveoperators,sothereseemstobenourgent
+needforamoresophisticatedtreatment.
+Subexpressionreferences: AfairlynovelfeatureoftheTLA+prooflanguageistheabil-
+itytorefertoarbitrarysubexpressionsandinstancesofoperators,theorems,andproof
+stepsthatappearearlierinthemoduleorinimportedmodules,reducingtheverbosity
+andincreasingthemaintainabilityofTLA+ proofs.Positionalreferencesdenoteapath
+throughtheabstractsyntax;forexample,forthe definition,O(x,y) =∆ x = 20∗y+2,
+thereferenceO(3,4)!2!1resolvestothefirstsubexpressionofthesecondsubexpression
+of O(3,4), i.e., 20∗4. Subexpressionscan also be labelled and accessed via labelled
+references.Forexample,forO(x,y)=∆ x = l::(y∗20)+2,thereferenceO(3,4)!lrefers
+to4∗20andwillcontinuetorefertothisexpressionevenifthedefinitionofOislater
+modifiedtoO(x,y) =∆ x = 7∗y2 +l::(20∗y)+2.TLAPMreplacesallsubexpression
+referenceswiththeexpressionstheyresolvetopriortofurtherprocessing.
+Verifyingobligations: Onceanobligationisproducedandprocessedasdescribedbe-
+fore,TLAPMinvokesbackendverifiersontheproofobligationscorrespondingtothe
+leafproofs.ThedefaultprocedureistoinvoketheZenontheoremproverfirst.IfZenon
+3
+--- Page 4 ---
+succeeds in verifying the obligation, it producesan Isabelle/Isar proof script that can
+becheckedbyIsabelle/TLA+.IfZenonfailstoproveanobligation,thenIsabelle/TLA+
+isinstructedtouseoneofitsautomatedproofmethods.Thedefaultprocedurecanbe
+modifiedthroughpragmasthatinstructTLAPMtobypassZenon,useparticularIsabelle
+tactics,oruseotherbackends.Mostuserswillinvokethepragmasindirectlybyusing
+particulartheoremsfromthestandardTLAPSmodule.Forinstance,usingthetheorem
+namedSimpleArithmeticinaleafproofcausesTLAPMtoinvokeadecisionproce-
+dureforPresburgerarithmeticforthatproof.Theusercanlearnwhatstandardtheorems
+canprovewhatkindsofassertionsbyreadingthedocumentation,butshedoesnotneed
+toknowhowsuchstandardtheoremsareinterpretedbyTLAPM.
+4 Backend verifiers
+4.1 Isabelle/TLA+
+Isabelle/TLA+isanaxiomatizationofTLA+inthegenericproofassistantIsabelle[13].
+ItembodiesthesemanticsoftheconstantfragmentofTLA+ inTLAPS;asmentioned
+inSection2,itisusedtocertifyproofsfoundbyautomaticbackendverifiers.We ini-
+tially considered encoding TLA+ in one of the existing object logics that come with
+theIsabelledistribution,suchasIsabelle/ZForIsabelle/HOL.However,thisturnedout
+to be inconvenient, mainly because TLA+ is untyped. (Indeed, TLA+ does not even
+distinguish between propositions and terms.) We would have had to define a type of
+TLA+ valuesinsidean existingobjectlogicandbuildTLA+-specifictheoriesforsets,
+functions,arithmeticetc.,essentiallyprecludingreuseoftheexistinginfrastructure.
+Isabelle/TLA+definesclassicalfirst-orderlogicbasedonequality,conditionals,and
+Hilbert’s choice operator. All operators take arguments and return values of the sin-
+gle type c representing TLA+ values. Set theory is based on the uninterpreted predi-
+catesymbol∈andstandardZermelo-Fränkelaxioms.UnlikemostpresentationsofZF,
+TLA+ considersfunctionstobeprimitiveobjectsratherthansetsoforderedpairs.Nat-
+ural numbers with zero and successor are introduced using Hilbert’s choice as some
+set satisfying the Peano axioms; the existence of such a set is established from the
+ZF axioms. Basic arithmetic operators over natural numbers such as ≤, +, and ∗ are
+defined by primitive recursion, and division and modulus are defined in terms of +
+and∗.Tuplesandsequencesaredefinedasfunctionswhosedomainsareinitialintervals
+of the naturalnumbers.Characters are introducedas pairs of hexadecimaldigits, and
+stringsassequencesofcharacters.Recordsarefunctionswhosedomainsarefinitesets
+of strings. Isabelle’s flexible parser and pretty-printer transparently converts between
+the surfacesyntaxandthe internalrepresentation.Thestandardlibraryintroducesba-
+sic operationsfor these data structures and proveselementary lemmas about them. It
+currentlyprovidesmorethan1400lemmasandtheorems,correspondingtoabout200
+pages of pretty-printed Isar text. Isabelle/TLA+ sets up Isabelle’s generic automated
+proofmethods(rewriting,tableauandresolutionprovers,andtheircombinations).
+ItisatestimonytothegenericityofIsabellethatsettingupanewobjectlogicwas
+mostlyamatterofperseveranceandengineering.BecauseTLA+ isuntyped,manythe-
+orems come with hypotheses that express “typing conditions”. For example, proving
+n+0 = n requiresprovingthat n is a number.When the semanticsof TLA+ allowed
+4
+--- Page 5 ---
+us to do so, we set up operatorsso thatthey returnthe expected“type”;for example,
+p∧qisguaranteedtobeaBooleanvaluewhateveritsargumentspandqare.Inother
+cases, typechecking is left to Isabelle’s automatic proof methods; support for condi-
+tionalrewriterulesinIsabelle’ssimplifierwasessentialtomakethiswork.
+4.2 Zenon
+Zenonisatheoremproverforfirst-orderlogicwithHilbert’schoiceoperatorandequal-
+ity.Itisaproof-producingtheoremprover:itoutputsformalproofscriptsforthetheo-
+remsitproves.ZenonwasextendedwithabackendthatproducesproofsinIsarsyntax;
+these proofs use lemmas based on the Isabelle/TLA+ object logic and are passed to
+Isabelleforverification.ZenonisthereforenotpartofthetrustedcodebaseofTLAPS.
+ZenonhadtobeextendedwithdeductionrulesspecifictoTLA+:rulesforreason-
+ingaboutset-theoreticoperators,forthecaseoperatorofTLA+,forsetextensionality
+andfunctionextensionality,forreasoningdirectlyonboundedquantifiers(whichisnot
+needed in theory but is quite importantfor efficiency),and for reasoning about func-
+tions,strings,etc.Interestingly,Hilbert’schoiceoperatorwasalreadyusedinZenonfor
+Skolemization,sowewereeasilyabletosupportthechooseoperatorofTLA+.
+Futureworkincludesaddingrulestodealwithtuples,sequences,records,andarith-
+metic, and improving the handling of equality. While there is some overlap between
+Zenon and Isabelle’s automatic methods as they are instantiated in Isabelle/TLA+, in
+practice they have different strong points and there are many obligations where one
+succeedswhile the otherfails. Zenonuses Isabelle’sautomaticprooftacticsfor some
+oftheelementarystepswhenitknowstheywillsucceed,ineffectusingthesetacticsas
+high-levelinferencerules.
+4.3 Otherbackends
+The first release of TLAPScomeswith some additionalnon-certifyingbackends.For
+arithmeticreasoningwehave:
+– AnSMT-LIBbasedbackendthatcanbelinkedtoanySMTsolver.Obligationsare
+rewritten into the AUFLIRA theory of SMT-LIB, which generally requires omit-
+tingassumptionsthatlieoutsidethistheory.Thisbackendisneededforreasoning
+aboutreal numbers.We have successfully used Yices, CVC3, Z3, veriT and Alt-
+Ergoinourexamples.Infutureworkwemightspecializethisgenericbackendfor
+particularsolversthatcanreasonaboutlargertheories.
+– A Presburger arithmetic backend, for which we have implemented Cooper’s al-
+gorithm.Our implementationis tailored to certain elementsof TLA+ that are not
+normallypartofthePresburgerfragment,butcanbe(conservatively)injected.
+Forboththesebackends,TLAPMperformsasimpleandhighlyconservativesortdetec-
+tionpassforboundidentifiers.Bothbackendsarecurrentlynon-certifying,butweplan
+toreplacethemwithcertifyingbackendsinthefuture.Inparticular,weareintegrating
+theproof-producingSMTsolververiT[5],withthegoaloftailoringitfordischarging
+TLA+ proofobligations.
+5
+--- Page 6 ---
+5 Proofdevelopment
+Writing proofs is hard and error-prone. Before attempting to prove correctness of a
+TLA+ specification, we first check finite instances with the TLC model checker [12].
+This usually catches numerouserrorsquickly– much more quicklythan by trying to
+proveitcorrect.OnlyafterTLCcanfindnomoreerrorsdowetrytowriteaproof.
+TheTLA+ languagesupportsahierarchical,non-linearproofdevelopmentprocess
+thatwefindindispensableforlargerproofs[9].Thehighest-levelproofstepsarederived
+almostwithoutthinkingfromthestructureofthetheoremtobeproved.Forexample,a
+stepoftheformP ∨...∨P ⇒QisprovedbythesequenceofstepsassertingP ⇒Q,
+1 n i
+foreachi.Whentheuserreachesasimpleenoughstep,shefirsttriesafullyautomatic
+proofusinga leafdirectivecitingthefactsanddefinitionsthatappearrelevant.Ifthat
+fails,shebeginsanewlevelwithasequenceofproof-lessassertionstepsthatsimplify
+theassertion,andafinalqedstepassertingthatthegoalfollowsfromthesesteps.These
+new lower-level steps are tuned until the qed step is successfully verified. Then, the
+steps are provedin anyorder.(Theuser can ask TLAPM whatstepshave noproofs.)
+Themostcommonreasonthatleafproofsfailtoverifyisthattheuserhasforgottento
+use some fact ordefinition.When a prooffails, TLAPM printsthe usablehypotheses
+andthegoal,withusabledefinitionsexpanded.Examiningthisoutputoftenrevealsthe
+omission.
+Thiskindof hierarchicaldevelopmentcriesfor a user interfacethatallows oneto
+see what has been proved, hide irrelevant parts of the proof, and easily tell TLAPM
+what it should try to prove next. Eventually, these functions will be provided by the
+TLA+ Toolbox.(Itnowperformsonlythehiding.)WhenTLAPSisintegratedintothe
+Toolbox,writingthe specification,model-checkingit, andwritinga proofwillbeone
+seamlessprocess.Meanwhile,wehavewrittenanEmacsmodethatallowshierarchical
+viewingofproofsandchoosingwhichpartstoprove.
+Weexpectmostuserstoassumesimplefactsaboutdatastructuressuchassequences
+ratherthanspendingtimeprovingthem– especiallyatthebeginning,beforewe have
+developed libraries of such facts for common data structures. Relying on unchecked
+assumptions would be a likely source of errors; it is easy to make a mistake when
+writingan“obviouslytrue”assumption.Suchassumptionsshouldthereforebemodel-
+checkedwithTLC.
+5.1 Exampledevelopments
+We havewrittenanumberofproofs,mainlytofindbugsandseehowwelltheprover
+works. Most of them are in the examples sub-directory of the TLAPS distribution.
+Herearethemostnoteworthy:
+– Peterson’sMutualExclusionAlgorithm.Thisisastandardsharedmemorymutual
+exclusionalgorithm.Thealgorithm(inits2-processversion)isdescribedinadozen
+lines of PlusCal, an algorithm language that is automatically translated to TLA+.
+Theproofofmutualexclusionisabout130lineslong.
+– TheBakeryAlgorithmwithAtomicReadsandWrites.Thisisamorecomplicated
+standard mutual exclusion example; its proof (for the N-process version) is 800
+lineslong.
+6
+--- Page 7 ---
+– Paxos.Wehavespecifiedahigh-levelversionofthewell-knownPaxosconsensus
+algorithmasatrivialspecificationofconsensusandtworefinementsteps—atotal
+of100linesofTLA+.Wehavecompletedtheproofofthefirstrefinementandmost
+oftheproofofthesecond.Thefirstrefinementproofis550lineslong;weestimate
+thatthesecondwillbesomewhatover1000lines.
+Tuning the back-end provershas made them more powerful,making proofseasier to
+write.Whilewritingmachine-checkedproofsremainstiresomeandmoretimeconsum-
+ingthanwewouldlike,ithasnotturnedouttobedifficultoncetheproofideahasbeen
+understood.
+Acknowledgements GeorgesGonthier helped design the TLA+ proof language. Jean-
+BaptisteTristanwrotethe(incomplete)Paxosproof.
+References
+1. TLAPSweb-site. http://www.msr-inria.inria.fr/~doligez/tlaps.
+2. TLA+Toolbox. http://www.tlaplus.net/tools/tla-toolbox/.
+3. B.AlpernandF.B.Schneider. Definingliveness. Inf.Process.Lett.,21(4):181–185, Oct.
+1985.
+4. R.Bonichon,D.Delahaye,andD.Doligez.Zenon:Anextensibleautomatedtheoremprover
+producingcheckableproofs. InN.DershowitzandA.Voronkov,editors,Proc.14thLPAR,
+pages151–165.SpringerLNCS4790,Oct.2007.
+5. T.Bouton, D.C.de Oliveira,D.Déharbe, andP.Fontaine. veriT:Anopen, trustableand
+efficientSMT-solver. InR.Schmidt,editor,CADE22,pages151–156, Montreal,Canada,
+2009.SpringerLNCS5663.
+6. A.ChaiebandT.Nipkow. Proofsynthesisandreflectionforlineararithmetic. Journal of
+AutomatedReasoning,41:33–59,2008.
+7. K. Chaudhuri, D. Doligez, L. Lamport, and S. Merz. A TLA+ Proof System. InG. Sut-
+cliffe,P.Rudnicki,R.Schmidt,B.Konev,andS.Schulz,editors,WorkshoponKnowledge
+Exchange:AutomatedProversandProofAssistants,number418inCEURWorkshopPro-
+ceedings,pages17–37,2008.
+8. P. Corbineau. A declarative proof language for the Coq proof assistant. In F. Honsell,
+M.Miculan,andI.Scagnetto,editors,WorkshoponTypesforProofsandPrograms,pages
+69–84,Udine,Italy,2007.SpringerLNCS4941.
+9. E.GafniandL.Lamport. DiskPaxos. DistributedComputing,16(1):1–20,2003.
+10. L.Lamport. Provingthecorrectnessof multiprocess programs. IEEETrans.Softw. Eng.,
+SE-3(2):125–143,Mar.1977.
+11. L.Lamport. Howtowriteaproof. AmericanMathematicalMonthly,102(7):600–608,Aug.
+1995.
+12. L.Lamport. SpecifyingSystems. Addison-Wesley,Boston,2003.
+13. L.C. Paulson. Isabelle: A Generic Theorem Prover. Springer VerlagLNCS828, Berlin,
+Heidelberg,1994.
+14. P. Rudnicki. An overview of the Mizar project. In Workshop on Types for Proofs and
+Programs,pages311–332,Bastad,Sweden,1992.
+15. M.Wenzel. TheIsabelle/Isarreferencemanual,Dec.2009.
+http://isabelle.in.tum.de/dist/Isabelle/doc/isar-ref.pdf.
+7

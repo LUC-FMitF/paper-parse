@@ -1,0 +1,26 @@
+
+--- Page 1 ---
+module CheckRequirements
+variables inputs1, output1
+variables inputs2, output2
+vars1
+∆= ⟨inputs1, output1⟩
+vars2
+∆= ⟨inputs2, output2⟩
+Requirements1
+∆= instance Requirements
+with inputs ←inputs1,
+output ←output1
+Requirements2
+∆= instance Requirements
+with inputs ←inputs2,
+output ←output2
+Init
+∆= Requirements1!Init ∧Requirements2!Init
+Next
+∆= Requirements1!Next ∧Requirements2!Next
+RequirementsNotConﬂicting
+∆= inputs1 = inputs2 ⇒output1 = output2
+EndsInSteadyState
+∆= 32[output1 = output2]⟨output1, output2⟩
+1

@@ -1,0 +1,54 @@
+
+--- Page 1 ---
+module Blinker
+extends Integers, Sequences
+BC is a sequence of blinker conﬁgurations - in this case just a natural number signifying the blink
+period in some time unit
+constant BC
+variables bState
+assume ∧BC ∈Seq(Nat)
+vars
+∆= bState
+States
+∆= {“Active Oﬀ”, “Active On”}
+Blinker
+∆= [timer : Nat, state : States]
+TypeOK
+∆= ∧bState ∈[domain BC →Blinker]
+Init
+∆=
+∧bState ∈{[n ∈domain BC 7→[timer 7→BC[n],
+state 7→“Active Oﬀ”]
+]}
+Transition(n)
+∆= ∧bState[n].timer = 0
+∧bState[n].state = “Active Oﬀ”
+∧bState′ = [bState except ![n].timer = BC[n],
+![n].state = “Active On”]
+∨
+∧bState[n].timer = 0
+∧bState[n].state = “Active On”
+∧bState′ = [bState except ![n].timer = BC[n],
+![n].state = “Active Oﬀ”]
+Tick
+∆= ∧∀n ∈domain BC : bState[n].timer > 0
+∧bState′ = [n ∈domain BC 7→[timer 7→bState[n].timer −1,
+state 7→bState[n].state]]
+Next
+∆= Tick ∨∃n ∈domain BC : Transition(n)
+Spec
+∆= Init ∧2[Next]vars
+FairSpec
+∆= Spec ∧WFvars(Next)
+LEDsWillTurnOn
+∆=
+∀n ∈domain BC :
+(bState[n].state = “Active Oﬀ”) ; (bState[n].state = “Active On”)
+LEDsWillTurnOﬀ
+∆=
+∀n ∈domain BC :
+(bState[n].state = “Active On”) ; (bState[n].state = “Active Oﬀ”)
+1
+
+--- Page 2 ---
+2

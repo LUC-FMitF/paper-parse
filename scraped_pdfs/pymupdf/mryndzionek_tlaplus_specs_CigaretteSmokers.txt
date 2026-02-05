@@ -1,0 +1,43 @@
+
+--- Page 1 ---
+module CigaretteSmokers
+A speciﬁcation of the cigarette smokers problem, originally described in 1971 by Suhas Patil.
+https://en.wikipedia.org/wiki/Cigarette smokers problem
+extends Integers, FiniteSets
+constant Ingredients
+variable smokers, dealer
+’Ingredients’ is a set of ingredients, originally {matches, paper, tobacco}. ’Oﬀers’ is a subset of
+subsets of ingredients, each missing just one ingriedent
+Oﬀers
+∆= {i ∈subset Ingredients :
+Cardinality(i) = Cardinality(Ingredients) −1}
+’smokers’ is a function from the ingredient the smoker has inﬁnite supply of, to a boolean ﬂag
+signifying smoker’s state (smoking/not smoking) ’dealer’ is an element of ’Oﬀers’, or an empty set
+TypeOK
+∆= ∧smokers ∈[Ingredients →[smoking : boolean ]]
+∧dealer
+∈Oﬀers ∨dealer = {}
+vars
+∆= ⟨smokers, dealer⟩
+Init
+∆= ∧smokers = [r ∈Ingredients 7→[smoking 7→false]]
+∧dealer ∈Oﬀers
+startSmoking
+∆= ∧dealer ̸= {}
+∧smokers′ = [r ∈Ingredients 7→[smoking 7→{r} ∪
+dealer = Ingredients]]
+∧dealer ′ = {}
+stopSmoking
+∆= ∧dealer = {}
+∧smokers′ = [r ∈Ingredients 7→[smoking 7→false]]
+∧dealer ′ ∈Oﬀers
+Next
+∆= startSmoking ∨stopSmoking
+Spec
+∆= Init ∧2[Next]vars
+FairSpec
+∆= Spec ∧WFvars(Next)
+An invariant checking that at most one smoker smokes at any particular moment
+AtMostOne
+∆= Cardinality({r ∈Ingredients : smokers[r].smoking}) ≤1
+1

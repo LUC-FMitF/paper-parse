@@ -1,0 +1,36 @@
+
+--- Page 1 ---
+module Requirements
+extends Integers
+variables inputs, output
+We have two buttons - A and B - and an indicator light. Spec like this can help with disam-
+biguating written requirements in situations where multiple requirements concern same resource.
+In this case requirements say only what needs to be done if one of the button is pressed, or not
+totally ignoring the situation where both are pressed
+Inputs
+∆= subset {“a button pressed”, “b button pressed”}
+Output
+∆= {“oﬀ”, “red”, “green”, “yellow”}
+TypeOK
+∆= ∧inputs ∈Inputs
+∧output ∈Output
+Initially indicator light is oﬀand buttons can be pushed or not
+Init
+∆= ∧inputs ∈Inputs
+∧output = “oﬀ”
+First requirement says that we signal with green light the fact that button A is pushed. If it’s not
+then the light should be yellow
+Requirement1
+∆= ∧if “a button pressed” ∈inputs then output′ = “green”
+else output′ = “yellow”
+∧unchanged ⟨inputs⟩
+Second requirement says that we signal with red light the fact that button B is pushed. If it’s not
+then the light should be yellow
+Requirement2
+∆= ∧if “b button pressed” ∈inputs then output′ = “green”
+else output′ = “yellow”
+∧unchanged ⟨inputs⟩
+We want to check all requirements
+Next
+∆= Requirement1 ∨Requirement2
+1

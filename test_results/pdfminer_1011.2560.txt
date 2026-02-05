@@ -1,0 +1,420 @@
+0
+1
+0
+2
+
+v
+o
+N
+1
+1
+
+]
+
+O
+L
+.
+s
+c
+[
+
+1
+v
+0
+6
+5
+2
+.
+1
+1
+0
+1
+:
+v
+i
+X
+r
+a
+
+Verifying Safety Properties With the TLA+ Proof System
+
+Kaustuv Chaudhuri1, Damien Doligez2, Leslie Lamport3, and Stephan Merz4
+
+1 INRIA Saclay, France, kaustuv.chaudhuri@inria.fr
+2 INRIA Rocquencourt, France, damien.doligez@inria.fr
+3 Microsoft Research Silicon Valley, USA, http://lamport.org
+4 INRIA Nancy, France, stephan.merz@inria.fr
+
+1 Overview
+
+TLAPS, the TLA+ proof system, is a platform for the development and mechanical
+veriﬁcation of TLA+ proofs. The TLA+ proof language is declarative, and understand-
+ing proofs requires little background beyond elementary mathematics. The language
+supports hierarchical and non-linear proof construction and veriﬁcation, and it is inde-
+pendent of any veriﬁcation tool or strategy. Proofs are written in the same language as
+speciﬁcations; engineers do not have to translate their high-level designs into the lan-
+guage of a particular veriﬁcation tool. A proof manager interprets a TLA+ proof as a
+collection of proof obligations to be veriﬁed, which it sends to backend veriﬁers that
+include theorem provers, proof assistants, SMT solvers, and decision procedures.
+
+The ﬁrst public release of TLAPS is available from [1], distributed with a BSD-like
+license. It handles almost all the non-temporal part of TLA+ as well as the temporal
+reasoning needed to prove standard safety properties, in particular invariance and step
+simulation, but not liveness properties. Intuitively, a safety property asserts what is per-
+mitted to happen; a liveness property asserts what must happen; for a more formal
+overview, see [3, 10].
+
+2 Foundations
+
+TLA+ is a formal language based on TLA (the Temporal Logic of Actions) [12]. It was
+designed for specifying the high-level behavior of concurrent and distributed systems,
+but it can be used to specify safety and liveness properties of any discrete system or
+algorithm. A behavior is a sequence of states, where a state is an assignment of values
+to state variables. Safety properties are expressed by describing the allowed steps (state
+transitions) in terms of actions, which are ﬁrst-order formulas involving two copies v
+and v′ of each state variable, where v denotes the value of the variable at the current
+state and v′ its value at the next state. These properties are proved by reasoning about
+actions, using a small and restricted amount of temporal reasoning. Proving liveness
+properties requires propositional linear-time temporal logic reasoning plus a few TLA
+proof rules.
+
+It has always been possible to assert correctness properties of systems in TLA+, but
+not to write their proofs. We have added proof constructs based on a hierarchical style
+for writing informal proofs [11]. The current version of the language is essentially the
+
+1
+
+ 
+ 
+ 
+ 
+ 
+ 
+same as the version described elsewhere [7]. Here, we describe only the TLAPS proof
+system. Hierarchical proofs are a stylistic variant of natural deduction with lemmas and
+have been used in other declarative proof languages [8, 14, 15]. A hierarchical proof is
+either a sequence of steps together with their proofs, or a leaf (lowest-level) proof that
+simply states the known facts (previous steps and theorems) and deﬁnitions from which
+the desired conclusion follows. The human reader or a backend veriﬁer must ensure that
+the leaf proofs are correct in their interpretation of TLA+ to believe the entire proof.
+
+The TLAPS proof manager, TLAPM, reads a (possibly incomplete) hierarchical
+proof and invokes the backend veriﬁers to verify the leaf proofs. One important back-
+end is Isabelle/TLA+, which is an implementation of TLA+ as an Isabelle object logic
+(see Section 4.1). Isabelle/TLA+ can be used directly with Isabelle’s generic proof
+methods, or other certifying backend veriﬁers can produce proofs that are checked by
+Isabelle/TLA+. Currently, the only certifying backend is the Zenon theorem prover [4].
+Among the non-certifying backends is a generic SMT-LIB-based backend for SMT
+solvers, and a decision procedure for Presburger arithmetic. We plan to replace these
+with certifying implementations such as the SMT solver veriT [5] and certifying imple-
+mentations of decision procedures [6].
+
+TLAPS is intended for avoiding high-level errors in systems, not for providing a
+formal foundation for mathematics. It is far more likely for a system error to be caused
+by an incomplete or incorrect speciﬁcation than by an incorrect proof inadvertently ac-
+cepted as correct due to bugs in TLAPS. Although we prefer certifying backends when-
+ever possible, we include non-certifying backends for automated reasoning in important
+theories such as arithmetic.
+
+3 Proof management
+
+A TLA+ speciﬁcation consists of a root module that can (transitively) import other
+modules by extension and parametric instantiation. Each module consists of a number
+of parameters (state variables and uninterpreted constants), deﬁnitions, and theorems
+that may have proofs. TLAPS is run by invoking the Proof Manager (TLAPM) on the
+root module and telling it which proofs to check. In the current version, we use pragmas
+to indicate the proofs that are not to be checked, but this will change when TLAPS
+is integrated into the TLA+ Toolbox IDE [2]. The design of TLAPM for the simple
+constant expressions of TLA+ was described in [7]; this section explains the further
+processing required to support more of the features of TLA+. TLAPM ﬁrst ﬂattens the
+module structure, since the module language of TLA+ is not supported by backend
+veriﬁers, which will likely remain so in the future.
+
+Non-constant reasoning: A TLA+ module parameter is either a constant or a (state)
+variable. Constants are independent of behaviors and have the same value in each state
+of the behavior, while a variable can have diﬀerent values in diﬀerent states. Following
+the tradition of modal and temporal logics, TLA+ formulas do not explicitly refer to
+states. Instead, action formulas are built from two copies v and v′ of variables that refer
+to the values before and after the transition. More generally, the prime operator ′ can
+be applied to an entire expression e, with e′ representing the value of e at the state after
+
+2
+
+a step. A constant expression e is one that does not involve any state variables, and
+is therefore equal to e′. (Double priming is not allowed in TLA+; the TLA+ syntactic
+analyzer catches such errors.)
+
+Currently, all TLAPS backends support logical reasoning only on constant expres-
+sions. The semantics of the prime operator is therefore syntactically approximated as
+follows: it is commuted with all ordinary operators of mathematics and is absorbed by
+constant parameters. Thus, if e is the expression (u = v + 2 ∗ c) where u and v are vari-
+ables and c a constant, then e′ equals u′ = v′ + 2 ∗ c. TLAPM currently performs such
+rewrites and its rewrite engine is trusted.
+
+Operators and substitutivity: At any point in the scope of its deﬁnition, a user-deﬁned
+operator is in one of two states: usable or hidden. A usable operator is one whose deﬁ-
+nition may be expanded in a proof; for example, if the operator P deﬁned by P(x, y) ∆=
+x + 2 ∗ y is usable, then TLAPM may replace P(2, 20) with 2 + 2 ∗ 20 (but not with
+42, which requires proving that 2 + 2 ∗ 20 = 42). A user-deﬁned operator is hidden by
+default; it is made usable in a particular leaf proof by explicitly citing its deﬁnition, or
+for the rest of the current subproof by a use step (see [7] for the semantics of use).
+
+Because TLA+ is a modal logic, it contains operators that do not obey substitutivity,
+which underlies Leibniz’s principle of equality. For example, from (u = 42) = true one
+cannot deduce (u = 42)′ = true′, i.e., u′ = 42. A unary operator O(_) is substitutive if
+e = f implies O(e) = O( f ), for all expressions e and f . This deﬁnition is extended in the
+obvious way to operators with multiple arguments. Most of the modal primitive opera-
+tors of TLA+ are not substitutive; and an operator deﬁned in terms of non-substitutive
+operators can be non-substitutive. If a non-substitutive operator is usable, then TLAPM
+expands its deﬁnition during preprocessing, as described in the previous paragraph; if it
+is hidden, then TLAPM replaces its applications by cryptographic hashes of its text to
+prevent unsound inferences by backend veriﬁers. This is a conservative approximation:
+for example, it prevents proving O(e ∧ f ) = O( f ∧ e) for a hidden non-substitutive op-
+erator O. Users rarely deﬁne non-substitutive operators, so there seems to be no urgent
+need for a more sophisticated treatment.
+
+Subexpression references: A fairly novel feature of the TLA+ proof language is the abil-
+ity to refer to arbitrary subexpressions and instances of operators, theorems, and proof
+steps that appear earlier in the module or in imported modules, reducing the verbosity
+and increasing the maintainability of TLA+ proofs. Positional references denote a path
+through the abstract syntax; for example, for the deﬁnition, O(x, y) ∆= x = 20 ∗ y + 2,
+the reference O(3, 4)!2!1 resolves to the ﬁrst subexpression of the second subexpression
+of O(3, 4), i.e., 20 ∗ 4. Subexpressions can also be labelled and accessed via labelled
+references. For example, for O(x, y) ∆= x = l::(y ∗ 20) + 2, the reference O(3, 4)!l refers
+to 4 ∗ 20 and will continue to refer to this expression even if the deﬁnition of O is later
+modiﬁed to O(x, y) ∆= x = 7 ∗ y2 + l::(20 ∗ y) + 2. TLAPM replaces all subexpression
+references with the expressions they resolve to prior to further processing.
+
+Verifying obligations: Once an obligation is produced and processed as described be-
+fore, TLAPM invokes backend veriﬁers on the proof obligations corresponding to the
+leaf proofs. The default procedure is to invoke the Zenon theorem prover ﬁrst. If Zenon
+
+3
+
+succeeds in verifying the obligation, it produces an Isabelle/Isar proof script that can
+be checked by Isabelle/TLA+. If Zenon fails to prove an obligation, then Isabelle/TLA+
+is instructed to use one of its automated proof methods. The default procedure can be
+modiﬁed through pragmas that instruct TLAPM to bypass Zenon, use particular Isabelle
+tactics, or use other backends. Most users will invoke the pragmas indirectly by using
+particular theorems from the standard TLAPS module. For instance, using the theorem
+named SimpleArithmetic in a leaf proof causes TLAPM to invoke a decision proce-
+dure for Presburger arithmetic for that proof. The user can learn what standard theorems
+can prove what kinds of assertions by reading the documentation, but she does not need
+to know how such standard theorems are interpreted by TLAPM.
+
+4 Backend veriﬁers
+
+4.1 Isabelle/TLA+
+
+Isabelle/TLA+ is an axiomatization of TLA+ in the generic proof assistant Isabelle [13].
+It embodies the semantics of the constant fragment of TLA+ in TLAPS; as mentioned
+in Section 2, it is used to certify proofs found by automatic backend veriﬁers. We ini-
+tially considered encoding TLA+ in one of the existing object logics that come with
+the Isabelle distribution, such as Isabelle/ZF or Isabelle/HOL. However, this turned out
+to be inconvenient, mainly because TLA+ is untyped. (Indeed, TLA+ does not even
+distinguish between propositions and terms.) We would have had to deﬁne a type of
+TLA+ values inside an existing object logic and build TLA+-speciﬁc theories for sets,
+functions, arithmetic etc., essentially precluding reuse of the existing infrastructure.
+
+Isabelle/TLA+ deﬁnes classical ﬁrst-order logic based on equality, conditionals, and
+Hilbert’s choice operator. All operators take arguments and return values of the sin-
+gle type c representing TLA+ values. Set theory is based on the uninterpreted predi-
+cate symbol ∈ and standard Zermelo-Fränkel axioms. Unlike most presentations of ZF,
+TLA+ considers functions to be primitive objects rather than sets of ordered pairs. Nat-
+ural numbers with zero and successor are introduced using Hilbert’s choice as some
+set satisfying the Peano axioms; the existence of such a set is established from the
+ZF axioms. Basic arithmetic operators over natural numbers such as ≤, +, and ∗ are
+deﬁned by primitive recursion, and division and modulus are deﬁned in terms of +
+and ∗. Tuples and sequences are deﬁned as functions whose domains are initial intervals
+of the natural numbers. Characters are introduced as pairs of hexadecimal digits, and
+strings as sequences of characters. Records are functions whose domains are ﬁnite sets
+of strings. Isabelle’s ﬂexible parser and pretty-printer transparently converts between
+the surface syntax and the internal representation. The standard library introduces ba-
+sic operations for these data structures and proves elementary lemmas about them. It
+currently provides more than 1400 lemmas and theorems, corresponding to about 200
+pages of pretty-printed Isar text. Isabelle/TLA+ sets up Isabelle’s generic automated
+proof methods (rewriting, tableau and resolution provers, and their combinations).
+
+It is a testimony to the genericity of Isabelle that setting up a new object logic was
+mostly a matter of perseverance and engineering. Because TLA+ is untyped, many the-
+orems come with hypotheses that express “typing conditions”. For example, proving
+n + 0 = n requires proving that n is a number. When the semantics of TLA+ allowed
+
+4
+
+us to do so, we set up operators so that they return the expected “type”; for example,
+p ∧ q is guaranteed to be a Boolean value whatever its arguments p and q are. In other
+cases, typechecking is left to Isabelle’s automatic proof methods; support for condi-
+tional rewrite rules in Isabelle’s simpliﬁer was essential to make this work.
+
+4.2 Zenon
+
+Zenon is a theorem prover for ﬁrst-order logic with Hilbert’s choice operator and equal-
+ity. It is a proof-producing theorem prover: it outputs formal proof scripts for the theo-
+rems it proves. Zenon was extended with a backend that produces proofs in Isar syntax;
+these proofs use lemmas based on the Isabelle/TLA+ object logic and are passed to
+Isabelle for veriﬁcation. Zenon is therefore not part of the trusted code base of TLAPS.
+Zenon had to be extended with deduction rules speciﬁc to TLA+: rules for reason-
+ing about set-theoretic operators, for the case operator of TLA+, for set extensionality
+and function extensionality, for reasoning directly on bounded quantiﬁers (which is not
+needed in theory but is quite important for eﬃciency), and for reasoning about func-
+tions, strings, etc. Interestingly, Hilbert’s choice operator was already used in Zenon for
+Skolemization, so we were easily able to support the choose operator of TLA+.
+
+Future work includes adding rules to deal with tuples, sequences, records, and arith-
+metic, and improving the handling of equality. While there is some overlap between
+Zenon and Isabelle’s automatic methods as they are instantiated in Isabelle/TLA+, in
+practice they have diﬀerent strong points and there are many obligations where one
+succeeds while the other fails. Zenon uses Isabelle’s automatic proof tactics for some
+of the elementary steps when it knows they will succeed, in eﬀect using these tactics as
+high-level inference rules.
+
+4.3 Other backends
+
+The ﬁrst release of TLAPS comes with some additional non-certifying backends. For
+arithmetic reasoning we have:
+
+– An SMT-LIB based backend that can be linked to any SMT solver. Obligations are
+rewritten into the AUFLIRA theory of SMT-LIB, which generally requires omit-
+ting assumptions that lie outside this theory. This backend is needed for reasoning
+about real numbers. We have successfully used Yices, CVC3, Z3, veriT and Alt-
+Ergo in our examples. In future work we might specialize this generic backend for
+particular solvers that can reason about larger theories.
+
+– A Presburger arithmetic backend, for which we have implemented Cooper’s al-
+gorithm. Our implementation is tailored to certain elements of TLA+ that are not
+normally part of the Presburger fragment, but can be (conservatively) injected.
+
+For both these backends, TLAPM performs a simple and highly conservative sort detec-
+tion pass for bound identiﬁers. Both backends are currently non-certifying, but we plan
+to replace them with certifying backends in the future. In particular, we are integrating
+the proof-producing SMT solver veriT [5], with the goal of tailoring it for discharging
+TLA+ proof obligations.
+
+5
+
+5 Proof development
+
+Writing proofs is hard and error-prone. Before attempting to prove correctness of a
+TLA+ speciﬁcation, we ﬁrst check ﬁnite instances with the TLC model checker [12].
+This usually catches numerous errors quickly – much more quickly than by trying to
+prove it correct. Only after TLC can ﬁnd no more errors do we try to write a proof.
+
+The TLA+ language supports a hierarchical, non-linear proof development process
+that we ﬁnd indispensable for larger proofs [9]. The highest-level proof steps are derived
+almost without thinking from the structure of the theorem to be proved. For example, a
+step of the form P1 ∨ . . .∨ Pn ⇒ Q is proved by the sequence of steps asserting Pi ⇒ Q,
+for each i. When the user reaches a simple enough step, she ﬁrst tries a fully automatic
+proof using a leaf directive citing the facts and deﬁnitions that appear relevant. If that
+fails, she begins a new level with a sequence of proof-less assertion steps that simplify
+the assertion, and a ﬁnal qed step asserting that the goal follows from these steps. These
+new lower-level steps are tuned until the qed step is successfully veriﬁed. Then, the
+steps are proved in any order. (The user can ask TLAPM what steps have no proofs.)
+The most common reason that leaf proofs fail to verify is that the user has forgotten to
+use some fact or deﬁnition. When a proof fails, TLAPM prints the usable hypotheses
+and the goal, with usable deﬁnitions expanded. Examining this output often reveals the
+omission.
+
+This kind of hierarchical development cries for a user interface that allows one to
+see what has been proved, hide irrelevant parts of the proof, and easily tell TLAPM
+what it should try to prove next. Eventually, these functions will be provided by the
+TLA+ Toolbox. (It now performs only the hiding.) When TLAPS is integrated into the
+Toolbox, writing the speciﬁcation, model-checking it, and writing a proof will be one
+seamless process. Meanwhile, we have written an Emacs mode that allows hierarchical
+viewing of proofs and choosing which parts to prove.
+
+We expect most users to assume simple facts about data structures such as sequences
+rather than spending time proving them – especially at the beginning, before we have
+developed libraries of such facts for common data structures. Relying on unchecked
+assumptions would be a likely source of errors; it is easy to make a mistake when
+writing an “obviously true” assumption. Such assumptions should therefore be model-
+checked with TLC.
+
+5.1 Example developments
+
+We have written a number of proofs, mainly to ﬁnd bugs and see how well the prover
+works. Most of them are in the examples sub-directory of the TLAPS distribution.
+Here are the most noteworthy:
+
+– Peterson’s Mutual Exclusion Algorithm. This is a standard shared memory mutual
+exclusion algorithm. The algorithm (in its 2-process version) is described in a dozen
+lines of PlusCal, an algorithm language that is automatically translated to TLA+.
+The proof of mutual exclusion is about 130 lines long.
+
+– The Bakery Algorithm with Atomic Reads and Writes. This is a more complicated
+standard mutual exclusion example; its proof (for the N-process version) is 800
+lines long.
+
+6
+
+– Paxos. We have speciﬁed a high-level version of the well-known Paxos consensus
+algorithm as a trivial speciﬁcation of consensus and two reﬁnement steps—a total
+of 100 lines of TLA+. We have completed the proof of the ﬁrst reﬁnement and most
+of the proof of the second. The ﬁrst reﬁnement proof is 550 lines long; we estimate
+that the second will be somewhat over 1000 lines.
+
+Tuning the back-end provers has made them more powerful, making proofs easier to
+write. While writing machine-checked proofs remains tiresome and more time consum-
+ing than we would like, it has not turned out to be diﬃcult once the proof idea has been
+understood.
+
+Acknowledgements Georges Gonthier helped design the TLA+ proof language. Jean-
+Baptiste Tristan wrote the (incomplete) Paxos proof.
+
+References
+
+1. TLAPS web-site. http://www.msr-inria.inria.fr/~doligez/tlaps.
+2. TLA+ Toolbox. http://www.tlaplus.net/tools/tla-toolbox/.
+3. B. Alpern and F. B. Schneider. Deﬁning liveness. Inf. Process. Lett., 21(4):181–185, Oct.
+
+1985.
+
+4. R. Bonichon, D. Delahaye, and D. Doligez. Zenon : An extensible automated theorem prover
+producing checkable proofs. In N. Dershowitz and A. Voronkov, editors, Proc. 14th LPAR,
+pages 151–165. Springer LNCS 4790, Oct. 2007.
+
+5. T. Bouton, D. C. de Oliveira, D. Déharbe, and P. Fontaine. veriT: An open, trustable and
+eﬃcient SMT-solver. In R. Schmidt, editor, CADE 22, pages 151–156, Montreal, Canada,
+2009. Springer LNCS 5663.
+
+6. A. Chaieb and T. Nipkow. Proof synthesis and reﬂection for linear arithmetic. Journal of
+
+Automated Reasoning, 41:33–59, 2008.
+
+7. K. Chaudhuri, D. Doligez, L. Lamport, and S. Merz. A TLA+ Proof System. In G. Sut-
+cliﬀe, P. Rudnicki, R. Schmidt, B. Konev, and S. Schulz, editors, Workshop on Knowledge
+Exchange: Automated Provers and Proof Assistants, number 418 in CEUR Workshop Pro-
+ceedings, pages 17–37, 2008.
+
+8. P. Corbineau. A declarative proof language for the Coq proof assistant.
+
+In F. Honsell,
+M. Miculan, and I. Scagnetto, editors, Workshop on Types for Proofs and Programs, pages
+69–84, Udine, Italy, 2007. Springer LNCS 4941.
+
+9. E. Gafni and L. Lamport. Disk Paxos. Distributed Computing, 16(1):1–20, 2003.
+10. L. Lamport. Proving the correctness of multiprocess programs. IEEE Trans. Softw. Eng.,
+
+SE-3(2):125–143, Mar. 1977.
+
+11. L. Lamport. How to write a proof. American Mathematical Monthly, 102(7):600–608, Aug.
+
+1995.
+
+12. L. Lamport. Specifying Systems. Addison-Wesley, Boston, 2003.
+13. L. C. Paulson. Isabelle: A Generic Theorem Prover. Springer Verlag LNCS 828, Berlin,
+
+Heidelberg, 1994.
+
+14. P. Rudnicki. An overview of the Mizar project.
+Programs, pages 311–332, Bastad, Sweden, 1992.
+
+In Workshop on Types for Proofs and
+
+15. M. Wenzel. The Isabelle/Isar reference manual, Dec. 2009.
+
+http://isabelle.in.tum.de/dist/Isabelle/doc/isar-ref.pdf.
+
+7
+
+

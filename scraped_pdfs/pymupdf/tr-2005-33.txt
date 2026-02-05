@@ -1,0 +1,2693 @@
+
+--- Page 1 ---
+Generalized Consensus and Paxos
+Leslie Lamport
+3 March 2004
+revised 15 March 2005
+corrected 28 April 2005
+Microsoft Research Technical Report MSR-TR-2005-33
+
+--- Page 2 ---
+Abstract
+Theoretician’s Abstract
+Consensus has been regarded as the fundamental problem that must be
+solved to implement a fault-tolerant distributed system. However, only a
+weaker problem than traditional consensus need be solved. We generalize
+the consensus problem to include both traditional consensus and this weaker
+version. A straightforward generalization of the Paxos consensus algorithm
+implements general consensus. The generalizations of consensus and of the
+Paxos algorithm require a mathematical detour de force into a type of object
+called a command-structure set.
+Engineer’s Abstract
+The state-machine approach to implementing a fault-tolerant distributed
+system involves reaching agreement on the sequence of system commands
+by executing a sequence of separate instances of a consensus algorithm. It
+can be shown that any fault-tolerant asynchronous consensus algorithm re-
+quires at least two message delays between the issuing of a command and
+when it can be executed. But even in the absence of faults, no algorithm
+can guarantee this fast an execution if two diﬀerent commands are issued
+concurrently. We generalize the state-machine approach to involve reach-
+ing agreement on a partially ordered set of commands. By generalizing the
+Paxos consensus algorithm, we can implement a system in which concur-
+rently issued commands can always be executed in two message delays if
+they are non-interfering, so it does not matter in which order those com-
+mands are executed. For many systems, concurrent commands are rarely
+interfering, so the generalized Paxos algorithm can be quite eﬃcient. And
+command-structure sets are very simple.
+
+--- Page 3 ---
+Contents
+1
+Introduction
+1
+2
+Traditional Consensus
+3
+2.1
+The Requirements
+. . . . . . . . . . . . . . . . . . . . . . . .
+3
+2.2
+Acceptors and Quorums . . . . . . . . . . . . . . . . . . . . .
+4
+2.3
+Lower-Bound Results for Consensus
+. . . . . . . . . . . . . .
+4
+3
+Generalized Consensus
+6
+4
+Command-Structure Sets
+8
+4.1
+Mathematical Preliminaries . . . . . . . . . . . . . . . . . . .
+8
+4.1.1
+Notation . . . . . . . . . . . . . . . . . . . . . . . . . .
+8
+4.1.2
+Sequences . . . . . . . . . . . . . . . . . . . . . . . . .
+8
+4.1.3
+Partial Orders
+. . . . . . . . . . . . . . . . . . . . . .
+9
+4.1.4
+Equivalence Classes
+. . . . . . . . . . . . . . . . . . .
+9
+4.1.5
+Directed Graph . . . . . . . . . . . . . . . . . . . . . .
+9
+4.2
+C-Struct Sets . . . . . . . . . . . . . . . . . . . . . . . . . . .
+10
+4.3
+The Consensus Requirements Restated . . . . . . . . . . . . .
+12
+4.4
+Some Examples of C-Structs . . . . . . . . . . . . . . . . . . .
+13
+5
+The Generalized Paxos Consensus Algorithm
+17
+5.1
+Ballots and Quorums . . . . . . . . . . . . . . . . . . . . . . .
+17
+5.2
+Ballot Arrays . . . . . . . . . . . . . . . . . . . . . . . . . . .
+18
+5.3
+The Abstract Algorithm . . . . . . . . . . . . . . . . . . . . .
+21
+5.4
+A Distributed Abstract Algorithm
+. . . . . . . . . . . . . . .
+26
+5.5
+The Generalized Paxos Consensus Algorithm
+. . . . . . . . .
+29
+6
+Implementation Considerations
+30
+6.1
+Normal Operation
+. . . . . . . . . . . . . . . . . . . . . . . .
+30
+6.2
+Ensuring Liveness
+. . . . . . . . . . . . . . . . . . . . . . . .
+32
+6.3
+Large C-Structs . . . . . . . . . . . . . . . . . . . . . . . . . .
+33
+7
+Summary
+34
+Acknowledgments
+36
+References
+36
+A Lower-Bound Proof Ideas
+38
+1
+
+--- Page 4 ---
+B Proofs of Propositions
+40
+C TLA+ Speciﬁcations
+43
+C.1
+Command Structures . . . . . . . . . . . . . . . . . . . . . . .
+43
+C.2
+Generalized Consensus . . . . . . . . . . . . . . . . . . . . . .
+46
+C.3
+The Constant Operators of Paxos . . . . . . . . . . . . . . . .
+47
+C.4
+The Abstract Algorithm . . . . . . . . . . . . . . . . . . . . .
+49
+C.5
+The Distributed Abstract Algorithm . . . . . . . . . . . . . .
+52
+C.6
+The Generalized Paxos Consensus Algorithm
+. . . . . . . . .
+55
+
+--- Page 5 ---
+1
+Introduction
+A system in which clients issue commands and receive responses can be
+represented as a state machine.
+Executing a command in a given state
+produces an output and a new state. A simple example is a toy banking
+system in which a client can deposit or withdraw money. The state consists
+of the amount of money in each client’s account, and clients can issue deposit
+or withdraw commands. Executing the command c withdraws $100 in a state
+with at least $100 in client c’s account subtracts $100 from the amount in
+that account and produces as output $100 for c, which is some string of bits
+that conveys $100 in digital cash to c. Executing c deposits $50 adds $50
+to c’s account and produces OK as output.
+In the standard state-machine approach, a sequence of instances of a
+consensus algorithm are used to choose the sequence of client commands.
+The ith instance of the algorithm chooses the ith command to be executed.
+Given an initial state, the sequence of commands deﬁnes the output and
+new state produced by executing each command in the sequence.
+Classic Paxos [4] provides a fault-tolerant implementation of an arbi-
+trary state machine in an asynchronous message-passing system. In Paxos,
+clients send commands to a leader. During normal operation, the leader
+receives a client’s command, assigns it a new command number i, and then
+begins the ith instance of the consensus algorithm by sending what are called
+phase 2a messages to a set of acceptor processes. We ignore for now what
+the acceptors do when they receive those messages.
+A previously unpublished algorithm, called Fast Paxos, tries to save
+one message delay by having the client send its command directly to the
+acceptors, bypassing the leader. An acceptor interprets the client’s message
+as if it were a phase 2a message from the leader for the next unused command
+number—that is, the command number that the acceptor believes to be the
+next unused one.
+Fast Paxos works ﬁne if all acceptors assign the same command number
+to a client’s command. However, suppose all acceptors think the next unused
+command number is 42, at which point client cA issues command A and
+client cB concurrently issues command B. Some acceptors may get cA’s
+message ﬁrst, assigning command number 42 to A, and then receive cB’s
+message, assigning 43 to B. Others may receive the messages in the opposite
+order, making the opposite assignment of command numbers to commands.
+This can cause instances 42 and 43 of the consensus algorithm not to choose
+any command right away, forcing the leader to intercede. Resolving this
+collision adds at least one more message delay.
+1
+
+--- Page 6 ---
+In Section 2.3, we sketch a theorem asserting that deciding whether A
+or B is the next command has to add an extra message delay to Fast Paxos.
+If it matters in which order commands A and B are executed—for example,
+if A deposits money in an account and B reads the account’s balance—then
+there is no way to avoid this extra message delay.
+However, suppose A
+and B commute, meaning that executing them in either order has the same
+eﬀect—for example, if they are operations to two diﬀerent accounts. There
+is then no inherent need to decide which to execute ﬁrst. This suggests that
+we should be able to get the speed of Fast Paxos even when two commands
+are issued concurrently, if those two commands commute. In many systems,
+concurrently issued commands almost always commute. An implementation
+that saves a message delay in almost all cases can be signiﬁcantly more
+eﬃcient than one using the conventional state-machine approach.
+By choosing an execution sequence, the state-machine approach decides
+the order in which all pairs of commands are executed—even pairs of com-
+muting commands. Instead of choosing a sequence, it suﬃces to choose a
+partially ordered set of commands in which any two non-commuting com-
+mands are ordered. We call such a partially ordered set a command history.
+Executing the commands in a command history in any order consistent with
+its partial order has the same eﬀect. We generalize the state-machine ap-
+proach by choosing a history rather than a sequence of commands.
+The key to this generalization lies in generalizing the concept of consen-
+sus. The customary view of the state-machine approach is that it solves a
+sequence of separate consensus problems to choose a sequence of commands,
+where consensus means reaching agreement on a single value. Instead, we
+think of it as solving a single more general consensus problem that requires
+agreeing on an increasing set of values—namely, the currently chosen preﬁx
+of the command sequence. We encompass traditional consensus, agreement
+on command sequences, and agreement on histories by a general consensus
+problem of reaching agreement on an increasing set of values in a partially
+ordered set with an append operation—a type of set we call a command
+structure set. The Paxos consensus algorithm can be directly extended to
+solve the generalized consensus problem for values in an arbitrary command
+structure set.
+Section 2 motivates our search for faster algorithms by describing some
+lower bounds for traditional consensus. Section 3 generalizes the traditional
+consensus problem, which chooses a single value, to the problem of choosing
+monotonically increasing, consistent values.
+Section 4 is a mathematical
+detour in which we deﬁne command-structure sets and give some examples.
+We then present the generalized Paxos algorithm in Section 5 and brieﬂy
+2
+
+--- Page 7 ---
+discuss its implementation in Section 6. A concluding section summarizes
+what we have done. Proofs and proof sketches are relegated to the appendix.
+Section C of the appendix also contains TLA+ speciﬁcations of command
+structure sets and of our algorithms.
+Generalized consensus for command histories is equivalent to the concept
+of generic consensus introduced by Pedone and Schiper [9].
+Generalized
+Paxos is quite similar to their algorithm GB+ for this set of c-structs, but
+theirr algorithm can detect conﬂicts and incur the expense of resolving them
+in cases when generalized Paxos does not. Moreover, generalized Paxos is a
+natural extension of Fast Paxos and shares its ﬂexibility—in particular, it
+can switch to ordinary Paxos when too many failures have occurred to permit
+fast execution. Pedone and Schiper’s algorithm employs an ad hoc preﬁx to
+an ordinary consensus algorithm, and they did not consider switching from
+fast to slower execution.
+2
+Traditional Consensus
+We now review the conventional consensus problem and give some lower
+bounds on solutions. We restrict ourselves to consensus in asynchronous
+systems.
+2.1
+The Requirements
+The consensus problem is typically described in terms of agreement among a
+single set of processes. However, it is better to cast the problem in terms of
+a set of proposer processes that propose values and a set of learner processes
+that must agree upon a value. Think of the proposers as a system’s clients
+and the learners as the servers that cooperate to implement the system.
+The traditional consensus problem has three safety requirements:
+Nontriviality Any value learned must have been proposed.
+Stability A learner can learn at most one value. (In other words, it cannot
+change its mind about what value it has learned.)
+Consistency Two diﬀerent learners cannot learn diﬀerent values.
+(Stability is often only tacitly assumed.) The safety properties are required
+to hold under certain failure assumptions. For asynchronous systems, they
+are generally required to hold despite any number of non-Byzantine failures.
+The traditional consensus problem also has the following liveness require-
+ment:
+3
+
+--- Page 8 ---
+Liveness(C, l) If value C has been proposed, then eventually learner l will
+learn some value.
+This requirement is stated in terms of C and l because the assumption under
+which it must hold generally depends on these parameters. For asynchro-
+nous implementations, the usual assumption is that learner l, the proposer
+of C, and a suﬃcient number of other processes are nonfaulty and can com-
+municate with one another.
+2.2
+Acceptors and Quorums
+Consensus is implemented using a ﬁnite set of processes called acceptors.
+Acceptors, proposers, and learners are processes. Each process is executed
+on a node, and a single node may execute several of these processes. A set
+of nodes is considered to be nonfaulty iﬀthe set of processes executed by
+those nodes is nonfaulty.
+A quorum Q is a set of acceptors that is large enough to ensure liveness.
+More precisely, Q is a quorum iﬀcondition Liveness(C, l) of consensus holds
+when the set containing the process that proposed command C, the learner
+l, and the acceptors in Q is nonfaulty for a long enough period of time.
+(How long is “long enough” depends on the algorithm.) This condition is
+required to hold regardless of what may have happened before this set of
+processes became nonfaulty.
+Proposer, acceptor, and learner can be viewed as roles performed by the
+nodes in a distributed system. The relation between these roles and the roles
+of client and server can vary from system to system. Typically, the clients
+are proposers and the server nodes are both learners and acceptors. There
+may be additional nodes that act only as acceptors—nodes sometimes called
+witnesses. The clients may also be considered to be learners. What roles a
+node plays is an implementation choice that determines the fault-tolerance
+properties of the system.
+2.3
+Lower-Bound Results for Consensus
+When devising an algorithm, it helps to know what is possible. So before
+deriving the generalized Paxos consensus algorithm, we describe some lower-
+bound results for consensus in asynchronous systems.
+The precise statements of the lower-bound results are tricky. They re-
+quire some unobvious hypotheses, and algorithms that violate the bounds
+are possible in certain special cases. One obvious hypothesis that we state
+once and for all now is that there are at least two proposers and two learners.
+4
+
+--- Page 9 ---
+(Consensus becomes a trivial problem if there is only one acceptor or one
+learner.) We omit the less obvious hypotheses and state only approximate
+versions of the results. The ideas behind their proofs are given in Section A
+of the appendix. The precise statements of the results and their rigorous
+proofs appear elsewhere [7].
+The ﬁrst result is rather obvious; equivalent results have appeared before.
+Approximate Theorem 1 Any two quorums have non-empty intersec-
+tion.
+A consensus algorithm using N acceptors is said to tolerate F faults if
+every set of N −F acceptors is a quorum. Approximate Theorem 1 implies
+that this is possible only if N > 2F.
+The other results give lower bounds on the number of message delays
+required to learn a value. The message delay between two events in the exe-
+cution of an algorithm is the length of the longest message chain connecting
+the two events. A message chain is a sequence of messages, each of which is
+received by the sender of the next message before that next message is sent.
+A message chain connects event e to event f if its ﬁrst message is sent by
+the process executing e when or after it executes e, and whose last message
+is received by the process executing f before or when it executes f .
+We say that a learner l learns a value in k message delays in an execution
+in which l learns a value C, and there are k message delays between the event
+of proposing C and the event of l learning C. The following result is also
+fairly obvious and has been proved in several settings [1].
+Approximate Theorem 2 Learning is impossible in fewer than 2 message
+delays.
+We deﬁne a set Q of acceptors to be a fast quorum iﬀ, for every proposer
+p and learner l, there is an execution involving only the set of processes
+Q ∪{p, l} in which a value proposed by p is learned by l in two message
+delays. Events that do not inﬂuence l’s learning event are irrelevant, and
+processes could fail before they are performed. We can therefore assume
+that the communication in such an execution consists only of p proposing a
+value and sending messages to the acceptors in Q and to l, followed by the
+acceptors in Q sending messages to l.
+Comparing the following result with Approximate Theorem 1 shows that
+fast quorums have to be bigger than plain quorums. We believe that this
+result was ﬁrst announced in [6] and ﬁrst proved in [7].
+Approximate Theorem 3 If Q1 and Q2 are fast quorums and Q is a
+quorum, then Q1 ∩Q2 ∩Q is non-empty.
+5
+
+--- Page 10 ---
+We say that an algorithm with N acceptors is fast learning despite E faults
+iﬀevery set of N −E acceptors is a fast quorum. Approximate Theorem 3
+implies that such an algorithm that tolerates F faults is possible only if
+N > 2E + F.
+The following result shows that it is impossible for a fault-tolerant con-
+sensus algorithm to guarantee, even in the absence of failure, that a value is
+always learned in two message delays. Its proof shows that this can’t occur
+because two proposers can concurrently propose diﬀerent values. The result
+is an approximate special case of the Collision-Fast Learning theorem of [7].
+Approximate Theorem 4 If, for every acceptor a, there is a quorum not
+containing a, then a consensus algorithm cannot ensure that, even in the
+absence of failures, every learner learns a value in two message delays.
+3
+Generalized Consensus
+We now generalize the consensus problem from agreeing on a single value
+to agreeing on an increasing set of values. We start with the problem of
+agreeing on a growing sequence of commands—the problem that must be
+solved in the conventional state-machine approach. Let learned[l] be learner
+l’s current knowledge of the command sequence. The value of learned[l] will
+change over time as l learns more commands in the sequence.
+In the conventional state-machine approach, a learner need not learn
+the sequence of commands in order. It might learn the 5th command in
+the sequence before learning the 3rd command. (However, it knows that the
+command is the 5th one.) It is convenient to deﬁne learning so that a learner
+is not considered to have learned the 5th command until it has learned the
+preceding four commands. This is a reasonable notion of learning, since a
+server cannot execute the 5th command until it knows the ﬁrst four. We
+therefore let learned[l] always be a sequence of commands (with no gaps),
+for every learner l.
+The four requirements for traditional consensus can be generalized as
+follows. The preﬁx relation on sequences is the usual reﬂexive one, in which
+any sequence is a preﬁx of itself.
+Nontriviality For any learner l, the value of learned[l] is always a sequence
+of proposed commands,
+Stability For any learner l, the value of learned[l] at any time is a preﬁx
+of its value at any later time.
+6
+
+--- Page 11 ---
+Consistency For any learners l1 and l2, it is always the case that one of
+the sequences learned[l1] and learned[l2] is a preﬁx of the other.
+Liveness(C, l) If command C has been proposed, then eventually the se-
+quence learned[l] will contain the element C.
+We now abstract these four consensus requirements from sequences to a
+more general set of values that we call command structures, or c-structs
+for short. C-structs are formed from a “null” element, which we call ⊥,
+by the operation of appending commands. More precisely, a c-struct set
+is a set, containing the element ⊥, with an append operator • such that
+v • C is a c-struct, for any c-struct v and command C. We extend • to
+sequences of commands in the usual way, deﬁning v •⟨C 1, . . . , C m ⟩to equal
+v • C 1 • · · · • C m.
+C-structs are more general than command sequences
+because ⊥•σ can equal ⊥•τ for two diﬀerent command sequences σ and τ.
+We now generalize the requirements for consensus from sequences to c-
+structs. The generalizations of nontriviality, stability, and liveness are fairly
+obvious.
+Nontriviality For any learner l, there always exists a sequence σ of pro-
+posed commands such that learned[l] = ⊥• σ.
+Stability For any learner l, if the value of learned[l] at any time is v,
+then at all later times there exists a command sequence σ such that
+learned[l] = v • σ.
+Liveness(C, l) If command C has been proposed, then learned[l] eventu-
+ally equals v • C • σ, for some c-struct v and command sequence σ.
+The obvious generalization of consistency is to use the same condition as
+before, where v is deﬁned to be a preﬁx of w iﬀw = v •σ for some command
+sequence σ. However, it turns out that we want to generalize still further by
+requiring only that any two learned c-structs are both preﬁxes of the same
+c-struct. (This is obviously true if one is a preﬁx of the other.) So, our
+generalized condition is:
+Consistency For all learners l1 and l2, there always exist command se-
+quences σ1 and σ2 such that learned[l1] • σ1 = learned[l2] • σ2.
+Section C.2 of the appendix contains a TLA+ speciﬁcation of generalized
+consensus.
+7
+
+--- Page 12 ---
+4
+Command-Structure Sets
+In Section 3, we informally introduced the concept of a c-struct to deﬁne
+the generalized consensus problem. We now formalize the notion of a set
+of c-structs and give some examples of such sets. But ﬁrst we review some
+standard notation and simple mathematics.
+4.1
+Mathematical Preliminaries
+4.1.1
+Notation
+Whenever possible, we use an informal style to describe mathematical con-
+cepts. But mathematics can sometimes be quite hard to understand when
+written in prose. While we try to keep the mathematics as prosaic as possi-
+ble, there are times when words are inadequate and formulas are required.
+We introduce here some fairly standard mathematical notation.
+We use
+the customary operators of propositional logic and predicate calculus, with
+∀x ∈S : P and ∃x ∈S : P asserting that P holds for all and for some x in
+S, respectively, and we let
+∆= mean is deﬁned to equal. We use the following
+notation for representing sets.
+• {e1, . . . , en} is the set consisting only of the elements ei. In particular,
+{ } is the empty set.
+• {x | P} is the set of all x such that P is true.
+• {x ∈S | P} equals {x | (x ∈S) ∧P}.
+For example, we deﬁne the union (S) and intersection (T) of a set S of sets
+as follows:
+• S S
+∆=
+{x | ∃T ∈S : x ∈T}
+• T S
+∆=
+{x | ∀T ∈S : x ∈T}
+4.1.2
+Sequences
+We use the term sequence to mean a ﬁnite sequence. We enclose sequences
+in angle brackets, so ⟨e1, . . . , em ⟩is a sequence with elements ei, and ⟨⟩
+is the empty sequence. We let Seq(S) be the set of all sequences whose
+elements are in the set S, and let ◦be the usual concatenation operator:
+⟨e1, . . . , em ⟩◦⟨f 1, . . . , f n ⟩
+∆=
+⟨e1, . . . , em, f 1, . . . , f n ⟩
+For conciseness, we use the term c-seq for a ﬁnite sequence of commands.
+8
+
+--- Page 13 ---
+4.1.3
+Partial Orders
+A relation ⊑is a (reﬂexive) partial order on a set S iﬀit satisﬁes the following
+properties, for all u, v, and w in S:
+• u ⊑v and v ⊑u iﬀu = v.
+• u ⊑v and v ⊑w imply u ⊑w.
+For a partial order ⊑, we deﬁne v < w to mean v ⊑w and v ̸= w.
+Given a partial order ⊑on S, a lower bound of a subset T of S is an
+element v of S such that v ⊑w for all w in T. A greatest lower bound (glb)
+of T is a lower bound v of T such that w ⊑v for every lower bound of T.
+If a glb exists, then it is unique. We write the glb of T as ⊓T, and we let
+v ⊓w equal ⊓{v, w} for any v and w in S.
+Upper bounds and the least upper bound (lub) of a set T are deﬁned
+in the analogous fashion. We write the lub of T as ⊔T (remember “l⊔b”),
+and we let v ⊔w equal ⊔{v, w} for any v and w in S.
+The TLA+ module OrderRelations in Section C.1 of the appendix for-
+malizes these deﬁnitions.
+4.1.4
+Equivalence Classes
+A relation ∼on a set S is called an equivalence relation iﬀit satisﬁes the
+following properties, for all u, v, and w in S:
+• u ∼u
+• u ∼v iﬀv ∼u
+• u ∼v and v ∼w imply u ∼w.
+We deﬁne [u], the equivalence class under ∼of an element u in S, by
+[u]
+∆=
+{v ∈S | v ∼u}
+Thus, u ∼v iﬀ[u] = [v]. The set of all such equivalence classes is called the
+quotient space of S under ∼, and is written S/ ∼.
+4.1.5
+Directed Graph
+A directed graph consists of a pair ⟨N , E ⟩where N (the set of nodes) is a
+set and E (the set of edges) is a subset of N × N (the set of pairs of nodes).
+A subgraph of a directed graph ⟨N , E ⟩is a directed graph ⟨M , D ⟩where
+M ⊆N and D = E ∩(M × M ). The subgraph ⟨M , D ⟩is deﬁned to be a
+preﬁx of ⟨N , E ⟩iﬀfor every edge ⟨m, n ⟩in E, if n is in M then m is in M .
+9
+
+--- Page 14 ---
+4.2
+C-Struct Sets
+Let Cmd be the set of all commands and CStruct be the set of all c-structs.
+So far, all we have assumed about the set CStruct is that it contains an
+element ⊥and an operator • that appends a command to a c-struct. We
+now introduce four axioms CS1–CS4 on CStruct.
+In other words, a set
+CStruct containing an element ⊥and an append operator • is deﬁned to be
+a c-struct set iﬀthese axioms are satisﬁed. The deﬁnitions of this section
+are formalized in TLA+ module CStructs of Appendix Section C.1.
+We inductively deﬁne v • ⟨C 1, . . . , C m ⟩for a c-struct v and a c-seq
+⟨C 1, . . . , C m ⟩by:
+v • ⟨C 1, . . . , C m ⟩=
+(
+v
+if m = 0,
+(v • C 1) • ⟨C 2, . . . , C m ⟩
+otherwise
+Our ﬁrst axiom asserts that every c-struct is obtained by concatenating a
+c-seq to ⊥.
+CS1. CStruct = {⊥• σ | σ ∈Seq(Cmd)}
+It follows from CS1 that CStruct is isomorphic to the quotient space of
+Seq(Cmd) under the equivalence relation deﬁned by σ ∼τ iﬀ⊥• σ = ⊥• τ.
+We deﬁne the preﬁx relation ⊑on c-structs by
+v ⊑w iﬀthere exists a c-seq σ such that w = v • σ.
+for any c-structs v and w. The next assumption we make about c-structs is:
+CS2. ⊑is a partial order on the set of c-structs.
+It is not hard to show that CS2 is equivalent to the assumption
+v • σ • τ = v implies v • σ = v, for every c-struct v and command
+sequences σ and τ.
+As is customary with a partial order, we read ⊑as “less than or equal”. But
+because ⊑is a preﬁx relation, we also read v ⊑w as “v is a preﬁx of w” or
+“w is an extension of v”.
+We say that the c-struct ⊥• ⟨C 1, . . . , C m ⟩is constructible from the
+commands C i. We deﬁne Str(P) to be the set of all c-structs that can be
+constructed from elements of the set P of commands:
+Str(P)
+∆=
+{⊥• σ | σ ∈Seq(P)}
+CS1 asserts that CStruct equals Str(Cmd).
+10
+
+--- Page 15 ---
+We deﬁne two c-structs v and w to be compatible iﬀthey have a common
+upper bound—that is, iﬀthere is some c-struct z with v ⊑z and w ⊑z.
+A set S of c-structs is called compatible iﬀevery pair of elements in S are
+compatible.
+The generalized Paxos algorithm computes lubs and glbs of c-structs. It
+requires that any non-empty ﬁnite set S of c-structs has a glb, and if S is
+compatible, then it has a lub. Moreover, it requires that its glb and lub
+be constructible from the same commands as the elements of S. In other
+words:
+CS3. For any set P of commands and any c-structs u,v, and w in
+Str(P):
+• v ⊓w exists and is in Str(P)
+• If v and w are compatible, then v ⊔w exists and is in Str(P).
+• If {u, v, w} is compatible, then u and v ⊔w are compatible.
+It follows from CS3 that for any ﬁnite set S of c-structs in Str(P), if S is
+non-empty then ⊓S ∈Str(P), and if S is compatible then ⊔S ∈Str(P).
+(The deﬁnition of lub implies that ⊥is the lub of the empty set.) Letting
+P equal the set Cmd, CS3 asserts the existence of the glb of any non-empty
+ﬁnite set S of c-structs, and the existence of its lub if S is compatible.
+For any compatible set S of c-structs, we deﬁne the ⊔-completion of S
+to be the set of all lubs of ﬁnite subsets of S—that is, the set
+{⊔T | (T ⊆S) ∧(T ﬁnite)}
+The set S is a subset of its ⊔-completion, since ⊔{v} = v, for any c-struct v.
+The ⊔-completion of any compatible set is compatible, since (⊔T)⊔(⊔U ) =
+⊔(T ∪U ) for any compatible ﬁnite sets T and U .
+We say that a c-struct v contains a command C iﬀv is constructible
+from some set of commands containing C. Equivalently, v contains C iﬀ
+v = ⊥• σ • C • τ for some c-seqs σ and τ.
+A c-struct v can contain
+a command C even if v is constructible from commands not containing
+C. That is, v could contain C and be an element of Str(P) for some set
+P of commands that does not contain C. This is because we could have
+⊥•σ = ⊥•τ even though the c-seqs σ and τ have no commands in common.
+For example, commands could have some irrelevant ﬁeld that is thrown away
+by the append operator •. We would then have ⊥• σ = ⊥• τ for any τ
+obtained from σ by changing just that ﬁeld in all the elements of σ.
+It follows easily from the deﬁnition of ⊑that if v ⊑w and v contains C
+then w also contains C. Hence, the lub of any non-empty set of compatible
+11
+
+--- Page 16 ---
+c-structs that contain C also contains C. We need to assume this for glbs
+as well.
+CS4. For any command C and compatible c-structs v and w, if v and
+w both contain C then v ⊓w contains C.
+It follows from CS4 that if all the elements of a ﬁnite, non-empty compatible
+set S of c-structs contain C, then ⊓S also contains C.
+The operator • combines c-structs and c-seqs. Mathematicians like more
+symmetric operators, so it is natural to try to deﬁne v • w when v and w
+are both c-structs. The obvious deﬁnition is:
+v • (⊥• σ)
+∆=
+v • σ, for any c-struct v and c-seq σ.
+For this to uniquely deﬁne • on c-structs, we need the addition assumption:
+Monoid Assumption For all c-structs v and c-seqs σ and τ, if ⊥•σ =
+⊥• τ then v • σ = v • τ.
+We can then extend the operator • to be a “multiplication” operator on
+CStruct. The set CStruct with this operator is called a monoid with identity
+element ⊥. We say that a c-struct set is monoidal iﬀit satisﬁes the monoid
+assumption. The generalized Paxos algorithm does not require CStruct to
+be monoidal. However, certain optimizations are possible if it is.
+One might expect that there should not exist an inﬁnite descending chain
+v1 = v2 = v3 = · · · of c-structs, each an extension of the next. We leave
+to the reader the exercise of ﬁnding a c-struct set that allows such inﬁnite
+descending chains.
+That the generalized Paxos algorithm works even on
+such a c-struct set seems to be of no practical signiﬁcance.
+4.3
+The Consensus Requirements Restated
+We now restate the requirements for consensus in terms of the concepts
+deﬁned above, where propCmd is the set of all proposed commands:
+Nontriviality learned[l] ∈Str(propCmd) always holds, for every learner l.
+Stability It is always the case that learned[l] = v implies v ⊑learned[l] at
+all later times, for any learner l and c-struct v.
+Consistency learned[l1] and learned[l2] are always compatible, for all learn-
+ers l1 and l2.
+Liveness(C, l) If C ∈propCmd then eventually learned[l] contains C.
+12
+
+--- Page 17 ---
+The approximate theorems of Section 2.3 above also hold (approximately)
+for the generalized consensus problem if there exist commands C and D
+such that ⊥• C and ⊥• D are not compatible.
+4.4
+Some Examples of C-Structs
+The most obvious example of a c-struct set is the set Seq(Cmd) of all c-seqs,
+where • is the usual append operator and ⊑the ordinary preﬁx relation.
+Two c-seqs are compatible iﬀone is a preﬁx of the other. It is easy to see
+that the set of c-seqs satisﬁes C1–C4, so it is indeed a c-struct set, and that
+it is monoidal.
+As we have seen, the generalization of consensus to this c-struct set is
+essentially the problem solved by the conventional state-machine approach.
+We now introduce some other c-struct sets that lead to diﬀerent consensus
+problems.
+Nonduplicate Command Sequences
+The traditional state-machine approach, speciﬁed by letting CStruct equal
+Seq(Cmd), allows multiple copies of a proposed command to appear in the
+command sequence. A banking system should not allow a single c withdraws
+$100 command to withdraw more than $100. The problem of multiple exe-
+cutions of the same command is traditionally solved by making commands
+idempotent. The state machine used to implement the banking system is
+deﬁned so that only the ﬁrst execution of any single withdrawal or deposit
+command has any eﬀect. A command contains a unique identiﬁer (uid), so
+c can withdraw $200 by issuing two diﬀerent c withdraws $100 commands.
+(The uid also appears on the command’s output, so the client knows to
+which command a response is for.)
+An alternative way of handling the problem of duplicate commands is
+to solve a diﬀerent consensus problem that eliminates them. We do this by
+taking CStruct to be the set of c-seqs with no duplicates—that is, c-seqs
+⟨C 1, . . . , C m ⟩such that the C i are all distinct. For any command C and
+sequence ⟨C 1, . . . , C m ⟩without duplicates, we deﬁne
+⟨C 1, . . . , C m ⟩• C
+∆=
+(
+⟨C 1, . . . , C m ⟩
+if C equals some C i,
+⟨C 1, . . . , C m, C ⟩
+otherwise
+As with ordinary sequences, ⊑is the preﬁx relation and two c-structs are
+compatible iﬀone is a preﬁx of the other. It is easy to see that this is a
+c-struct set (satisﬁes axioms CS1–CS4) and that it is monoidal.
+13
+
+--- Page 18 ---
+Redeﬁning consensus in this way does not make it any easier to solve
+the problem of multiple executions of the same command. It just transfers
+the problem from the state machine to the computation of •. Instead of
+duplicate commands being detected when executing the state machine, they
+are detected when executing the consensus algorithm.
+Commands with ⊥
+We now show that generalized consensus generalizes the ordinary consensus
+problem of choosing a single command. To obtain the ordinary consensus
+problem, we deﬁne CStruct be the set Cmd ∪{⊥} consisting of all commands
+together with the additional element ⊥. We deﬁne • by
+v • C
+∆=
+(
+C
+if v = ⊥,
+v
+otherwise
+This implies that v ⊑w iﬀv = ⊥or v = w. Two commands are compatible
+iﬀthey are equal, and every command contains every command, since C =
+C • ⟨D ⟩for any commands C and D. It is not hard to check that the set
+Cmd ∪{⊥} and the operation • form a monoidal c-struct set.
+With this c-struct set, generalized consensus reduces to the traditional
+consensus problem, where learned[l] = ⊥means that l has not yet learned
+a value. For example, the consistency condition of generalized consensus
+asserts that, for any two learners l1 and l2, either learner[l1] and learner[l2]
+are equal, or one of them equals ⊥.
+Command Sets
+A very simple consensus problem is obtained by taking CSruct to be the set
+of all ﬁnite sets of commands. We let ⊥be the empty set and deﬁne v • C
+to equal v ∪{C}.
+This c-struct set is interesting because the resulting consensus problem
+is very easy to solve. Proposers simply send commands to learners, and a
+learner l adds a command to learned[l] whenever it receives a proposer’s
+message containing that command.
+We can also let CStruct be the set of all ﬁnite multisets of commands,
+where a multiset is a set in which an element can appear multiple times. The
+deﬁnition of ⊥and • are the same, except where ∪is taken to be multiset
+union.
+It is not too hard to see that these two diﬀerent choices of CStruct
+yield equivalent consensus problems. In particular, an algorithm in which a
+14
+
+--- Page 19 ---
+learner l keeps only a single copy of any command in learned[l] also solves the
+consensus problem for multisets of commands. This observation illustrates
+that our statement of the consensus problem considers multiple proposals of
+the same command to be the same as a single proposal.
+Command Histories
+As observed in the introduction, deﬁning an execution of a set of commands
+does not require totally ordering them. It suﬃces to determine the order
+in which every pair of non-commuting commands are executed. Determin-
+ing whether or not two commands commute can be diﬃcult. Instead, one
+generally introduces an interference relation ≍(also called a dependence re-
+lation) and requires that C ≍D holds for any non-commuting pair C, D of
+commands. We can allow C ≍D to hold for some pairs C, D of commuting
+commands as well. For the banking example, we can deﬁne C ≍D to be
+true iﬀcommands C and D both access the same account. Then C ≍D
+holds even if C and D just deposit money into the same account, so they
+commute.
+In general, we assume a symmetric relation ≍on commands—that is a
+relation satisfying C ≍D iﬀD ≍C for any commands C and D. We deﬁne
+the equivalence relation ∼on c-seqs by letting two sequences be equivalent
+iﬀone can be transformed into the other by permuting elements in such a
+way that the order of all pairs of interfering commands is preserved. The
+precise deﬁnition is:
+⟨C 1, . . . , C m ⟩∼⟨D1, . . . , Dn ⟩iﬀm = n and there exists a permuta-
+tion π of {1, . . . , m} such that, for each i, j = 1, . . . , m:
+• Di = C π(i)
+• If i < j and C i ≍C j then π(i) < π(j).
+We deﬁne a command history to be an equivalence class of c-seqs under this
+equivalence relation. Command histories are isomorphic to Mazurkiewicz
+traces [8], which were introduced to study the semantics of concurrent sys-
+tems. For conciseness, we usually write history instead of command history.
+We now let CStruct be the set of all histories (that is, the quotient space
+Seq(Cmd)/ ∼), and we deﬁne • by
+[ ⟨C 1, . . . , C m ⟩] • C
+∆=
+[ ⟨C 1, . . . , C m, C ⟩]
+for any c-seq ⟨C 1, . . . , C m ⟩and command C. It is easy to check that, for
+any two c-seqs σ and τ, if [σ] = [τ] then [σ ◦⟨C ⟩] = [τ ◦⟨C ⟩] for any
+command C. Therefore, this uniquely deﬁnes the operator •.
+15
+
+--- Page 20 ---
+To show that the set of histories is a c-struct, we observe that the history
+[ ⟨C 1, . . . , C m ⟩] is isomorphic to a directed graph G(⟨C 1, . . . , C m ⟩) whose
+nodes are the C i, where there is an edge from C i to C j iﬀi < j and C i ≍C j .
+To deﬁne the mapping G from c-seqs to graphs precisely, we must distinguish
+diﬀerent occurrences of the same command in a history. So we deﬁne the
+nodes of G(⟨C 1, . . . , C m ⟩) to consist of all pairs ⟨C i, ki ⟩where C i is the
+ki th occurrence of the command C i in the sequence ⟨C 1, . . . , C m ⟩. There
+is an edge from ⟨C i, ki ⟩to ⟨C j , kj ⟩iﬀi < j and C i ≍C j . For example,
+suppose that C, D, and E are distinct commands with C ≍D, C ≍E,
+D ̸≍E, and no command interferes with itself. Then G(⟨C, D, E, C, E ⟩)
+is the graph
+⟨C, 1⟩
+PP
+q
+
+1
+⟨D, 1⟩
+⟨E, 1⟩
+
+1
+PP
+q
+⟨C, 2⟩-
+⟨E, 2⟩
+~
+It is not hard to see that for any two c-seqs σ and τ:
+• [σ] = [τ] iﬀG(σ) = G(τ).
+• [σ] ⊑[τ] iﬀG(σ) is a preﬁx of G(τ).
+• [σ] and [τ] are compatible iﬀthe subgraphs of G(σ) and G(τ) consist-
+ing of the nodes they have in common are identical, and C ̸≍D for
+every node ⟨C, i ⟩in G(σ) that is not in G(τ) and every node ⟨D, j ⟩
+in G(τ) that is not in G(σ).
+Using these observations, one can show that the set of histories is a monoidal
+c-struct set.
+If non-interfering commands commute, then it is easy to see that execu-
+tions of equivalent c-seqs yield the same result—that is, the same output for
+each command and the same ﬁnal state. Hence, to use the state-machine ap-
+proach for implementing a system, it suﬃces to solve the consensus problem
+for histories.
+If ≍is deﬁned so that all pairs of commands are interfering, then histories
+are equivalent to sequences. If ≍is deﬁned so no commands interfere, then
+histories are equivalent to ﬁnite multisets of commands.
+Intuitively, the
+weaker the ≍relation is (the less likely it is for commands to interfere), the
+easier it is to solve the generalized consensus problem. As we have seen, in
+the limiting case of command sets, the problem has a trivial solution.
+16
+
+--- Page 21 ---
+Our deﬁnition of a history allows it to contain duplicate commands. As
+we did with sequences, we can also deﬁne c-structs to consist of histories
+without duplicates. (A history without duplicates is an equivalence class of
+sequences without duplicates.) As with sequences, this moves the problem
+of duplicate detection from the state machine to the consensus algorithm.
+5
+The Generalized Paxos Consensus Algorithm
+We now develop an algorithm to implement generalized consensus in an
+asynchronous, non-Byzantine distributed setting. This means that we as-
+sume a network of processes that communicate by sending messages. Mes-
+sages can be lost, but they cannot be corrupted.
+A process can fail by
+stopping and doing nothing, but it cannot execute its algorithm incorrectly.
+We make no assumption about relative execution speeds or about the time
+it takes for a message to be delivered.
+We require the safety conditions for consensus to hold with no additional
+assumptions. The famous theorem of Fischer, Lynch, and Paterson [3] im-
+plies that additional assumptions are needed to ensure liveness. We defer a
+discussion of liveness to Section 6.2. (However, the need to satisfy liveness
+will motivate our development of the algorithm.)
+Section C of the appendix contains formal TLA+ speciﬁcations of our
+algorithms. The deﬁnitions of Sections 5.1 and 5.2 are formalized in Sec-
+tion C.3. Appendix Section C.4 contains a TLA+ speciﬁcation of the ab-
+stract algorithm of Section 5.3. The distributed abstract algorithm of Sec-
+tion 5.4 and the generalized Paxos consensus algorithm of Section 5.5 are
+formalized in the TLA+ speciﬁcations of Sections C.5 and C.6, respectively.
+5.1
+Ballots and Quorums
+Like ordinary Paxos, the generalized Paxos algorithm executes a sequence of
+numbered ballots to choose values. If a ballot does not succeed in choosing
+values because of a failure, then a higher-numbered ballot is executed. Each
+acceptor participates in only one ballot at a time, going from one ballot only
+to a higher-numbered one. However, diﬀerent acceptors may be participating
+in diﬀerent ballots at the same time.
+We assume an unbounded set of ballot numbers that are totally ordered
+by a relation <, with a smallest ballot number that we call 0. The natural
+numbers is an obvious choice for the set of ballot numbers, but not the only
+one. The set of all non-negative reals is another possible choice. We write
+17
+
+--- Page 22 ---
+balnum as an abbreviation for ballot number, and we let BalNum be the set
+of all balnums.
+We assume that some ballot numbers are designated to be fast. Ballots
+with fast balnums will be used to try to have learners learn commands in
+two message delays. A balnum that is not fast is said to be a classic balnum.
+We assume that the sets of fast and classic balnums are both unbounded.
+A quorum of acceptors must participate in a ballot for that ballot to
+succeed in choosing values. What constitutes a quorum can depend upon
+the ballot number.
+For each balnum m, we assume a collection of sets
+of acceptors called m-quorums. We let Quorum(m) be the set of all m-
+quorums. Approximate Theorems 1 and 3 lead us to make the following
+assumption about quorums:
+Quorum Assumption For all balnums k and m:
+1. The intersection of any k-quorum and any m-quorum is non-
+empty.
+2. If k is a fast balnum, then the intersection of any two k-quorums
+and any m-quorum is non-empty. More precisely:
+∀Q1, Q2 ∈Quorum(k), R ∈Quorum(m) :
+Q1 ∩Q2 ∩R ̸= {}
+5.2
+Ballot Arrays
+The state of the balloting is described by a data structure called a ballot
+array. Before talking about algorithms, we deﬁne ballot arrays and prove
+some properties about them.
+We ﬁrst introduce a new value none that is not a c-struct, and we extend
+⊑to c-structs and none by deﬁning none ⊑none to be true and v ⊑w
+to be false if either v or w (but not both) equals none. We deﬁne a ballot
+array as follows.
+Deﬁnition 1 A ballot array β is a mapping that assigns to each acceptor
+a a balnum bβa and to each acceptor a and balnum m a value βa[m] that is
+a c-struct or equals none, such that for every acceptor a:
+• βa[0] ̸= none
+• The set of balnums m with βa[m] ̸= none is ﬁnite.
+• βa[m] = none for all balnums m > bβa.
+18
+
+--- Page 23 ---
+Think of a ballot array β as describing a possible state of a voting algorithm.
+The value of bβa represents the number of the ballot in which a is currently
+participating. The value of βa[m] represents the votes cast by a in the ballot
+numbered m; if βa[m] = none then a has not voted in ballot m, otherwise
+a has voted for all preﬁxes of βa[m]. But this is only how we think about
+ballot arrays. A ballot array is really just any data structure satisfying the
+deﬁnition.
+We now deﬁne a c-struct to be chosen in a ballot array iﬀit is the glb
+of the c-structs voted for in some ballot by a quorum:
+Deﬁnition 2 A c-struct v is chosen at balnum m in ballot array β iﬀthere
+exists an m-quorum Q such that v ⊑βa[m] for all acceptors a in Q. A
+c-struct v is chosen in ballot array β iﬀit is chosen at m in β for some
+balnum m.
+Remember that if v is a c-struct, then v ⊑w implies w ̸= none. Hence, for
+a c-struct to be chosen at m, there must be at least one m-quorum Q all of
+whose members have voted in ballot m.
+We next deﬁne what it means for v to be choosable at balnum m in β.
+Intuitively, it means that β represents a state of a voting algorithm in which
+it is possible for acceptors to cast additional votes that cause v to become
+chosen at m, assuming that an acceptor a can cast new votes only in ballots
+numbered bβa or higher.
+Deﬁnition 3 A c-struct v is choosable at balnum m in ballot array β iﬀ
+there exists an m-quorum Q such that v ⊑βa[m] for every acceptor a in Q
+with bβa > m.
+It follows immediately from the deﬁnition that if v is chosen at m in β, then
+it is choosable at m in β.
+We deﬁne v to be safe at m iﬀit is an extension of any value choosable
+at a balnum less than m, and we deﬁne β to be safe iﬀevery βa[m] that is
+a c-struct is safe at m.
+Deﬁnition 4 A c-struct v is safe at m in β iﬀw ⊑v for every balnum
+k < m and every c-struct w that is choosable at k. A ballot array β is safe
+iﬀfor every acceptor a and balnum k, if βa[k] is a c-struct then it is safe at
+k in β.
+Observe that if v is safe at m in β, then every extension of v is also safe at
+m in β. Every c-struct is trivially safe at 0 in any ballot array.
+The following result shows that a voting algorithm can satisfy the con-
+sistency requirement of consensus by ensuring that an acceptor votes in each
+19
+
+--- Page 24 ---
+ballot number m only for c-structs that are safe at m. Detailed proofs of all
+the propositions in this section appear in Section B of the Appendix.
+Proposition 1 If a ballot array β is safe, then the set of values that are
+chosen in β is compatible.
+Proposition 1 shows that an algorithm can satisfy the consistency require-
+ment of consensus by allowing acceptors to vote only for safe values. Satisfy-
+ing liveness requires that the algorithm be able to get values chosen, which
+requires that acceptors must be able to vote in some ballot with a larger
+balnum than any in which they have already voted. Hence, the algorithm
+must be able to ﬁnd values that are safe at some suﬃciently large balnum.
+Moreover, since liveness should be satisﬁed if only a quorum of acceptors are
+non-faulty, the algorithm should be able to ﬁnd safe values knowing only the
+states of acceptors in some quorum. Hence, we need to be able to compute
+safe values knowing only bβa and the subarray βa for the acceptors a in some
+quorum. We now show how this is done.
+We deﬁne a set ProvedSafe(Q, m, β) of c-structs that depends only on
+the values of βa[j] for a ∈Q and j < m. We then show that, if bβa ≥m for
+every a in Q, then every c-struct in ProvedSafe(Q, m, β) is safe at m in β.
+In the following deﬁnition, Max B is the largest element in the ﬁnite set B
+of balnums.
+Deﬁnition 5 For any balnum m, m-quorum Q, and ballot array β, let:
+• k
+∆= Max {i ∈BalNum | (i < m) ∧(∃a ∈Q : βa[i] ̸= none)}.
+[This set is non-empty if m > 0 because β is a ballot array.]
+• R
+∆= {R ∈Quorum(k) | ∀a ∈Q ∩R : βa[k] ̸= none}.
+• γ(R)
+∆= ⊓{βa[k] | a ∈Q ∩R}, for any R in R.
+[γ(R) exists by CS3 because Q and R are quorums, so Q ∩R is non-empty.]
+• Γ
+∆= {γ(R) | R ∈R}
+Then ProvedSafe(Q, m, β) is deﬁned to equal
+if R = { } then {βa[k] | (a ∈Q) ∧(βa[k] ̸= none)}
+else
+if Γ is compatible then { ⊔Γ }
+else
+{ }
+The set Γ is ﬁnite because the set of acceptors is ﬁnite.
+Hence, if Γ is
+compatible, then ⊔Γ exists. If R is non-empty, then ProvedSafe(Q, m, β)
+contains at most one element.
+20
+
+--- Page 25 ---
+Proposition 2 For any balnum m > 0, m-quorum Q, and ballot array β, if
+β is safe and bβa ≥m for all a ∈Q, then every element of ProvedSafe(Q, m, β)
+is safe at m in β.
+This proposition implies that an algorithm can ﬁnd a c-struct safe at
+a ballot number m by computing the set ProvedSafe(Q, m, β) for an m-
+quorum Q, if that set is non-empty. Let k, R, and Γ be as in the deﬁnition.
+The deﬁnition implies that ProvedSafe(Q, m, β) is non-empty if R is empty.
+To ﬁnd safe values, we must ensure that ProvedSafe(Q, m, β) is also non-
+empty if R is non-empty. By the deﬁnition, this means showing that Γ is
+compatible if R is non-empty. The proof of Proposition 3 in the appendix
+shows that this is the case if k is a fast balnum. However, it need not be true
+for a classic balnum k. To ensure that ProvedSafe(Q, m, β) is non-empty,
+we need β to satisfy another condition that we now deﬁne.
+Deﬁnition 6 A ballot array β is called conservative iﬀfor every classic
+balnum m and all acceptors a and b, if βa[m] and βb[m] are both diﬀerent
+from none, then they are compatible.
+Proposition 3 For any balnum m > 0, m-quorum Q, and ballot array β,
+if β is conservative then ProvedSafe(Q, m, β) is non-empty.
+5.3
+The Abstract Algorithm
+Paxos assumes some method of selecting a single leader. However, a unique
+leader is required only to ensure liveness. The safety requirements for con-
+sensus are satisﬁed even if there is no leader, or if multiple leaders are
+selected. We assume a set of possible leaders among which the leader is to
+be chosen. Each balnum is assigned to a possible leader, each possible leader
+being assigned unbounded sets of both classic and fast balnums.
+Since we are considering only safety properties here, we don’t care how
+many of the possible leaders actually are leaders. So, we drop the “possible”
+and simply call them leaders.
+Intuitively, the abstract algorithm works as follows. Each acceptor par-
+ticipates in a sequence of ballots. It participates in only one ballot at a time,
+ending its participation in a ballot by joining a higher-numbered ballot. Vot-
+ing in that ballot begins when the leader of a ballot (the one assigned its
+balnum) suggests c-structs for acceptors to vote for in that ballot. In a fast
+ballot, an acceptor ﬁrst votes for a c-struct suggested by the leader and then
+decides by itself what additional c-structs to vote for. In a classic ballot, an
+acceptor votes only for c-structs suggested by the leader.
+21
+
+--- Page 26 ---
+Acceptors, leaders, and learners perform the following actions. An accep-
+tor a can at any time stop participating in its current ballot and join a new
+one with number m by performing action JoinBallot(a, m). When enough
+acceptors have joined ballot m, its leader can perform a StartBallot(m, Q)
+action to suggest a c-struct for that ballot. If this is a classic ballot, the
+leader then suggests additional c-structs by performing action Suggest(m, C)
+for proposed commands C. This action suggests a new c-struct v •C, where
+v is a c-struct the leader had previously suggested. An acceptor a can per-
+form action ClassicVote(a, v) to vote in its current ballot for a c-struct v
+suggested by the leader. If it is participating in a fast ballot and has already
+voted for a c-struct suggested by the leader, acceptor a can then perform
+action FastVote(a, C) to vote for a new c-struct containing the proposed
+command C. It can keep performing FastVote(a, C) actions for diﬀerent
+commands C, until it joins a higher-numbered ballot. A learner l can at
+any time perform an AbstractLearn(l, v) action that sets learned[l] to v, if
+v is an extension of learned[l] that is chosen.
+We describe the algorithm precisely in terms of the following variables.
+learned An array of c-structs, where learned[l] is the c-struct currently
+learned by learner l. Initially, learned[l] = ⊥for all learners l.
+propCmd The set of proposed commands. It initially equals the empty
+set.
+bA A ballot array. It represents the current state of the voting. Ini-
+tially, c
+bAa = 0, bAa[0] = ⊥and bAa[m] = none for all m > 0.
+(Every acceptor casts a default vote for ⊥in ballot 0, so the
+algorithm begins with ⊥chosen.)
+minTried, maxTried Arrays, where minTried[m] and maxTried[m] are
+either both c-structs or both equal to none, for every balnum
+m. All the c-structs suggested thus far by the leader in ballot
+m are extensions of minTried[m] and preﬁxes of maxTried[m].
+Initially, minTried[0] = maxTried[0] = ⊥and minTried[m] =
+maxTried[m] = none for all m > 0.
+The algorithm maintains the following three invariants, where a c-struct v
+is said to be proposed iﬀit is an element of Str(propCmd).
+Tried Invariant For all balnums m,
+1. minTried[m] ⊑maxTried[m]
+2. If minTried[m] ̸= none, then minTried[m] is safe at m in bA and
+maxTried[m] is proposed.
+22
+
+--- Page 27 ---
+[This implies that minTried[m] and maxTried[m] are both proposed
+and are both safe at m in bA, if either is not none.]
+bA Invariant For all acceptors a and balnums m, if bAa[m] ̸= none, then
+1. minTried[m] ⊑bAa[m].
+2. If m is a classic balnum, then bAa[m] ⊑maxTried[m].
+[This and part 2 of the Tried invariant imply that bAa[m] is proposed.]
+3. If m is a fast balnum, then bAa[m] is proposed.
+learned Invariant For every learner l:
+1. learned[l] is proposed.
+2. learned[l] is the lub of a ﬁnite set of c-structs chosen in bA.
+It is easy to check that the invariants are satisﬁed by the initial values of
+the variables. Observe that because the extension of a safe c-struct is safe,
+part 2 of the Tried invariant and part 1 of the bA invariant imply that bA
+is safe. The bA invariant implies that bA is also conservative.
+We now show that these invariants imply that the algorithm satisﬁes the
+nontriviality and consistency requirements.
+Nontriviality This is asserted by part 1 of the learned invariant.
+Consistency By the bA invariant, bAa[m] ̸= none implies minTried[m] ⊑
+bAa[m], which implies minTried[m] ̸= none.
+Part 2 of the Tried
+invariant then implies that bAa[m] is safe at m in bA. This shows that
+bA is safe, so Proposition 1 implies that the set of values chosen in
+bA is compatible. Consistency then follows from part 2 of the learned
+invariant, since the ⊔-completion of a compatible set is compatible.
+To complete the description of the abstract algorithm, we now specify
+each of its atomic actions.
+Propose(C) for any command C. It is enabled iﬀC /∈propCmd. It sets
+propCmd to propCmd ∪{C}.
+JoinBallot(a, m) for acceptor a and balnum m. It is enabled iﬀc
+bAa < m.
+It sets c
+bAa to m.
+StartBallot(m, Q) for balnum m and m-quorum Q. It is enabled iﬀ
+• maxTried[m] = none and
+• ∀a ∈Q : c
+bAa ≥m.
+23
+
+--- Page 28 ---
+It sets minTried[m] and maxTried[m] to w •σ for an arbitrary element
+w in ProvedSafe(Q, m, bA) and sequence σ in Seq(propCmd).
+Suggest(m, C) for balnum m and command C. It is enabled iﬀ
+• C ∈propCmd and
+• maxTried[m] ̸= none.
+It sets maxTried[m] to maxTried[m] • C.
+ClassicVote(a, v) for acceptor a and c-struct v. It is enabled iﬀ
+• maxTried[ c
+bAa] ̸= none,
+• minTried[ c
+bAa] ⊑v ⊑maxTried[ c
+bAa], and
+• bAa[ c
+bAa] = none or bAa[ c
+bAa] < v
+It sets bAa[ c
+bAa] to v.
+FastVote(a, C) for acceptor a and command C. It is enabled iﬀ
+• C ∈propCmd,
+• c
+bAa is a fast balnum, and
+• bAa[ c
+bAa] ̸= none.
+It sets bAa[ c
+bAa] to bAa[ c
+bAa] • C.
+AbstractLearn(l, v) for learner l and c-struct v. It is enabled iﬀv is chosen
+in bA. It sets learned[l] to learned[l] ⊔v.
+Note that the Join and StartBallot actions are never enabled for balnum 0.
+(The initial state is one in which those ballot 0 actions have already been
+performed.)
+We ﬁrst need to show that these actions are type correct, meaning that
+they set the variables to values of the right type.
+The only non-trivial
+condition to check is that bA is always set to a ballot array. Since bAa[m]
+is changed only by setting it to a c-struct for m = c
+bAa, and c
+bAa is only
+increased, this follows from the deﬁnition of ballot array.
+We now show that each of these actions maintains the invariance of the
+three invariants. In the proofs, we let an ordinary expression exp be the
+value of that expression before executing the action, and exp′ be its value
+after the execution.
+Propose(C) This action only increases the set propCmd, and this is easily
+seen to preserve the invariants.
+24
+
+--- Page 29 ---
+JoinBallot(a, m) This action changes only c
+bAa, so it does not aﬀect the
+bA or learned invariant. It could violate the Tried invariant only if
+minTried[m] is safe at m in bA but not in bA′, for some m. But the
+deﬁnition of choosable at implies that if w is choosable at k in bA′,
+then it is choosable at k in bA. Hence, the deﬁnition of safe at implies
+that any c-struct v safe at m in bA is also safe at m in bA′.
+StartBallot(m, Q) This action changes only minTried[m] and maxTried[m],
+setting them from none to a c-struct v that is safe at m in bA by Propo-
+sition 2 and the observation that any extension of a safe c-struct is safe.
+The bA invariant, assumption CS3, and the deﬁnition of ProvedSafe
+imply that v is proposed. Hence, the action preserves the Tried in-
+variant. It preserves the bA invariant because part 1 of that invariant
+implies bAa[m] = none for all acceptors a. It preserves the learned
+invariant because it does not change learned, propCmd, or what values
+are chosen in bA.
+Suggest(m, C) This action changes only maxTried[m], setting it to an ex-
+tension of its previous value. Part 2 of the Tried invariant implies that
+maxTried[m] is safe and proposed. Since the extension of a safe value
+is safe, maxTried[m]′ is safe. Since the action is enabled only if C is
+proposed, maxTried[m]′ is also proposed. It is then easy to check that
+the invariants are maintained.
+ClassicVote(a, v) This action changes only bAa[ c
+bAa], setting it to v. Since
+minTried[ c
+bAa] ⊑v ⊑maxTried[ c
+bAa], the action clearly maintains the
+bA and learned invariants. It can violate the Tried invariant only by
+making minTried[m] unsafe at m in bA′ for some balnum m. But it
+follows from the deﬁnition of choosable at that any c-struct choosable
+at balnum k in bA′ is choosable at k in bA, which implies that the
+action preserves safety at any balnum m.
+FastVote(a, C) This action changes only bAa[ c
+bAa], setting it to an exten-
+sion of its previous value. Since it is performed only if c
+bAa is a fast
+balnum, it obviously preserves the bA invariant. It preserves the Tried
+invariant for the same reason that the ClassicVote action does, and it
+is easily seen to preserve the learned invariant.
+AbstractLearn(l, v) This action trivially maintains the Tried and bA invari-
+ants. The enabling condition implies that it maintains part 2 of the
+learned invariant. Part 1 of that invariant follows from parts 2 and 3
+25
+
+--- Page 30 ---
+of the bA invariant and assumption CS3, which imply that any chosen
+c-struct is proposed.
+Since the invariants hold in the initial state, this proves that they hold
+throughout any execution of the algorithm. As observed above, this proves
+that the algorithm satisﬁes the non-triviality and consistency requirements.
+Since learned[l] is changed only by action AbstractLearn(l, v), which sets it
+to learned[l] ⊔v, the stability requirement is obviously satisﬁed.
+5.4
+A Distributed Abstract Algorithm
+The abstract algorithm is non-distributed because an action performed by
+one process depends on the values of variables set by another process. For
+example, the action ClassicVote(a, v) performed by acceptor a depends
+upon the values of minTried and maxTried, variables set by a leader. To
+implement this non-distributed algorithm with a distributed one, we must
+have each process send information to other processes when it changes the
+values of its variables. For example, the leader of ballot m sends messages
+to acceptors when it changes minTried[m] or maxTried[m]. The problem is
+that the values of those variables can change between when the message is
+sent and when it is received. This problem is solvable because the values
+of variables change monotonically. The values of maxTried[m] and bAa[m]
+change only from none to a sequence of c-structs, each a preﬁx of the next.
+The value of minTried[m] changes only from none to a c-struct, and then
+remains unchanged. Each c
+bAa can only increase.
+We now describe a distributed abstract algorithm. Its variables consist
+of the variables of the abstract algorithm plus additional variables that we
+don’t specify that represent what messages are in transit and what messages
+have been received. The variables taken from the abstract algorithm are
+initialized as in that algorithm, and initially no messages have been sent.
+We now describe each of the distributed algorithm’s actions, and we explain
+what action of the abstract algorithm it implements.
+Following previous descriptions of classic Paxos [5], we divide acceptor
+and leader actions into phase 1 and phase 2 actions. Phase 1 actions im-
+plement the Join and StartBallot actions of the abstract algorithm; phase 2
+actions implement Suggest, ClassicVote, and FastVote. (The FastVote ac-
+tion does not appear in classic Paxos.) Phase 1 actions are never enabled
+for ballot 0. (They are unnecessary.)
+SendProposal(C) executed by the proposer of command C.
+The action
+is always enabled. It sets propCmd to propCmd ∪{C} and sends a
+26
+
+--- Page 31 ---
+⟨“propose”, C ⟩message. This message may be sent to one or more
+possible leaders and/or to the acceptors; we discuss later where they
+are sent.
+The action implements the abstract algorithm’s Propose(C) action
+if C /∈propCmd; otherwise it leaves that algorithm’s variables un-
+changed.
+Phase1a(m) executed by the leader of ballot numbered m. The action is
+enabled iﬀmaxTried[m] = none. It sends the message ⟨“1a”, m ⟩to
+acceptors.
+The action leaves the abstract algorithm’s variables unchanged.
+Phase1b(a, m) executed by acceptor a, for balnum m. The action is en-
+abled iﬀa has received a ⟨“1a”, m ⟩message (from the leader) and
+c
+bAa < m. It sends the message ⟨“1b”, m, a, bAa ⟩to the leader and
+sets c
+bAa to m.
+This action implements the abstract algorithm’s JoinBallot(a, m) ac-
+tion.
+Phase2Start(m, v) executed by the leader of ballot m, for c-struct v. The
+action is enabled when:
+• maxTried[m] = none,
+• the leader has received a “1b” message for balnum m from every
+acceptor in an m-quorum Q, and
+• v = w • σ, where σ ∈Seq(propCmd), w ∈ProvedSafe(Q, m, β),
+and β is any ballot array such that, for every acceptor a in Q,
+bβa = k and the leader has received a message ⟨“1b”, m, a, ρ⟩
+with βa = ρ.
+The action sets minTried[m] and maxTried[m] to v • σ and sends the
+message ⟨“2a”, m, v • σ⟩to acceptors, where σ is some sequence of
+commands, each element of which the leader has received in “propose”
+messages.
+We now show that this action implements the abstract algorithm’s
+StartBallot(m, Q) action. To show that the enabling condition im-
+plies that StartBallot(m, Q) is enabled, we must show that c
+bAa ≥m
+for all a ∈Q. This is true because the Phase1b message that sent the
+“1b” message from acceptor a ∈Q set c
+bAa to m, and the value of c
+bAa
+never decreases. Since a “propose” message is send only for commands
+27
+
+--- Page 32 ---
+in propCmd, it is clear that the action implements StartBallot(m, Q) if
+ProvedSafe(Q, m, β) equals ProvedSafe(Q, m, bA). These ProvedSafe
+sets are equal for the following reason. The set ProvedSafe(Q, m, β)
+depends only on the values βa[k] for a ∈Q and k < m. But βa[k]
+equals ρ[k] for some ⟨“1b”, m, a, ρ⟩message sent by a. When that
+message was sent, ρ[k] equaled bAa[k].
+Moreover, the Phase1b ac-
+tion that sent the message also set c
+bAa to m, which prevents any
+further change to bAa[k] for k < m. Hence, βa[k] equals the current
+value of bAa[k] for all a ∈Q and k < m, so ProvedSafe(Q, m, β) =
+ProvedSafe(Q, m, bA). This completes the proof that the action im-
+plements StartBallot(m, Q).
+Phase2aClassic(m, C) executed by the leader of ballot m, for command
+C. The action is enabled iﬀmaxTried[m] ̸= none and the leader has
+received a ⟨“propose”, C ⟩message. It sends the message
+⟨“2a”, m, maxTried[m] • C ⟩
+to the acceptors and sets maxTried[m] to maxTried[m] • C.
+It is easy to see that this implements action Suggest(m, C) of the
+abstract algorithm.
+Phase2bClassic(a, m, v) executed by acceptor a for balnum m and c-struct
+v. The action is enabled iﬀc
+bAa = m, acceptor a has received the
+message ⟨“2a”, m, v ⟩, and bAa[m] equals none or bAa[m] < v. It sets
+bAa[m] to v and sends a ⟨“2b”, m, a, v ⟩message to every learner.
+This action clearly implements action ClassicVote(a, v) of the abstract
+algorithm if minTried[m] ⊑v ⊑maxTried[m]. But minTried[m] ⊑
+v = maxTried[m] held when the “2a” message was sent, minTried[m]
+never changes once it is diﬀerent from none, and maxTried[m] can
+only increase. Hence, minTried[m] ⊑v ⊑maxTried[m] must hold.
+Phase2bFast(a, m, C) executed by acceptor a for balnum m and command
+C. The action is enabled iﬀm is a fast balnum, c
+bAa = m, bAa[m] ̸=
+none, and a has received a ⟨“propose”, C ⟩message. It sets bAa[m] to
+bAa[m] • C and sends the message ⟨“2b”, m, a, bAa[m] • C ⟩to every
+learner.
+It is easy to see that this implements action FastVote(a, C) of the
+abstract algorithm.
+28
+
+--- Page 33 ---
+Learn(l, v) performed by learner l for c-struct v. The action is enabled iﬀ,
+for some balnum m and some m-quorum Q, learner l has received a
+message ⟨“2b”, m, a, w ⟩with v ⊑w from every acceptor a in Q. It
+sets learned[l] to learned[l] ⊔v.
+The existence of the message ⟨“2b”, m, a, w ⟩implies w ⊑bAa[m],
+since the value of bAa[m] equaled w when the message was sent and
+can only increase.
+Hence, the enabling condition implies that v is
+chosen in bA, so this action implements action AbstractLearn(l, v) of
+the abstract algorithm.
+Since the distributed abstract algorithm implements the abstract algorithm,
+it satisﬁes the nontriviality, consistency, and stability requirements.
+5.5
+The Generalized Paxos Consensus Algorithm
+In our distributed abstract algorithm, processes maintain a lot of informa-
+tion. A leader maintains the values of minTried[m] and maxTried[m] for
+each of its balnums m; an acceptor a maintains the array bAa. Moreover,
+the complete array bAa is sent in phase 1b messages. We obtain the gener-
+alized Paxos consensus algorithm by eliminating most of this information,
+so a process maintains only the data it needs.
+The variable minTried is not used at all by the algorithm, so it can
+be eliminated.
+(It appears only in the proof that the distributed algo-
+rithm’s actions implement the non-distributed abstract algorithm’s actions.)
+Moreover, when the leader has begun the execution of ballot m with a
+Phase1a(m) action, it can forget about lower-numbered ballots.
+(It can
+ignore phase 1b messages for lower-numbered ballots.) Therefore, a leader
+r need only maintain a variable maxStarted[r] whose value is the largest
+balnum m assigned to it such that maxTried[m] ̸= none, and a variable
+maxVal[r] whose value is maxTried[maxStarted[r]].
+To compute ProvedSafe(Q, m, bA), a leader does not need the complete
+arrays bAa; it needs to know only the largest balnum k < m such that
+bAa[k] ̸= none and the value of bAa[k]. It is therefore not hard to see that
+an acceptor a need keep only the following information:
+mbal[a]
+∆=
+c
+bAa
+bal[a]
+∆=
+Max{k ∈balnum | bAa[k] ̸= none}
+val[a]
+∆=
+bAa[bal[a]]
+The Phase1b(a, m) action is then enabled iﬀa has received a ⟨“1a”, m ⟩
+message with m < mbal[a]; the action sets mbal[a] to m and sends the
+29
+
+--- Page 34 ---
+message ⟨“1b”, m, a, bal[a], val[a]⟩. The modiﬁcations to the other actions
+are straightforward. Since this is just an optimization of the distributed
+abstract algorithm, it satisﬁes the safety requirements for consensus.
+In the generalized Paxos consensus algorithm, the state of a leader, ac-
+ceptor, or learner consists of a c-struct and at most two balnums. The largest
+message sent (a phase 1b message) contains a c-struct, a pair of balnums,
+and the name of an acceptor. This is very little data, if c-structs are small.
+However, a c-struct might be a history containing all the commands ever
+executed by the system. It would be impractical to send a lot of messages
+containing such c-structs. It might even be diﬃcult for a process to store
+a c-struct. The problem of handling large c-structs is discussed below in
+Section 6.3.
+6
+Implementation Considerations
+6.1
+Normal Operation
+In the usual implementations, one builds a system with some number N of
+processors acting as acceptors. One can then let a quorum for both classic
+and fast balnums consist of any set with at least ⌊2N /3⌋+ 1 acceptors.
+One can also let a quorum for classic balnums consist of any set of at least
+⌊N /2⌋+1 acceptors, and let a quorum for fast balnums consist of any set of
+at least ⌈3N /4⌉acceptors. A little simple set theory shows that the Quorum
+Assumption is satisﬁed by these choices of quorums.
+We consider how the system behaves in normal operation, starting with
+the failure of the current leader and the selection of a new one. As part
+of the leader-selection process, the new leader tries to learn what acceptors
+are working.
+It also tries to learn the number of the largest ballot that
+was in progress and chooses a larger balnum m that is assigned to it. The
+leader chooses a fast balnum m if ⌊2N /3⌋+ 1 acceptors are working; other-
+wise, it must choose a classic one. It then begins ballot m by executing its
+Phase1a(m) action, sending phase 1a messages to an m-quorum of accep-
+tors. Upon receipt of those messages, the acceptors execute Phase1b actions
+and send phase 1b messages to the leader. (Those Phase1b actions are en-
+abled unless an acceptor had already participated in a higher-numbered
+ballot, in which case the acceptor notiﬁes the leader and the leader tries
+again with a larger balnum.)
+When the leader has received phase 1b messages from an m-quorum,
+it begins the second phase of ballot m (the voting phase) by executing
+a Phase2aStart action, sending phase 2a messages to acceptors in an m-
+30
+
+--- Page 35 ---
+quorum.
+Those acceptors will then execute their Phase2aClassic action,
+sending phase 2b messages to the learners. The eﬀect of this is to complete
+the choosing of all c-structs that failed to be chosen in an earlier ballot. (The
+failure of the previous leader may have resulted in a partially completed
+ballot, in which fewer than a quorum of acceptors voted for some c-struct.)
+What happens next depends on whether the leader has chosen a clas-
+sic or a fast balnum.
+If it has chosen a classic balnum, then it notiﬁes
+proposers to send it their “propose” messages. Upon receipt of such a mes-
+sage, it executes the Phase2aClassic action, sending phase 2a messages to
+an m-quorum of acceptors. Upon receipt of a phase 2a message, acceptors
+execute Phase2bClassic actions, sending phase 2b messages to the learners.
+A learner learns a c-struct containing the proposed command when it has
+received the phase 2b messages from an m-quorum. Thus, three message
+delays elapse between the proposal of a command and the learning of a c-
+struct containing that command. Approximate Theorem 3 implies that this
+delay is optimal if fewer than ⌊2N /3⌋+ 1 acceptors are non-faulty.
+If the leader has chosen a fast balnum, then it notiﬁes proposers to send
+their proposals directly to an m-quorum of acceptors. Upon receipt of a
+proposal, an acceptor executes a Phase2bFast action, sending a phase 2b
+message to the learners. By assumption CS4, a learner learns a c-struct
+containing a command C if it receives phase 2b messages with compatible
+c-structs containing C from an m-quorum of acceptors. The command is
+therefore learned within two message delays of its proposal, if a quorum of
+acceptors all send compatible c-structs. When the c-structs are histories,
+this will be the case unless an interfering command D is proposed concur-
+rently. In that case, some acceptors a may execute Phase2bFast(a, m, C)
+before executing Phase2bFast(a, m, D), and other acceptors may execute
+the actions in the opposite order. Thus, some acceptors may vote for a c-
+struct w •C •D and others for the incompatible c-struct w •D •C, for some
+c-struct w. In that case, no c-struct containing either C or D is chosen in
+ballot m.
+When such a collision occurs, the leader can intervene by executing
+a Phase1a(n) action for a higher fast balnum n. Suppose as a result of
+the phase 1b messages it receives, the leader’s Phase2Start(n, w) action is
+enabled. It begins phase 2 of ballot n by executing that action, sending
+phase 2a messages for the c-struct w • C • D or w • D • C. Upon receipt of
+this message, the acceptors perform the corresponding Phase2bClassic ac-
+tions, sending phase 2b messages that cause a c-struct containing C and D
+to be learned. The acceptors then resume normal fast operation, receiving
+proposals directly from proposers and executing Phase2bFast actions.
+31
+
+--- Page 36 ---
+The failure or repair of an acceptor can cause the leader to switch from
+fast to slow Paxos or vice-versa. It does this by executing Phase1a(n) for a
+new balnum n.
+6.2
+Ensuring Liveness
+We now consider the liveness condition LiveChoice(C, l). It holds under
+certain assumptions that can be stated in terms of the concept of a nonfaulty
+set of processes. Intuitively, a set of processes is nonfaulty iﬀthere are upper
+bounds on the time taken by each process to perform an action and on the
+delivery time of messages sent from one of the processes to another. We do
+not attempt to deﬁne precisely what nonfaulty means.
+When classic balnums are used, the liveness properties of generalized
+Paxos are essentially the same as for ordinary Paxos. It is not hard to see
+that progress can be guaranteed if eventually:
+• A single unique, non-faulty leader r is chosen, and no other possible
+leader performs Phase1a actions.
+• Leader r executes a Phase1a(m) action for a suﬃciently large classic
+balnum m, and executes no Phase1a(n) actions for n > m.
+• All messages sent between r and an m-quorum Q of acceptors are
+eventually delivered.
+• Leader r and all acceptors in Q eventually execute enabled Phase1
+and Phase2 actions.
+Under those assumptions, condition LiveChoice(C, l) will hold if the pro-
+poser of C eventually executes a SendProposal(C) action, the message
+⟨“propose”, C ⟩sent by that action is received by leader r, and learner l
+receives the phase 2b messages sent by acceptors in Q. The details are the
+same as for ordinary Paxos, and the reader is referred to the proof by de
+Prisco et al. [2].
+To achieve liveness with fast Paxos, the leader must receive phase 2b
+messages and observe if a collision has occurred—a situation indicated by
+receipt of phase 2b messages for incompatible c-structs. It must then start
+a new, higher-numbered ballot and get the conﬂicting proposed commands
+chosen as described above. The basic idea is clear, though formalizing the
+details is tedious.
+32
+
+--- Page 37 ---
+6.3
+Large C-Structs
+The generalized Paxos algorithm uses c-structs throughout, saving their val-
+ues in variables and sending them in messages. This is obviously a problem if
+c-structs are large—for example, if they contain the entire execution history
+of the system. We now indicate how they are handled in practice.
+A process constructs a c-struct v by appending a short command se-
+quence σ to another c-struct w.
+When a process sends v in a message,
+it has already sent w to the same recipient. So it can send v by sending
+only σ and the identiﬁer of the message containing w. Sending c-structs in
+messages therefore poses no problem.
+If a c-struct contains the entire history of the system, even storing it in
+memory may be a problem. Moreover, a leader must compute glbs and lubs
+of sets of c-structs to execute a Phase2Start action.
+Maintaining the entire execution history is a problem faced by the ordi-
+nary state-machine approach. Even if the entire command sequence can be
+kept in a process’s memory, restarting a failed server could require sending
+an infeasibly large sequence of commands. This problem is solved by letting
+a process forget the initial preﬁx of the command sequence, remembering
+only the state after that preﬁx’s execution. That state is the only informa-
+tion needed to execute later commands. A process thus remembers the state
+after executing some initial preﬁx of commands, the number of commands
+in that preﬁx, and the sequence of subsequent commands.
+The same idea can be applied in general when c-structs are histories. If
+a server has learned that the “current” history of the system is v •σ for some
+c-seq σ, then it can execute the commands in σ knowing only the state after
+executing the history v. So in generalized Paxos, servers can also forget
+preﬁxes of the current history. However, we now explain why this is not as
+simple for arbitrary c-structs as it is for command sequences.
+To execute the generalized Paxos algorithm, a process must be able to
+compute the glb and lub of two c-structs. For example, to execute action
+Phase2bClassic(a, m, v) upon receipt of a phase 2a message containing c-
+struct v, acceptor a must check that bAa[m] ⊑v, which is equivalent to
+checking that v = bAa[m] ⊔v. Suppose that a process a must compute the
+lub of a c-struct va in its memory and a c-struct vb that it has received in a
+message from another process b. If preﬁxes of c-structs have been forgotten,
+then a will know only that va = wa • σa and vb = wb • σb for known c-seqs
+σa and σb, but for preﬁxes wa and wb that it has forgotten. In general, it
+is not possible to compute va ⊔vb knowing only σa, σb, and the states after
+executing the histories wa and wb.
+33
+
+--- Page 38 ---
+To solve this problem, we introduce the concept of a checkpoint.
+A
+checkpoint is a command C satisfying the following property: for any c-seqs
+ρ, σ, and τ, if ⊥• ρ • C • σ = ⊥• τ, then there is a c-seq η such that
+τ = η ◦⟨C ⟩◦σ and ⊥• ρ = ⊥• η. For a monoidal c-struct set, this implies
+that any c-struct v can be written uniquely in the form v1 • C • · · · • C • vn
+where each vi equals ⊥• τ i and the c-seq τ i does not contain the command
+C. For histories, a checkpoint is any command that interferes with every
+command. Any state machine can be augmented by a checkpoint that is
+deﬁned to be a no-op (produces no output and leaves the state unchanged)
+that interferes with ever command.
+Assume a special checkpoint command C.
+A leader can periodically
+propose command C. A preﬁx is forgotten only if it is of the form v • C. In
+an ordinary state-machine implementation, a process might remember only
+the state after executing command number i, for some i, and the sequence
+of later commands. Similarly, in an implementation of generalized Paxos, a
+process might remember only the state after executing the preﬁx vi ending
+with the ith checkpoint and the c-struct w such that the history it currently
+knows is vi • w.
+Just as in the ordinary state-machine approach, an implementation can
+use a sequence of separate instances of the generalized Paxos algorithm to
+choose successive parts of the command history. In the ordinary approach,
+the command sequence C 1, C 2, . . . is chosen by letting the ith instance of the
+ordinary Paxos consensus algorithm choose the command C i. In generalized
+Paxos, a command history v1 • C • v2 • C • · · · can be chosen by letting the
+ith instance of the generalized Paxos algorithm choose the history vi • C,
+where C is a special checkpoint command. The procedures for forgetting
+history preﬁxes and updating restarted servers in generalized Paxos are then
+completely analogous to the ones for the ordinary state-machine method.
+7
+Summary
+Classical Paxos uses a sequence of consensus algorithms to choose a sequence
+of commands. In normal operation, a client (proposer) sends its command
+to the leader, which forwards it in a phase 2a message to the acceptors,
+which then send phase 2b messages to the servers (learners), which execute
+the command upon receipt of enough phase 2b messages. Thus, it takes
+three message delays for a command to be executed. Messages can be saved
+at the cost of an extra message delay by having the phase 2b messages sent
+only to the leader.
+34
+
+--- Page 39 ---
+Consistency of the system is maintained despite any number of non-
+Byzantine failures. To ensure progress despite the failure of F nodes requires
+more than 2F acceptors.
+Fast Paxos saves one message delay by having the client send its com-
+mand directly to the acceptors. Allowing fast progress despite the failure of
+E nodes requires more than 2E + F acceptors. However, if two clients con-
+currently send commands, then the normal procedure might fail to choose
+a command, incurring one or more extra message delays.
+Instead of executing a sequence of ordinary consensus algorithms, each
+choosing a single command, we have restated the problem of implementing
+a state machine as that of agreeing on a growing command history. We
+generalized both ordinary consensus and consensus on command histories
+to the problem of learning a monotonic sequence of objects called command
+structures, and we generalized the Paxos consensus algorithm to solve this
+problem.
+The purpose of this generalization is to obtain an algorithm with the
+same message delay as fast Paxos, but that remains fast despite concur-
+rent issuing of client commands, if those commands are non-interfering. In
+many applications, concurrently issued commands are almost always non-
+interfering.
+The generalized Paxos algorithm provides a new method of
+implementing such systems that, in the normal case, is optimal in terms of
+the number of message delays required to execute a command.
+In principle, a single instance of the generalized consensus algorithm can
+be used to implement a system. In practice, a sequence of separate instances
+will be used, each choosing the portion of the history between two successive
+checkpoints.
+All the implementation details of the ordinary state-machine approach
+apply to the generalized algorithm. In particular, reconﬁguration can be
+performed by state-machine commands. In the original state-machine ap-
+proach, based on a sequence of instances of a consensus algorithm, the set
+of acceptors (and hence the set of quorums) used in instance i can be de-
+termined by the state after executing command i −1.1 The same applies to
+the generalized state-machine approach based on command histories. The
+instance of generalized Paxos used to choose the portion of the history be-
+tween checkpoints i and i +1 can be determined by the state after executing
+checkpoint i
+1In ordinary Paxos, one allows pipelining of α−1 instances by letting the set of acceptors
+in instance i depend on the state after command i −α. There is no reason to do this in
+generalized Paxos, where each instance chooses a set of commands.
+35
+
+--- Page 40 ---
+Acknowledgments
+Lasaro Jonas Camargos and Rodrigo Schmidt found some minor errors in
+an earlier version.
+References
+[1] Bernadette Charron-Bost and Andr´e Schiper.
+Uniform consensus
+is harder than consensus (extended abstract).
+Technical Report
+DSC/2000/028, ´Ecole Polytechnique F´ed´erale de Lausanne, Switzerland,
+May 2000.
+[2] Roberto De Prisco, Butler Lampson, and Nancy Lynch. Revisiting the
+paxos algorithm. Theoretical Computer Science, 243:35–91, 2000.
+[3] Michael J. Fischer, Nancy Lynch, and Michael S. Paterson. Impossibility
+of distributed consensus with one faulty process. Journal of the ACM,
+32(2):374–382, April 1985.
+[4] Leslie Lamport. The part-time parliament. ACM Transactions on Com-
+puter Systems, 16(2):133–169, May 1998.
+[5] Leslie Lamport. Paxos made simple. ACM SIGACT News (Distributed
+Computing Column), 32(4):18–25, December 2001.
+[6] Leslie Lamport. Lower bounds for asynchronous consensus. In Andr´e
+Schiper, Alex A. Shvartsman, Hakim Weatherspoon, and Ben Y. Zhao,
+editors, Future Directions in Distributed Computing, volume 2584 of Lec-
+ture Notes in Computer Science, pages 22–23. Springer, 2003.
+[7] Leslie Lamport.
+Lower bounds for asynchronous consensus.
+Tech-
+nical
+Report
+MSR-TR-2004-71,
+Microsoft
+Research,
+July
+2004.
+Currently available from http://research.microsoft.com/users/
+lamport/pubs/pubs.html, or by searching the Web for the 23-letter
+string obtained by removing the - characters from all-lamports-pubs-
+onthe-web.
+[8] A. Mazurkiewicz. Semantics of concurrent systems: A modular ﬁxed
+point trace approach. In G. Rozenberg, editor, FAdvances in Petri Nets
+1984, volume 188 of Lecture Notes in Computer Science, pages 353–375.
+Springer-Verlag, 1984.
+36
+
+--- Page 41 ---
+[9] Fernando Pedone and Andr´e Schiper. Handling message semantics with
+generic broadcast. Distributed Computing, 15(2):97–107, 2002.
+37
+
+--- Page 42 ---
+A
+Lower-Bound Proof Ideas
+We describe the ideas behind the proofs of the approximate theorems as-
+serted in Section 2.3. We make no attempt to convince the reader that the
+results are really valid. In fact, most of them are false as stated. Their
+precise statements and rigorous proofs appear in [7].
+Approximate Theorem 1 Any two quorums have non-empty intersec-
+tion.
+Proof Idea: We assume that Q1 and Q2 are disjoint quorums and obtain a
+contradiction. Let p1 and p2 be two proposers that propose diﬀerent values
+C 1 and C 2, and let l1 and l2 be diﬀerent learners. Suppose both of the
+sets S i
+∆= Qi ∪{pi, li} are nonfaulty, but all messages sent between S 1 and
+S 2 are lost. The requirement Liveness(C i, li) implies that both learners li
+must learn a value. Nontriviality implies that li must learn vi. Thus, l1 and
+l2 must learn diﬀerent values, violating the consistency requirement. 2
+Approximate Theorem 2 Learning is impossible in fewer than 2 message
+delays.
+Proof Idea: Suppose l learns a value proposed by p in one message delay.
+Then it is possible that every message sent by p was lost except for ones
+received by l. If all messages from p and l to other processes are lost, then
+there is nothing to prevent another learner from learning a diﬀerent value
+proposed by another proposer, violating consistency. 2
+Approximate Theorem 3 If Q1 and Q2 are fast quorums and Q is a
+quorum, then Q1 ∩Q2 ∩Q is non-empty.
+Proof Idea: Let A1 and A2 be sets of acceptors such that A1, A2, and
+Q1 ∩Q2 are pairwise disjoint and Qi = Ai ∪(Q1 ∩Q2), for each i. Let
+p1 and p2 be proposers and let la be a learner. Let Fi be an execution in
+which pi proposes a value vi and sends messages to the acceptors in Qi and
+to la, then the acceptors in Qi then send messages to la, and la learns vi.
+(Any messages sent by or to processes not in Qi ∪{pi, la} are lost.) Deﬁne
+ˆi so ˆ1 = 2 and ˆ2 = 1. (Thus, Qi and Aˆi are disjoint, for each i.)
+We now deﬁne two executions, E1 and E2 as follows. In both executions,
+p1 and p2 propose two diﬀerent values v1 and v2.
+In Ei, messages sent
+between processes in the set Qi ∪{pi, la} are delivered very quickly, as are
+messages sent between processes in the set Aˆi ∪{pˆi}; however messages
+38
+
+--- Page 43 ---
+sent between those two sets travel very slowly.
+Moreover, messages sent
+between processes in Qi ∪{pi, la} are delivered so that the beginning of that
+execution looks to those processes exactly like the execution Fi. Hence, la
+learns vi in execution Ei.
+Suppose that la and all the acceptors in Q1 ∩Q2 lose communication
+with the rest of the processes. Executions E1 and E2 appear the same to
+those other processes—that is, to processes p1 and p2 and the acceptors in
+A1 and A2. Hence, those processes have no way of knowing if la learned v1
+or v2. If there were a quorum Q disjoint from Q1∩Q2, then liveness requires
+that a diﬀerent learner lb eventually learn a value. This is impossible, since
+consistency cannot be ensured without knowing which value la learned. 2
+Approximate Theorem 4 If, for every acceptor a, there is a quorum not
+containing a, then a consensus algorithm cannot ensure that, in the absence
+of failures, every learner learns a value in two message delays.
+Proof Idea: Let p1 and p2 be proposers and la a learner. Let Fi be a
+scenario in which pi proposes value vi, it sends messages to all learners and
+acceptors, all acceptors send messages to all learners, and la then learns
+vi. Deﬁne ˆi so ˆ1 = 2 and ˆ2 = 1. Let Ei be the scenario obtained from Fi
+by having all messages lost except those needed for Ei to look the same to
+la as Fi, and having proposer pˆi also proposes value vˆi, but letting all its
+messages arrive after all the messages that were in Fi.
+Let a1, . . . , an be the acceptors, and deﬁne a sequence of executions
+G0, . . . , Gn as follows. Let G0 equal E1 and Gn equal E2. In G0, all the
+messages sent by p1 arrive before all the messages sent by p2, while in Gn,
+those messages all arrive in the opposite order. For 0 < i < n, let Gi be
+the same as Gi−1, except that the message from p2 arrives at acceptor ai
+before the message from p1. Learner la learns value v1 in G0 and v2 in Gn.
+So there is some i > 0 so that la learns v1 in Gi−1 and v2 in Gi.
+Now consider an execution that begins like either Gi−1 or Gi, and then
+ai and la both lose contact with the remaining processes. Both executions
+look exactly the same to those remaining processes, which therefore cannot
+tell which value la learned. There is a quorum Q not containing ai all of
+whose processes have not failed, so another learner lb must be able to learn
+a value. But there is no way to discover what value la has learned, so there
+is no way to ensure consistency while allowing lb to learn a value. 2.
+39
+
+--- Page 44 ---
+B
+Proofs of Propositions
+Proposition 1 If a ballot array β is safe, then the set of values that are
+chosen in β is compatible.
+Proof: By the deﬁnition of chosen in and compatible, it suﬃces to assume
+1. β is safe
+2. c-struct v is chosen at balnum m in β
+3. c-struct w is chosen at balnum n in β
+and to prove v and w are compatible.
+1. Choose an m-quorum Qv and an n-quorum Qw such that v ⊑βa[m] for
+all a ∈Qv and w ⊑βa[n] for all a ∈Qw.
+Proof: Qv and Qw exist by assumptions 2 and 3 and the deﬁnition of
+chosen at.
+2. Case: m = n
+2.1. Choose an acceptor a in Qv ∩Qw.
+Proof: a exists by the case assumption, step 1 (which implies Qv
+and Qw are m-quorums), and the Quorum Assumption.
+2.2. Q.E.D.
+Proof: Steps 1 and 2.1 imply v ⊑βa[m] and w ⊑βa[m], so v and
+w are compatible.
+3. Case: m < n
+3.1. v is choosable at m in β.
+Proof: By assumption 2, since choosable at implies chosen at.
+3.2. Choose an acceptor a in Qw.
+Proof: a exists by choice of Qw (step 1), since the Quorum As-
+sumption implies that any n-quorum is non-empty.
+3.3. Q.E.D.
+Proof: Steps 3.2 and 1 imply w ⊑βa[n]. Assumption 1 implies
+βa[n] is safe at n, so 3.1, the case assumption m < n, and the
+deﬁnition of safe at imply v ⊑βa[n]. Hence, w and v are compatible.
+4. Q.E.D.
+Proof: By steps 2 and 3, the case n < m following from 3 by symmetry.
+Proposition 2 For any balnum m > 0, m-quorum Q, and ballot array β, if
+β is safe and bβa ≥m for all a ∈Q, then every element of ProvedSafe(Q, m, β)
+is safe at m in β.
+Proof: Assume β is safe, ∀a ∈Q : bβa ≥m, and v ∈ProvedSafe(Q, m, β).
+Let w be a c-struct choosable at some balnum j < m.
+By deﬁnition of
+40
+
+--- Page 45 ---
+safe at, it suﬃces to prove w ⊑v. Let k, R, and γ(R) be deﬁned as in
+Deﬁnition 5.
+1. Choose a j-quorum Qw such that βa[j] ̸= none and w ⊑βa[j] for all a
+in Qw such that bβa > j.
+Proof: Qw exists by the assumption that w is choosable at j and the
+deﬁnition of choosable at.
+2. j ≤k < m
+2.1. k < m and βa[i] = none for all a ∈Q and all i with k < i < m.
+Proof: By deﬁnition of k.
+2.2. Choose a in Q ∩Qw.
+Proof: a exists by step 1 (Qw a j-quorum), the assumption that Q
+is an m-quorum, and the Quorum Assumption.
+2.3. bβa ≥m and βa[i] = none for all i with k < i < m.
+Proof: The hypothesis ∀a ∈Q : bβa ≥m and the choice of a (step
+2.2) imply bβa ≥m. Step 2.1 implies βa[i] = none if k < i < m.
+2.4. βa[j] ̸= none
+Proof: Step 2.3 and the hypothesis j < m imply bβa > j. Step 2.2
+(which implies a ∈Qw) and step 1 then imply βa[j] ̸= none.
+2.5. Q.E.D.
+Proof: Steps 2.3 and 2.4 and the hypothesis j < m imply j ≤k;
+step 2.1 asserts k < m.
+3. Case: j = k
+3.1. Qw ∈R
+Proof: The hypothesis ∀a ∈Q : bβa ≥m and step 2 (j < m) imply
+bβa > j for all a ∈Q. By step 1 and the case assumption j = k, this
+implies βa[k] ̸= none for all a ∈Q ∩Qw.
+3.2. γ(Qw) ⊑v
+Proof: By step 3.1, the hypothesis v ∈ProvedSafe(Q, m, β), and
+the deﬁnition of ProvedSafe.
+3.3. w ⊑γ(Qw)
+Proof: Steps 1 and 3.1, the case assumption j = k, and the deﬁni-
+tion of R imply w ⊑βa[j] for all a ∈Q ∩Qw. The deﬁnitions of γ
+and of the glb imply w ⊑γ(Qw)
+3.4. Q.E.D.
+Proof: Assumption CS2 (⊑a partial order) and steps 3.2 and 3.3
+imply w ⊑v.
+4. Case: j < k
+4.1. Case: R is empty.
+4.1.1. Choose a in Q such that βa[k] ̸= none and v = βa[k].
+41
+
+--- Page 46 ---
+Proof: a exists by case assumption 4.1 (R empty) and the
+hypothesis v ∈ProvedSafe(Q, m, β).
+4.1.2. w ⊑βa[k]
+Proof: Step 4.1.1 (βa[k] ̸= none), the hypotheses that w is
+choosable at j, case assumption 4 (j < k), and the assumption
+that β is safe.
+4.1.3. Q.E.D.
+Proof: Steps 4.1.1 and 4.1.2 imply w ⊑v.
+4.2. Case: R is non−empty.
+4.2.1. Choose a k-quorum R in R.
+Proof: R exists by case assumption 4.2.
+4.2.2. w ⊑βk[a] for all a ∈Q ∩R
+Proof: For all a ∈Q ∩R, step 4.2.1 and the deﬁnition of R
+imply βk[a] ̸= none. The hypothesis that w is choosable at j,
+case assumption 4 (j < k), and the hypothesis that β is safe
+then imply w ⊑βk[a].
+4.2.3. w ⊑γ(R)
+Proof: Step 4.2.2, the deﬁnition of γ, and the deﬁnition of
+the glb.
+4.2.4. γ(R) ⊑v
+Proof: Step 4.2.1, the hypothesis v ∈ProvedSafe(Q, m, β),
+and the deﬁnition of the lub.
+4.2.5. Q.E.D.
+Proof: Steps 4.2.3 and 4.2.4 and the transitivity of ⊑(as-
+sumption CS2) imply w ⊑v.
+4.3. Q.E.D.
+Proof: By steps 4.1 and 4.2.
+5. Q.E.D.
+Proof: Step 2 implies that steps 3 and 4 cover all possible cases.
+Proposition 3 For any balnum m > 0, m-quorum Q, and ballot array β,
+if β is conservative then ProvedSafe(Q, m, β) is non-empty.
+Proof: Let m be a balnum, Q an m-quorum, and β a conservative ballot ar-
+ray. Let k, R, and γ be deﬁned as in the deﬁnition of ProvedSafe(Q, m, β).
+We assume that R1 and R2 are k-quorums in R (so R is non-empty) and
+show that γ(R1) and γ(R2) are compatible. The deﬁnition of ProvedSafe
+then implies that ProvedSafe(Q, m, β) is non-empty.
+1. Case: k is a fast balnum.
+1.1. Choose an acceptor a in R1 ∩R2 ∩Q
+42
+
+--- Page 47 ---
+Proof: a exists by the case 1 assumption that k is a fast balnum
+and the Quorum Assumption, since the deﬁnition of R implies that
+R1 and R2 are k-quorums.
+1.2. Q.E.D.
+Proof: Step 1.1 and the deﬁnition of γ imply γ(R1) ⊑βa[k] and
+γ(R2) ⊑βa[k], so γ(R1) and γ(R2) are compatible.
+2. Case: k is a classic balnum.
+2.1. Choose an upper bound w of {βa[k] | (a ∈Q) ∧(βa[k] ̸= none)}.
+Proof: w exists by case assumption 2 and the hypothesis that β is
+conservative.
+2.2. Q.E.D.
+Proof: It follows from the deﬁnitions of R and γ that γ(R) ⊑w for
+all R in R. Hence R1 and R2 are compatible because they are in R.
+3. Q.E.D.
+Proof: By Steps 1 and 2 and the assumption that every balnum is either
+a fast or a classic one.
+C
+TLA+ Speciﬁcations
+C.1
+Command Structures
+module OrderRelations
+We make some deﬁnitions for an arbitrary ordering relation ⪯on a set S. The module
+will be used by instantiating ⪯and S with a particular operator and set.
+constants S,
+⪯
+We deﬁne IsPartialOrder to be the assertion that ⪯is an (irreﬂexive) partial order on a
+set S, and IsTotalOrder to be the assertion that it is a total ordering of S.
+IsPartialOrder
+∆=
+∧∀u, v, w ∈S : (u ⪯v) ∧(v ⪯w) ⇒(u ⪯w)
+∧∀u, v ∈S
+: (u ⪯v) ∧(v ⪯u) ≡(u = v)
+IsTotalOrder
+∆=
+∧IsPartialOrder
+∧∀u, v ∈S : (u ⪯v) ∨(v ⪯u)
+We now deﬁne the glb (greatest lower bound) and lub (least upper bound) operators.
+TLA+ does not permit the use of ⊓and ⊔as preﬁx operators, so we use GLB and LUB
+for those operators. To deﬁne GLB, we ﬁrst deﬁne IsLB(lb, T) to be true iﬀlb is a lower
+bound of S, and IsGLB(lb, T) to be true iﬀlb is a glb of S. The value of GLB(T) is
+unspeciﬁed if T has no glb. The deﬁnitions for upper bounds are analogous.
+IsLB(lb, T)
+∆= ∧lb ∈S
+43
+
+--- Page 48 ---
+∧∀v ∈T : lb ⪯v
+IsGLB(lb, T)
+∆= ∧IsLB(lb, T)
+∧∀v ∈S : IsLB(v, T) ⇒(v ⪯lb)
+GLB(T)
+∆= choose lb ∈S : IsGLB(lb, T)
+v ⊓w
+∆= GLB({v, w})
+IsUB(ub, T)
+∆= ∧ub ∈S
+∧∀v ∈T : v ⪯ub
+IsLUB(ub, T)
+∆= ∧IsUB(ub, T)
+∧∀v ∈S : IsUB(v, T) ⇒(ub ⪯v)
+LUB(T)
+∆= choose ub ∈S : IsLUB(ub, T)
+v ⊔w
+∆= LUB({v, w})
+module CStructs
+extends Sequences
+The Sequences module deﬁnes the operator Seq.
+We declare the assumed objects as parameters. TLA+ does not permit the identiﬁer ⊥,
+so we use Bottom instead.
+constants Cmd, CStruct,
+• , Bottom
+TLA+ does not permit operator overloading, so we write v ∗∗σ instead of v • σ for a
+command sequence σ. TLA+ allows recursive deﬁnitions only of functions, not operators,
+so the deﬁnition of ∗∗recursively deﬁnes the function conc such that conc[w, t] = w ∗∗t.
+v ∗∗s
+∆= let conc[w ∈CStruct, t ∈Seq(Cmd)]
+∆=
+if t
+= ⟨⟩then w
+else conc[w • Head(t), Tail(t)]
+in
+conc[v, s]
+TLA+ does not permit the general construct {e | P}, instead having two more restricted
+set-forming operators.
+Str(P)
+∆= {Bottom ∗∗s : s ∈Seq(P)}
+Our algorithms use a value none that is not a c-struct and extend the relation ⊑to the
+element none so that none ⊑none, none ̸⊑v, and v ̸⊑none for any c-struct v. It is
+simpler to deﬁne the extended ⊑relation here than to extend it later.
+none
+∆= choose n : n /∈CStruct
+v ⊑w
+∆= ∨∧v ∈CStruct
+∧w ∈CStruct
+∧∃s ∈Seq(Cmd) : w = v ∗∗s
+∨∧v = none
+∧w = none
+44
+
+--- Page 49 ---
+v < w
+∆= (v ⊑w) ∧(v ̸= w)
+We now import the deﬁnitions of the OrderRelations module with CStruct substituted for
+S and ⊑substituted for ⪯.
+instance OrderRelations with S ←CStruct, ⪯←⊑
+We now deﬁne compatibility of c-structs and of sets of c-structs, and the of contains,
+giving them obvious operator names.
+AreCompatible(v, w)
+∆= ∃ub ∈CStruct : IsUB(ub, {v, w})
+IsCompatible(S)
+∆= ∀v, w ∈S : AreCompatible(v, w)
+Contains(v, C)
+∆= ∃s, t
+∈Seq(Cmd) : v = ((Bottom ∗∗s) • C) ∗∗t
+Here are the formal statements of assumptions CS1–CS4, as well as an assumption CS0
+that was tacitly made but not explicitly named.
+CS0
+∆= ∀v ∈CStruct, C ∈Cmd : v • C ∈CStruct
+CS1
+∆= CStruct = Str(Cmd)
+CS2
+∆= IsPartialOrder
+CS3
+∆= ∀P ∈subset Cmd \ {{}} :
+∧∀v, w ∈Str(P) :
+∧v ⊓w ∈Str(P)
+∧IsGLB(v ⊓w, {v, w})
+∧AreCompatible(v, w) ⇒∧v ⊔w ∈Str(P)
+∧IsLUB(v ⊔w, {v, w})
+CS4
+∆= ∀v, w ∈CStruct, C ∈Cmd :
+AreCompatible(v, w) ∧Contains(v, C) ∧Contains(w, C) ⇒
+Contains(v ⊓w, C)
+assume CS0 ∧CS1 ∧CS2 ∧CS3 ∧CS4
+45
+
+--- Page 50 ---
+C.2
+Generalized Consensus
+module GeneralConsensus
+We specify the safety properties of the general consensus problem. We ﬁrst give a “state-
+machine style” TLA+ speciﬁcation Spec. We then assert that Spec implies the three safety
+properties Nontriviality, Stability, and Consistency.
+extends CStructs
+constant Learner
+variables propCmd, learned
+TypeInv asserts a type invariant; the assertion that TypeInv is always true is a property
+of (implied by) the speciﬁcation.
+TypeInv
+∆= ∧propCmd ⊆Cmd
+∧learned ∈[Learner →CStruct]
+Init is the initial predicate.
+Init
+∆= ∧propCmd = {}
+∧learned
+= [l ∈Learner 7→Bottom]
+We now deﬁne the two actions of proposing a command and learning a c-struct. The
+Learn action sets learned[l] to the lub of its present value and a proposed c-struct.
+Propose
+∆= ∃C ∈Cmd \ propCmd : ∧propCmd′ = propCmd ∪{C}
+∧unchanged learned
+Learn(l)
+∆= ∧∃v ∈Str(propCmd) :
+∧∀r ∈Learner : AreCompatible(v, learned[r])
+∧learned′ = [learned except ![l] = learned[l] ⊔v]
+∧unchanged propCmd
+Next is the complete next-state action; Spec is the complete speciﬁcation.
+Next
+∆= Propose ∨∃l ∈Learner : Learn(l)
+Spec
+∆= Init ∧2[Next]⟨propCmd, learned⟩
+We now deﬁne the three safety properties as temporal formulas and assert that they and
+the type-correctness invariant are properties of the speciﬁcation.
+Nontriviality
+∆= ∀l ∈Learner : 2(learned[l] ∈Str(propCmd))
+Stability
+∆= ∀l ∈Learner, v ∈CStruct :
+2((learned[l] = v) ⇒2(v ⊑learned[l]))
+Consistency
+∆= ∀l1, l2 ∈Learner :
+2AreCompatible(learned[l1], learned[l2])
+theorem Spec ⇒(2TypeInv) ∧Nontriviality ∧Stability ∧Consistency
+46
+
+--- Page 51 ---
+C.3
+The Constant Operators of Paxos
+module PaxosConstants
+This module deﬁnes the data structures for the abstract algoritm, introduced in Sections
+5.1 and 5.2.
+extends CStructs, FiniteSets
+Module FiniteSets deﬁnes IsFiniteSet(S) to be true iﬀS is a ﬁnite set.
+We introduce the parameter IsFast, where IsFast(m) is true iﬀm is a fast ballot number.
+The ordering relation ≤on ballot numbers is also a parameter.
+constants BalNum,
+≤, IsFast( )
+We assume that 0 is a balnum, and that ≤is a total ordering of the set BalNum of
+balnums. (Note: 0 is pre-deﬁned in TLA+ to have its usual value. However, this does not
+imply that BalNum contains any other usual numbers.)
+assume
+∧0 ∈BalNum
+∧let PO
+∆= instance OrderRelations with S ←BalNum, ⪯←≤
+in
+PO!IsTotalOrder
+i < j
+∆= (i ≤j) ∧(i ̸= j)
+If B is a set of ballot numbers that contains a maximum element, then Max(B) is deﬁned
+to equal that maximum. Otherwise, its value is unspeciﬁed.
+Max(B)
+∆= choose i ∈B : ∀j ∈B : j ≤i
+constants Learner, Acceptor, Quorum( )
+QuorumAssumption
+∆=
+∧∀m ∈BalNum : Quorum(m) ⊆subset Acceptor
+∧∀k, m ∈BalNum :
+∀Q ∈Quorum(k), R ∈Quorum(m) : Q ∩R ̸= {}
+∧∀k ∈BalNum :
+IsFast(k) ⇒∀m ∈BalNum :
+∀Q1, Q2 ∈Quorum(k), R ∈Quorum(m) :
+Q1 ∩Q2 ∩R ̸= {}
+assume QuorumAssumption
+We deﬁne BallotArray to be the set of all ballot arrays. We represent a ballot array as a
+record, where we write βa[m] as β.vote[a][m] and bβa as β.mbal[a].
+47
+
+--- Page 52 ---
+BallotArray
+∆=
+{beta ∈[vote : [Acceptor →[BalNum →CStruct ∪{none}]],
+mbal : [Acceptor →BalNum]] :
+∀a ∈Acceptor :
+∧beta.vote[a][0]
+̸= none
+∧IsFiniteSet({m ∈BalNum : beta.vote[a][m] ̸= none})
+∧∀m ∈BalNum : (beta.mbal[a] < m) ⇒(beta.vote[a][m] = none)}
+We now formalize the deﬁnitions of chosen at, safe at, etc. We translate the English terms
+into obvious operator names. For example, IsChosenAt(v, m β) is deﬁne to be true iﬀv
+is chosen at m in β, assuming that v is a c-struct, m a balnum, and β a ballot array.
+(We don’t care what IsChosenAt(v, m β) means for other values of v, m, and β.) We also
+assert the three propositions as theorems.
+IsChosenAt(v, m, beta)
+∆=
+∃Q ∈Quorum(m) :
+∀a ∈Q : (v ⊑beta.vote[a][m])
+IsChosenIn(v, beta)
+∆= ∃m ∈BalNum : IsChosenAt(v, m, beta)
+IsChoosableAt(v, m, beta)
+∆=
+∃Q ∈Quorum(m) :
+∀a ∈Q : (m < beta.mbal[a]) ⇒(v ⊑beta.vote[a][m])
+IsSafeAt(v, m, beta)
+∆=
+∀k
+∈BalNum :
+(k < m) ⇒∀w ∈CStruct : IsChoosableAt(w, k, beta) ⇒(w ⊑v)
+IsSafe(beta)
+∆=
+∀a ∈Acceptor, k ∈BalNum :
+(beta.vote[a][k] ̸= none) ⇒IsSafeAt(beta.vote[a][k], k, beta)
+theorem
+Proposition 1
+∀beta ∈BallotArray :
+IsSafe(beta) ⇒IsCompatible({v ∈CStruct : IsChosenIn(v, beta)})
+ProvedSafe(Q, m, beta)
+∆=
+let k
+∆= Max({i ∈BalNum :
+(i < m) ∧(∃a ∈Q : beta.vote[a][i] ̸= none)})
+RS
+∆= {R ∈Quorum(k) : ∀a ∈Q ∩R : beta.vote[a][k] ̸= none}
+g(R)
+∆= GLB({beta.vote[a][k] : a ∈Q ∩R})
+G
+∆= {g(R) : R ∈RS}
+in
+if RS = {} then {beta.vote[a][k] :
+a ∈{b ∈Q : beta.vote[b][k] ̸= none}}
+48
+
+--- Page 53 ---
+else if IsCompatible(G) then {LUB(G)}
+else {}
+theorem
+Proposition 2
+∀m ∈BalNum \ {0}, beta ∈BallotArray :
+∀Q ∈Quorum(m) :
+∧IsSafe(beta)
+∧∀a
+∈Q : m ≤beta.mbal[a]
+⇒∀v ∈ProvedSafe(Q, m, beta) : IsSafeAt(v, m, beta)
+IsConservative(beta)
+∆=
+∀m ∈BalNum, a, b ∈Acceptor :
+∧¬IsFast(m)
+∧beta.vote[a][m] ̸= none
+∧beta.vote[b][m] ̸= none
+⇒AreCompatible(beta.vote[a][m], beta.vote[b][m])
+theorem
+Proposition 3
+∀beta ∈BallotArray :
+IsConservative(beta) ⇒
+∀m ∈BalNum \ {0} :
+∀Q ∈Quorum(m) : ProvedSafe(Q, m, beta) ̸= {}
+C.4
+The Abstract Algorithm
+module AbstractGPaxos
+extends PaxosConstants
+variables propCmd, learned, bA, minTried, maxTried
+We begin with the type invariant and the initial predicate.
+TypeInv
+∆= ∧propCmd ⊆Cmd
+∧learned ∈[Learner →CStruct]
+∧bA ∈BallotArray
+∧minTried ∈[BalNum →CStruct ∪{none}]
+∧maxTried ∈[BalNum →CStruct ∪{none}]
+Init
+∆= ∧propCmd = {}
+∧learned
+= [l ∈Learner 7→Bottom]
+∧bA = [vote 7→[a ∈Acceptor 7→
+[m ∈BalNum 7→
+49
+
+--- Page 54 ---
+if m = 0 then Bottom else none]],
+mbal 7→[a ∈Acceptor 7→0]]
+∧maxTried = [m ∈BalNum 7→
+if m = 0 then Bottom else none]
+∧minTried = maxTried
+We next deﬁne the three invariants of the abstract algorithm.
+TriedInvariant
+∆=
+∀m ∈BalNum : ∧minTried[m] ⊑maxTried[m]
+∧(minTried[m] ̸= none) ⇒
+∧IsSafeAt(minTried[m], m, bA)
+∧maxTried[m] ∈Str(propCmd)
+bAInvariant
+∆=
+∀a ∈Acceptor, m ∈BalNum :
+(bA.vote[a][m] ̸= none) ⇒
+∧minTried[m] ⊑bA.vote[a][m]
+∧¬IsFast(m) ⇒(bA.vote[a][m] ⊑maxTried[m])
+∧IsFast(m) ⇒(bA.vote[a][m] ∈Str(propCmd))
+learnedInvariant
+∆=
+∀l ∈Learner : ∧learned[l] ∈Str(propCmd)
+∧∃S ∈subset CStruct :
+∧IsFiniteSet(S)
+∧∀v ∈S : IsChosenIn(v, bA)
+∧learned[l] = LUB(S)
+We now deﬁne the actions.
+Propose(C)
+∆=
+∧C /∈propCmd
+∧propCmd′ = propCmd ∪{C}
+∧unchanged ⟨learned, bA, minTried, maxTried⟩
+JoinBallot(a, m)
+∆=
+∧bA.mbal[a] < m
+∧bA′ = [bA except !.mbal[a] = m]
+∧unchanged ⟨propCmd, learned, minTried, maxTried⟩
+StartBallot(m, Q)
+∆=
+∧maxTried[m] = none
+∧∀a ∈Q : m ≤bA.mbal[a]
+50
+
+--- Page 55 ---
+∧∃w ∈ProvedSafe(Q, m, bA), s ∈Seq(propCmd) :
+∧minTried′ = [minTried except ![m] = w ∗∗s]
+∧maxTried′ = [maxTried except ![m] = w ∗∗s]
+∧unchanged ⟨propCmd, learned, bA⟩
+Suggest(m, C)
+∆=
+∧C ∈propCmd
+∧maxTried[m] ̸= none
+∧maxTried′ = [maxTried except ![m] = maxTried[m] • C]
+∧unchanged ⟨propCmd, learned, bA, minTried⟩
+ClassicVote(a, v)
+∆=
+∧maxTried[bA.mbal[a]] ̸= none
+∧minTried[bA.mbal[a]] ⊑v
+∧v ⊑maxTried[bA.mbal[a]]
+∧∨bA.vote[a][bA.mbal[a]] = none
+∨bA.vote[a][bA.mbal[a]] < v
+∧bA′ = [bA except !.vote[a][bA.mbal[a]] = v]
+∧unchanged ⟨propCmd, learned, minTried, maxTried⟩
+FastVote(a, C)
+∆=
+∧C ∈propCmd
+∧IsFast(bA.mbal[a])
+∧bA.vote[a][bA.mbal[a]] ̸= none
+∧bA′ = [bA except !.vote[a][bA.mbal[a]] = bA.vote[a][bA.mbal[a]] • C]
+∧unchanged ⟨propCmd, learned, minTried, maxTried⟩
+AbstractLearn(l, v)
+∆=
+∧IsChosenIn(v, bA)
+∧learned′ = [learned except ![l] = learned[l] ⊔v]
+∧unchanged ⟨propCmd, bA, minTried, maxTried⟩
+We combine the actions into the next-state relation and deﬁne Spec to be the complete
+speciﬁcation.
+Next
+∆= ∨∃C ∈Cmd : ∨Propose(C)
+∨∃m ∈BalNum : Suggest(m, C)
+∨∃a ∈Acceptor : FastVote(a, C)
+∨∃m ∈BalNum : ∨∃a ∈Acceptor
+: JoinBallot(a, m)
+∨∃Q ∈Quorum(m) : StartBallot(m, Q)
+∨∃v ∈CStruct : ∨∃a ∈Acceptor : ClassicVote(a, v)
+∨∃l ∈Learner
+: AbstractLearn(l, v)
+51
+
+--- Page 56 ---
+Spec
+∆= Init ∧2[Next]⟨propCmd, learned, bA, minTried, maxTried⟩
+The following theorem asserts the invariance of our invariants.
+theorem
+Spec ⇒2(TypeInv ∧TriedInvariant ∧bAInvariant ∧learnedInvariant)
+The following asserts that our speciﬁcation Spec implies/implements the speciﬁcation Spec
+from module GeneralConsensus.
+GC
+∆= instance GeneralConsensus
+theorem Spec ⇒GC!Spec
+C.5
+The Distributed Abstract Algorithm
+module DistAbstractGPaxos
+We import all the declarations and deﬁnitions from module AbstractGPaxos.
+extends AbstractGPaxos
+We deﬁne Msg to be the set of all possible messages. For the sake of clarity and avoiding
+errors, we let messages be records instead of tuples. For example, the message ⟨“2a”, m, v ⟩
+in the text becomes a record with type ﬁeld “2a”, bal ﬁeld m, and val ﬁeld v.
+Msg
+∆=
+[type : {“propose”}, cmd : Cmd]
+∪
+[type : {“1a”}, bal : BalNum]
+∪
+[type : {“1b”}, bal : BalNum, acc : Acceptor,
+vote : [BalNum →CStruct ∪{none}]]
+∪
+[type : {“2a”}, bal : BalNum, val : CStruct]
+∪
+[type : {“2b”}, bal : BalNum, acc : Acceptor, val : CStruct]
+We describe the state of the message-passing system by the value of the variable msgs.
+Because we are specifying only safety and not liveness, we do not need explicitly to model
+message loss. Since an action is never required to happen, the loss of a message during
+an execution of the system is modeled by the receive action for that message never being
+executed in the corresponding behavior. We can also model the possibility of receiving
+the same message multiple times by never deleting a message when it is received. So, we
+use a simple model of the message passing in which a message is sent by adding it to the
+set msgs, and a process can at any time receive any message that is an element of msgs.
+variables msgs
+We begin with the type invariant and the initial predicate. We preﬁx with a D standard
+names like Init, which are already deﬁned in the AbstractGPaxos
+DTypeInv
+∆= ∧TypeInv
+∧msgs ⊆Msg
+DInit
+∆= ∧Init
+52
+
+--- Page 57 ---
+∧msgs = {}
+We now deﬁne the actions.
+When an action very directly implements an action of
+the abstract non-distributed algorithm, we can re-use the action deﬁnition from module
+AbstractGPaxos.
+SendProposal(C)
+∆=
+∧propCmd′ = propCmd ∪{C}
+∧msgs′ = msgs ∪{[type 7→“propose”, cmd 7→C]}
+∧unchanged ⟨learned, bA, minTried, maxTried⟩
+Phase1a(m)
+∆=
+∧maxTried[m] = none
+∧msgs′ = msgs ∪{[type 7→“1a”, bal 7→m]}
+∧unchanged ⟨propCmd, learned, bA, minTried, maxTried⟩
+Phase1b(a, m)
+∆=
+∧[type 7→“1a”, bal 7→m] ∈msgs
+∧JoinBallot(a, m)
+∧msgs′ = msgs ∪{[type 7→“1b”, bal 7→m, acc 7→a,
+vote 7→bA.vote[a]]}
+Phase2Start(m, v)
+∆=
+∧maxTried[m] = none
+∧∃Q ∈Quorum(m) :
+∧∀a ∈Q : ∃msg ∈msgs : ∧msg.type = “1b”
+∧msg.bal
+= m
+∧msg.acc = a
+∧let beta
+∆=
+choose b ∈BallotArray :
+∀a ∈Q : ∧b.mbal[a] = m
+∧∃msg ∈msgs : ∧msg.type = “1b”
+∧msg.bal
+= m
+∧msg.acc = a
+∧b.vote[a] = msg.vote
+pCmd
+∆=
+{msg.cmd : msg ∈{mg ∈msgs : mg.type = “propose”}}
+in
+∃w ∈ProvedSafe(Q, m, beta), s ∈Seq(pCmd) :
+∧minTried′ = [minTried except ![m] = w ∗∗s]
+∧maxTried′ = minTried′
+∧msgs′ = msgs ∪{[type 7→“2a”, bal 7→m, val 7→w ∗∗s]}
+∧unchanged ⟨propCmd, learned, bA⟩
+53
+
+--- Page 58 ---
+Phase2aClassic(m, C)
+∆=
+∧[type 7→“propose”, cmd 7→C] ∈msgs
+∧maxTried[m] ̸= none
+∧maxTried′ = [maxTried except ![m] = maxTried[m] • C]
+∧msgs′ = msgs ∪{[type 7→“2a”, bal 7→m, val 7→maxTried′[m]]}
+∧unchanged ⟨propCmd, learned, bA, minTried⟩
+Phase2bClassic(a, m, v)
+∆=
+∧[type 7→“2a”, bal 7→m, val 7→v] ∈msgs
+∧bA.mbal[a] = m
+∧∨bA.vote[a][bA.mbal[a]] = none
+∨bA.vote[a][bA.mbal[a]] < v
+∧bA′ = [bA except !.vote[a][bA.mbal[a]] = v]
+∧msgs′ = msgs ∪{[type 7→“2b”, bal 7→m, acc 7→a, val 7→v]}
+∧unchanged ⟨propCmd, learned, minTried, maxTried⟩
+Phase2bFast(a, m, C)
+∆=
+∧[type 7→“propose”, cmd 7→C] ∈msgs
+∧bA.mbal[a] = m
+∧bA.vote[a][m] ̸= none
+∧bA′ = [bA except !.vote[a][m] = bA.vote[a][m] • C]
+∧msgs′ = msgs ∪
+{[type 7→“2b”, bal 7→m, acc 7→a, val 7→bA′.vote[a][m]]}
+∧unchanged ⟨propCmd, learned, minTried, maxTried⟩
+Learn(l, v)
+∆=
+∧
+∃m ∈BalNum :
+∃Q ∈Quorum(m) :
+∀a
+∈Q : ∃msg ∈msgs : ∧msg.type = “2b”
+∧msg.bal
+= m
+∧msg.acc = a
+∧v ⊑msg.val
+∧
+learned′ = [learned except ![l] = learned[l] ⊔v]
+∧
+unchanged ⟨propCmd, bA, minTried, maxTried, msgs⟩
+DNext and DSpec are the complete next-state relation and speciﬁcation.
+DNext
+∆= ∨∃C ∈Cmd : SendProposal(C)
+The proposers’ actions.
+∨∃m ∈BalNum :
+The leaders’ actions.
+∨Phase1a(m)
+∨∃v ∈CStruct : Phase2Start(m, v)
+∨∃C ∈Cmd : Phase2aClassic(m, C)
+54
+
+--- Page 59 ---
+∨∃a ∈Acceptor :
+The acceptors’ actions.
+∨Phase1b(a, m)
+∨∃v ∈CStruct : Phase2bClassic(a, m, v)
+∨∃C ∈Cmd : Phase2bFast(a, m, C)
+∨∃l ∈Learner :
+The learners’ actions.
+∃v ∈CStruct : Learn(l, v)
+DSpec
+∆= DInit ∧2[DNext]⟨propCmd, learned, bA, minTried, maxTried, msgs⟩
+The following theorems assert that DTypeInv is an invariant and that DSpec implements
+the speciﬁcation of generalized consensus, formula Spec of module GeneralConsensus.
+theorem DSpec ⇒2DTypeInv
+theorem DSpec ⇒GC!Spec
+C.6
+The Generalized Paxos Consensus Algorithm
+module GeneralizedPaxos
+extends PaxosConstants
+We introduce a set Leader of leaders, and let LeaderOf (m) be the leader of ballot num-
+ber m.
+constant Leader, LeaderOf ( )
+assume ∀m ∈BalNum : LeaderOf (m) ∈Leader
+The set Msg of all possible messages is the same as for the distributed abstract algorithm
+of module DistAbstractGPaxos.
+Msg
+∆=
+[type : {“propose”}, cmd : Cmd]
+∪
+[type : {“1a”}, bal : BalNum]
+∪
+[type : {“1b”}, bal : BalNum, acc : Acceptor,
+vbal : BalNum, vote : CStruct ∪{none}]
+∪
+[type : {“2a”}, bal : BalNum, val : CStruct]
+∪
+[type : {“2b”}, bal : BalNum, acc : Acceptor, val : CStruct]
+We deﬁne NotABalNum to be an arbitrary value that is not a balnum.
+NotABalNum
+∆= choose m : m /∈BalNum
+55
+
+--- Page 60 ---
+The variables propCmd, learned, and msgs are the same as in the distributed abstract
+algorithm. We replace the abstract algorithm’s variable bA with the variables mbal, bal,
+and val. The value of curLdrBal[ldr] is the ballot that leader ldr is currently leading or
+has most recently led. Initially, its value is initially curLdrBal[ldr] equals NotABalNum
+for all leaders except the leader of ballot 0, which is initially in progress.
+We replace
+the variable maxTried of the abstract algorithm with maxLdrTried, where the value of
+maxLdrTried[ldr] corresponds to the value of maxTried[curLdrBal[ldr]] in the abstract
+algorithm.
+variables propCmd, learned, msgs, maxLdrTried, curLdrBal, mbal, bal, val
+We begin with the type invariant and the initial predicate.
+TypeInv
+∆= ∧propCmd ⊆Cmd
+∧learned
+∈[Learner →CStruct]
+∧msgs ⊆Msg
+∧maxLdrTried ∈[Leader →CStruct ∪{none}]
+∧curLdrBal ∈[Leader →BalNum ∪{NotABalNum}]
+∧mbal ∈[Acceptor →BalNum]
+∧bal
+∈[Acceptor →BalNum]
+∧val
+∈[Acceptor →CStruct]
+Init
+∆= ∧propCmd = {}
+∧learned
+= [l ∈Learner 7→Bottom]
+∧msgs
+= {}
+∧maxLdrTried = [ldr ∈Leader 7→if ldr = LeaderOf (0)
+then Bottom else none]
+∧curLdrBal
+= [ldr ∈Leader 7→if ldr = LeaderOf (0)
+then 0 else NotABalNum]
+∧mbal = [a ∈Acceptor 7→0]
+∧bal
+= [a ∈Acceptor 7→0]
+∧val
+= [a ∈Acceptor 7→Bottom]
+We now deﬁne the actions.
+SendProposal(C)
+∆=
+∧propCmd′ = propCmd ∪{C}
+∧msgs′ = msgs ∪{[type 7→“propose”, cmd 7→C]}
+∧unchanged ⟨learned, maxLdrTried, curLdrBal, mbal, bal, val⟩
+Phase1a(ldr)
+∆=
+∧∃m ∈BalNum :
+∧∨curLdrBal[ldr] = NotABalNum
+∨curLdrBal[ldr] < m
+∧LeaderOf (m) = ldr
+56
+
+--- Page 61 ---
+∧curLdrBal′
+= [curLdrBal
+except ![ldr] = m]
+∧maxLdrTried′ = [maxLdrTried except ![ldr] = none]
+∧msgs′ = msgs ∪{[type 7→“1a”, bal 7→m]}
+∧unchanged ⟨propCmd, learned, mbal, bal, val⟩
+Phase1b(a, m)
+∆=
+∧[type 7→“1a”, bal 7→m] ∈msgs
+∧mbal[a] < m
+∧mbal′ = [mbal except ![a] = m]
+∧msgs′ = msgs ∪{[type 7→“1b”, bal 7→m, acc 7→a,
+vbal 7→bal[a], vote 7→val[a]]}
+∧unchanged ⟨propCmd, learned, maxLdrTried, curLdrBal, bal, val⟩
+Phase2Start(ldr, v)
+∆=
+∧curLdrBal[ldr] ̸= NotABalNum
+∧maxLdrTried[ldr] = none
+∧∃Q ∈Quorum(curLdrBal[ldr]) :
+∧∀a ∈Q : ∃msg ∈msgs : ∧msg.type = “1b”
+∧msg.bal
+= curLdrBal[ldr]
+∧msg.acc = a
+∧let
+We deﬁne PrSafe so it equals the value of ProvedSafe(Q, m, beta) where
+computed in the corresponding action of the distributed abstract algo-
+rithm.
+To help understand this correspondence, see the deﬁnition of
+ProvedSafe in module PaxosConstants.
+1bMsg(a)
+∆=
+For an acceptor a in Q, this is the “1b” message sent by a for ballot
+number curLdrBal[ldr]. There can be only one such message.
+choose msg ∈msgs : ∧msg.type = “1b”
+∧msg.bal
+= curLdrBal[ldr]
+∧msg.acc = a
+k
+∆= Max({1bMsg(a).vbal : a ∈Q})
+RS
+∆= {R ∈Quorum(k) : ∀a ∈Q ∩R : 1bMsg(a).vbal = k}
+g(R)
+∆= GLB({1bMsg(a).vote : a ∈Q ∩R})
+G
+∆= {g(R) : R ∈RS}
+PrSafe
+∆=
+When the action is enabled, the set G will always be compatible.
+if RS = {} then {1bMsg(a).vote :
+a ∈{b ∈Q : 1bMsg(b).vbal = k}}
+else {LUB(G)}
+pCmd
+∆= {msg.cmd : msg ∈{mg ∈msgs : mg.type = “propose”}}
+in
+∧∃w ∈PrSafe, s ∈Seq(pCmd) :
+57
+
+--- Page 62 ---
+∧maxLdrTried′ = [maxLdrTried except ![ldr] = w ∗∗s]
+∧msgs′ = msgs ∪{[type 7→“2a”, bal 7→curLdrBal[ldr],
+val 7→w ∗∗s]}
+∧unchanged ⟨propCmd, learned, curLdrBal, mbal, bal, val⟩
+Phase2aClassic(ldr, C)
+∆=
+∧curLdrBal[ldr] ̸= NotABalNum
+∧[type 7→“propose”, cmd 7→C] ∈msgs
+∧maxLdrTried[ldr] ̸= none
+∧maxLdrTried′ = [maxLdrTried except ![ldr] = maxLdrTried[ldr] • C]
+∧msgs′ = msgs ∪{[type 7→“2a”, bal 7→curLdrBal[ldr],
+val 7→maxLdrTried′[ldr]]}
+∧unchanged ⟨propCmd, learned, curLdrBal, mbal, bal, val⟩
+Phase2bClassic(a, v)
+∆=
+∧[type 7→“2a”, bal 7→mbal[a], val 7→v] ∈msgs
+∧∨bal[a] < mbal[a]
+∨val[a] < v
+∧bal′
+= [bal except ![a] = mbal[a]]
+∧val′
+= [val except ![a] = v]
+∧msgs′ = msgs ∪{[type 7→“2b”, bal 7→mbal[a], acc 7→a, val 7→v]}
+∧unchanged ⟨propCmd, learned, maxLdrTried, curLdrBal, mbal⟩
+Phase2bFast(a, C)
+∆=
+∧[type 7→“propose”, cmd 7→C] ∈msgs
+∧bal[a] = mbal[a]
+∧val′ = [val except ![a] = val[a] • C]
+∧msgs′ = msgs ∪
+{[type 7→“2b”, bal 7→mbal[a], acc 7→a, val 7→val′[a]]}
+∧unchanged ⟨propCmd, learned, maxLdrTried, curLdrBal, mbal, bal⟩
+Learn(l, v)
+∆=
+∧
+∃m ∈BalNum :
+∃Q ∈Quorum(m) :
+∀a
+∈Q : ∃msg ∈msgs : ∧msg.type = “2b”
+∧msg.bal
+= m
+∧msg.acc = a
+∧v ⊑msg.val
+∧
+learned′ = [learned except ![l] = learned[l] ⊔v]
+∧
+unchanged ⟨propCmd, msgs, maxLdrTried, curLdrBal, mbal, bal, val⟩
+Next and Spec are the complete next-state relation and speciﬁcation.
+58
+
+--- Page 63 ---
+Next
+∆= ∨∃C ∈Cmd : SendProposal(C)
+The proposers’ actions.
+∨∃ldr ∈Leader :
+The leaders’ actions.
+∨Phase1a(ldr)
+∨∃v ∈CStruct : Phase2Start(ldr, v)
+∨∃C ∈Cmd :
+Phase2aClassic(ldr, C)
+∨∃a ∈Acceptor :
+The acceptors’ actions.
+∨∃v ∈CStruct : Phase2bClassic(a, v)
+∨∃m ∈BalNum : Phase1b(a, m)
+∨∃C ∈Cmd
+: Phase2bFast(a, C)
+∨∃l ∈Learner :
+The learners’ actions.
+∃v ∈CStruct : Learn(l, v)
+Spec
+∆= Init ∧2[Next]⟨propCmd, learned, msgs, maxLdrTried, curLdrBal, mbal, bal, val⟩
+The following theorems assert that TypeInv is an invariant and that Spec implements the
+speciﬁcation of generalized consensus, formula Spec of module GeneralConsensus.
+theorem Spec ⇒2TypeInv
+GC
+∆= instance GeneralConsensus
+theorem Spec ⇒GC!Spec
+59

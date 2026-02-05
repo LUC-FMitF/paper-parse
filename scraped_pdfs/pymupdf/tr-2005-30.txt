@@ -1,0 +1,3697 @@
+
+--- Page 1 ---
+Real Time is Really Simple
+Leslie Lamport
+Microsoft Research
+Technical Report MSR-TR-2005-30
+4 March 2005
+Revised 16 August 2005
+
+--- Page 2 ---
+Abstract
+It is easy to write and verify real-time speciﬁcations with existing lan-
+guages and methods; one just represents time as an ordinary variable. The
+resulting speciﬁcations can be veriﬁed with ordinary model checkers. This
+basic idea and some less obvious details are explained with simple examples.
+
+--- Page 3 ---
+Contents
+1
+Introduction
+1
+2
+Specifying a Simple Algorithm
+4
+2.1
+The Algorithm
+. . . . . . . . . . . . . . . . . . . . . . . . . .
+4
+2.2
+The Untimed Version in TLA+ . . . . . . . . . . . . . . . . .
+5
+2.3
+Adding Timing to an Untimed Speciﬁcation . . . . . . . . . .
+8
+2.4
+Speciﬁcation FSpec1: Progress Through Liveness . . . . . . .
+10
+2.5
+Speciﬁcation FSpec2: Progress Through Timing Bounds . . .
+17
+3
+Proving Correctness of Fischer’s Algorithm
+19
+3.1
+Proof of Mutual Exclusion . . . . . . . . . . . . . . . . . . . .
+21
+3.2
+Proof of Eventual Progress
+. . . . . . . . . . . . . . . . . . .
+21
+3.3
+Proof of Real-Time Progress . . . . . . . . . . . . . . . . . . .
+24
+4
+A Simple Distributed Algorithm
+29
+5
+Avoiding Zeno Speciﬁcations
+35
+6
+Model Checking
+37
+6.1
+General Observations . . . . . . . . . . . . . . . . . . . . . . .
+37
+6.2
+Model Checking with Symmetry
+. . . . . . . . . . . . . . . .
+38
+6.2.1
+Speciﬁcations and Temporal Properties
+. . . . . . . .
+38
+6.2.2
+Symmetry . . . . . . . . . . . . . . . . . . . . . . . . .
+38
+6.2.3
+Model Checking
+. . . . . . . . . . . . . . . . . . . . .
+39
+6.2.4
+Expressing Symmetry
+. . . . . . . . . . . . . . . . . .
+41
+6.2.5
+Symmetry Under Time Translation . . . . . . . . . . .
+43
+6.2.6
+Periodicity and Zeno Behaviors . . . . . . . . . . . . .
+45
+6.2.7
+Checking Inductive Invariance
+. . . . . . . . . . . . .
+49
+6.3
+Model Checking Our Speciﬁcations . . . . . . . . . . . . . . .
+50
+6.3.1
+Modifying the Speciﬁcations . . . . . . . . . . . . . . .
+50
+6.3.2
+Measurements
+. . . . . . . . . . . . . . . . . . . . . .
+51
+6.3.3
+Speciﬁcation FSpec1 . . . . . . . . . . . . . . . . . . .
+52
+6.3.4
+Speciﬁcation FSpec2 . . . . . . . . . . . . . . . . . . .
+56
+6.3.5
+Speciﬁcation HFSpec2 . . . . . . . . . . . . . . . . . .
+56
+6.3.6
+Speciﬁcation LSpec . . . . . . . . . . . . . . . . . . . .
+57
+6.4
+Comparison With Uppaal . . . . . . . . . . . . . . . . . . . .
+59
+6.4.1
+The Leader Algorithm . . . . . . . . . . . . . . . . . .
+61
+6.4.2
+Fischer’s Algorithm
+. . . . . . . . . . . . . . . . . . .
+64
+
+--- Page 4 ---
+7
+Conclusion
+66
+7.1
+Objections . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+66
+7.2
+Hybrid-System Speciﬁcations . . . . . . . . . . . . . . . . . .
+67
+7.3
+Concluding Remarks . . . . . . . . . . . . . . . . . . . . . . .
+67
+Acknowledgements
+68
+References
+68
+
+--- Page 5 ---
+1
+Introduction
+There is a simple and obvious way to describe a real-time algorithm, proto-
+col, or system design:
+• Introduce a variable now, whose value represents the current time,
+and model the passage of time with an action that increments now.
+• Express timing bounds as follows:
+– Describe a lower bound by allowing certain actions to occur only
+if now is greater than some value.
+– Describe an upper bound by not allowing the action that incre-
+ments now to occur if that would cause a violation of the bound.
+This produces what I will call an explicit-time description.
+No special language or tools are required to handle explicit-time descrip-
+tions. They can be written and debugged exactly like untimed ones; they
+can be veriﬁed with conventional assertional reasoning; and they can be
+checked with conventional model checkers.
+Another approach is to write implicit-time descriptions. One creates a
+new language with special constructs for expressing timing properties, where
+the current time is implicit rather than being represented by a variable. This
+is often done by modifying an existing untimed language. Examples include
+timed CSP [38], timed Petri nets [42], and timed I/O automata [30].
+A new language requires a new semantics, new tools, and new proof
+rules. Implicit-time methods have therefore been the subject of hundreds of
+papers and theses. In contrast, nothing new is required to handle explicit-
+time descriptions.
+They are apparently so simple and obvious that very
+little has been written about them. Except for a handful of papers using
+TLA [2, 26], the only published work I know of in which both the algo-
+rithm or system description and the properties to be checked are expressed
+in an ordinary untimed language is that of Dutertre and Sorea [14] and
+Brinksma, Mader, and Fehnker [9]. The very fact that such speciﬁcations
+are easily model checked seems never to have been stated explicitly in print,
+though it has been known for many years and is implicit in several pub-
+lished results [16]. Explicit-time speciﬁcations of the correctness properties
+to be proved have been used [33], and Ostroﬀhas described a method for
+translating an implicit-time description into an explicit-time one for veriﬁca-
+tion [34]. However, other than the aforementioned TLA-based work and the
+1
+
+--- Page 6 ---
+work of Dutertre and Sorea and of Brinksma et al., I know of no previously
+published, purely explicit-time approach.
+An implicit-time approach may be necessary if we want to reason about
+an actual implementation—for example, one written in a programming lan-
+guage like Java or in a hardware description language. Modifying a real Java
+program by adding extra variables to express the timing constraints would
+be diﬃcult and error-prone, and it would alter the program’s timing prop-
+erties. The earliest published real-time veriﬁcation method that I know of,
+by Bernstein and Harter [7], was an implicit-time approach based on a toy
+programming language. They presumably hoped that their method could
+be extended to verify actual programs. However, the diﬃculties encountered
+in trying to extend ordinary program veriﬁcation to actual programs makes
+such a hope now seem naive. Most recent work on real-time veriﬁcation
+has been directed toward higher-level descriptions of algorithms, protocols,
+or system designs. There is no a priori reason to prefer an implicit-time
+approach for such higher-level descriptions.
+The preponderance of publications advocating implicit-time approaches
+seems to have created the impression that explicit-time ones are not as
+good—or perhaps even do not exist. In fact, implicit-time approaches oﬀer
+no practical advantage over explicit-time ones—except perhaps for use in
+model checking, discussed below. Their proponents may argue that the more
+complex implicit-time approaches are more elegant, abstract, hierarchical, or
+compositional, or have some other wonderful attributes. I will not attempt
+to challenge such claims. I assert only that implicit-time methods are no
+better than the simple explicit-time approach for the practical problem of
+describing and verifying the correctness of a high-level algorithm, protocol,
+or system design.
+A number of algorithms and programs have been developed especially
+for model-checking real-time speciﬁcations [3, 18, 27, 43]. They have used
+implicit-time languages, usually based on timed automata. Most of these
+languages seem to have been developed for modeling ﬁnite-state controllers,
+and they are not suﬃciently expressive for describing more complicated sys-
+tems such as network protocols. Such languages cannot model the simple
+distributed algorithm of Section 4. The only real-time model checker capable
+of handling this example that I know of is Uppaal [27].
+Special-purpose model checkers may be needed if one wants to verify
+a speciﬁcation that models continuous time, since representing continuous
+time by an ordinary variable produces an inherently inﬁnite-state speci-
+ﬁcation.
+(Dutertre and Sorea use a more general approach that handles
+some other inﬁnite-state speciﬁcations as well.) However, in practice, model
+2
+
+--- Page 7 ---
+checking is used to debug a speciﬁcation by checking small instances of it.
+Discrete-time speciﬁcations seem adequate for that purpose, and ordinary
+model checkers can be applied to them.
+The previously published recipe for writing explicit-time TLA speciﬁca-
+tions [2], formulated more recently in TLA+ [25], is a bit subtle because it
+conjoins timing properties to a complete untimed speciﬁcation. This makes
+the method less obvious and a little more complicated than necessary. More-
+over, the TLC model checker for TLA+ cannot handle the resulting speciﬁ-
+cations. So, I describe here an even simpler and more obvious approach and
+show how to model check the resulting speciﬁcations.
+The approach described here works with almost any language or for-
+malism based on state machines [8] or shared-memory programs [4, 11, 40].
+However, because they rely on the global variable now, explicit-time spec-
+iﬁcations are diﬃcult to write in process-based languages and formalisms
+with no explicit global state, such as CCS [32], CSP [19], Petri nets [39],
+streams [10], and I/O automata [29]. Instead, those formalisms are usually
+extended to allow writing implicit-time speciﬁcations.
+Section 2 explains with a simple example how to write an explicit-time
+speciﬁcation in TLA+. Section 3 discusses how to prove the correctness of
+such a speciﬁcation. Section 4 is devoted to a more sophisticated example—a
+real-time message-passing algorithm. A potential pitfall of the approach and
+how to avoid it are discussed in Section 5. Section 6 explains how to model
+check explicit-time speciﬁcations and presents the results of checking the
+examples of Sections 2 and 4. It also describes how ordinary model checkers
+compare with the Uppaal real-time model checker on these examples. A
+concluding section brieﬂy discusses objections to the method that I have
+heard and the extension of explicit-time speciﬁcations to hybrid systems.
+The method of writing and checking real-time speciﬁcations described
+here appears not to have been published before—perhaps because it seems
+too simple to be worth publishing. Yet that simplicity is what makes the
+method so appealing.
+In the face of a succession of more complicated
+implicit-time methods, it is useful to state the obvious: a simple explicit-
+time approach works at least as well.
+Although basically simple, some aspects of writing and verifying explicit-
+time speciﬁcations may not be obvious. These include the diﬀerent choices
+of which actions update timers (Section 2.3), the relation between the proofs
+of liveness and of real-time progress (Section 3.3), how to check that a spec-
+iﬁcation is nonZeno (Section 5), and several techniques for model checking
+the speciﬁcations (Section 6).
+3
+
+--- Page 8 ---
+2
+Specifying a Simple Algorithm
+The explicit-time approach is described mainly in terms of a single exam-
+ple. Space constraints require that the example be simple. The question
+then arises of whether larger problems can be handled with explicit time,
+or whether implicit-time methods are needed. I can answer this only by
+observing that explicit-time speciﬁcations can be written in languages such
+as TLA+ that have been applied to problems at least as large as any tackled
+by the formalisms on which implicit-time methods are based [6]. Adding a
+variable now clearly does not change how things scale—except perhaps for
+model checking, which is discussed in Section 6.
+I have chosen as the example Fischer’s mutual exclusion algorithm [41],
+mainly because it is the simplest interesting real-time algorithm I know. It
+is a shared-memory, multithreaded algorithm. There seems to be a com-
+mon misconception that methods based on shared variables or global state
+are not good for specifying and reasoning about distributed systems, and
+one must instead use a process-based method. It has been known for years
+that shared-variable languages are ﬁne for specifying distributed systems,
+and that one wants to reason about such systems in terms of global in-
+variants [21]. Section 4 brieﬂy presents an explicit-time speciﬁcation of a
+real-time distributed algorithm. It should serve as yet one more illustration
+that process-based methods oﬀer no practical advantage for specifying or
+reasoning about distributed systems.
+2.1
+The Algorithm
+Fischer’s algorithm uses a single shared variable x whose value is either
+a thread identiﬁer or the special value NotAThread; its initial value is
+NotAThread. Figure 1 shows the program for thread t without the tim-
+ing constraints needed to ensure mutual exclusion. Those constraints are as
+ncs : noncritical section;
+a : wait until x = NotAThread;
+b : x : = t;
+c : if x ̸= t then goto a;
+cs : critical section;
+d : x : = NotAThread; goto ncs;
+Figure 1: The program of thread t, with timing constraints omitted.
+4
+
+--- Page 9 ---
+follows, where δ and ϵ are parameters:
+• Step b must be executed at most δ seconds1 after the preceding exe-
+cution of step a.
+• Step c cannot be executed until at least ϵ seconds after the preceding
+execution of step b.
+Additional constraints are needed to ensure progress. Two kinds of con-
+straints can be used:
+1. Suitable fairness conditions on certain program statements, or
+2. Upper bounds on the execution times of those statements.
+I explain how to specify both kinds of constraints and prove their corre-
+sponding progress properties.
+2.2
+The Untimed Version in TLA+
+Before discussing the timing constraints, I describe how the untimed algo-
+rithm can be speciﬁed in TLA+, a complete speciﬁcation language based on
+the logic TLA [25]. TLA has a trace-based semantics in which a speciﬁca-
+tion describes a set of behaviors, and a behavior is a sequence of states. I
+assume no knowledge of TLA+. All TLA+ syntax appearing in the speciﬁ-
+cations that diﬀers from ordinary mathematical or programming notation
+is explained. I do assume that the reader is at least somewhat acquainted
+with the basic concepts of safety, liveness, and fairness [40].
+The customary form of a TLA speciﬁcation is
+Init ∧2[Next]vars ∧Liveness
+where the state predicate Init describes the possible initial states, the next-
+state action Next describes possible state changes, Liveness is the conjunc-
+tion of liveness or fairness conditions, and vars is the tuple of speciﬁcation
+variables.
+We ﬁrst determine the speciﬁcation variables.
+We obviously want a
+variable x that represents the program variable of that name.
+We also
+need a variable to represent the algorithm’s control state. We introduce a
+1For the sake of euphony, I assume that the unit of time is the second. There is no way
+for a speciﬁcation, which is ultimately a mathematical formula, to state formally that one
+unit of time equals a certain multiple of the frequency of an emission line of cesium.
+5
+
+--- Page 10 ---
+variable pc, where pc[t] describes the control state of thread t. For example,
+pc[t] = “a” means that control in thread t is at program statement a.
+We won’t specify any liveness requirement on the untimed algorithm,
+so the interesting part of its speciﬁcation is the deﬁnition of the next-state
+action Next that describes possible steps—that is, possible pairs of successive
+states in an allowed behavior of the algorithm. An algorithm step is a step
+of some thread, so Next is deﬁned by
+Next
+∆=
+∃t ∈Thread : TNext(t)
+where TNext(t) is the next-state action of thread t. A step of thread t is
+one that is performed by executing one of t’s program statements, so
+TNext(t)
+∆=
+NCS(t) ∨StmtA(t) ∨StmtB(t) ∨StmtC(t) ∨CS(t) ∨StmtD(t)
+where each of the actions NCS(t), StmtA(t), . . . describes an execution of
+the corresponding program statement. We now deﬁne these actions.
+In a conventional programming language, a step that changes the value
+of a variable v can be described by an assignment statement v := exp. In
+TLA+, the corresponding change to v is expressed by the action expression2
+v′ = exp. However, while the assignment statement leaves all variables other
+than v unchanged3, the TLA+ action expression says nothing about the new
+values of any other variables. The change to an array variable v described by
+an assignment statement v[c] := exp is represented by the action expression
+v′ = aexp, where aexp is an expression whose value is the same as that of
+v, except aexp[c] = exp. This expression aexp is written in TLA+ as
+[v except ![c] = exp]
+Before deﬁning the actions corresponding to a thread’s program statements,
+we deﬁne some operators for describing the control state. The state predicate
+At(t, loc) is true iﬀcontrol in thread t is at program location loc, and
+GoTo(t, loc) is the action expression that describes t’s control state changing
+to loc:
+At(t, loc)
+∆= pc[t] = loc
+GoTo(t, loc)
+∆= pc′ = [pc except ![t] = loc]
+2I am using the term action expression to mean a formula containing primed and
+unprimed variables. I reserve the term action to mean an action expression that deter-
+mines the new (primed) values of all the speciﬁcation variables as functions of their old
+(unprimed) values.
+3More precisely, in a programming language, what variables an assignment statement
+leaves unchanged must be determined from the context [28].
+6
+
+--- Page 11 ---
+We deﬁne GoFromTo(t, loc1, loc2) to assert that control in thread t goes
+from loc1 to loc2:
+GoFromTo(t, loc1, loc2)
+∆=
+At(t, loc1) ∧GoTo(t, loc2)
+We assume that each of the statements a, b, c, and d is an atomic operation,
+meaning that its execution is described by a single step. Statement a of
+thread t can then be represented by the action StmtA(t) deﬁned as follows,
+where a list of assertions bulleted with ∧(or ∨) denotes their conjunction
+(or disjunction), and the expression unchanged exp is deﬁned to equal
+exp′ = exp, asserting that expression exp is left unchanged:
+StmtA(t)
+∆=
+∧x = NotAThread
+∧GoFromTo(t, “a”, “b”)
+∧unchanged x
+A conjunct of an action that, like x = NotAThread, contains no primed vari-
+ables is an enabling condition for the action. Action StmtC(t), describing
+program statement c of thread t, is:
+StmtC(t)
+∆=
+∧At(t, “c”)
+∧if x ̸= t then GoTo(t, “a”)
+else
+GoTo(t, “cs”)
+∧unchanged x
+The deﬁnitions of actions StmtB(t) and StmtD(t) should be obvious. We
+represent the noncritical section by the action
+NCS(t)
+∆=
+∧GoFromTo(t, “ncs”, “a”)
+∧unchanged x
+Since TLA speciﬁcations allow “stuttering steps” that do not change any
+of the speciﬁcation’s variables, our speciﬁcation allows the execution of t’s
+noncritical section to consist of any number of steps that do not change
+pc or x, followed by an NCS(t) step that changes pc[t] from “ncs” to “a”
+and leaves x unchanged. The critical section is similarly represented by a
+single action CS(t), so execution of the critical section can also consist of
+any sequence of steps that change neither pc nor x.
+Except for the deﬁnitions of the initial predicate Init, actions StmtB(t),
+and StmtD(t), and the liveness condition Liveness, this completes the spec-
+iﬁcation of the untimed algorithm. I will not bother writing the remaining
+deﬁnitions.
+7
+
+--- Page 12 ---
+2.3
+Adding Timing to an Untimed Speciﬁcation
+In an explicit-time speciﬁcation of the actual real-time algorithm, a variable
+now represents the current time. For our purposes, it makes no diﬀerence
+whether time is continuous or advances in femtosecond steps. Moreover,
+instead of representing nature’s time (measured in some inertial coordinate
+system), now could represent some particular digital clock. We could there-
+fore pretend that time is discrete and let now assume only integral values.
+However, it’s just as easy to represent continuous time by letting now assume
+real values.
+The variable now is incremented by a special action, which I like to
+call Tick, that can increment now by any positive real value. Thus, even
+though the range of possible values of now is continuous, now increases
+in discrete ticks. We can view a behavior, which is a sequence of states,
+to be a sequence of snapshots of the system, each taken at some instant
+of time.
+These snapshots are taken often enough to capture every state
+reached by the ordinary variables—that is, the variables of the untimed
+systems, such as x and pc in the speciﬁcation of Fischer’s algorithm. Since
+the ordinary variables are assumed to change in discrete steps, and now
+can be incremented by arbitrary amounts, nothing is lost by representing
+continuous time in this way.
+Timing constraints are expressed by adding special timer variables. A
+constraint that something must occur within or after τ seconds is expressed
+by having a variable timer set to time out in precisely τ seconds. There seem
+to be three basic ways to do this. The method I have used before [2], which
+is perhaps the simplest, is with expiration timers. An expiration timer timer
+is left unchanged by the Tick action. It can be set to now +τ, in which case
+the timeout occurs when now = timer, or it can be set to now, in which
+case the timeout occurs when now = timer + τ. A possibly more intuitive
+way is with a countdown timer that is decreased by the Tick action. If the
+timer is set to τ, then the timeout occurs when it becomes equal to 0. The
+third type of timer is a count-up timer that is increased by the Tick action.
+If the timer is set to 0, then timeout occurs when it becomes equal to τ.
+Timers may be reset when not in use; countdown and count-up timers that
+have been reset are left unchanged by the Tick action. Typically, the value
+of a reset timer equals 0, ∞, or −∞. Although it makes little diﬀerence to
+TLC, some model checkers require the use of countdown or count-up timers,
+so I will use countdown timers here.
+Dutertre and Sorea [14] and Brinksma et al. [9] use an alternative ap-
+proach in which timer variables store the exact time at which future actions
+8
+
+--- Page 13 ---
+will occur. Such a timer variable is set, perhaps nondeterministically, when
+it becomes possible to predict that the action will happen. The Tick ac-
+tion advances now directly to the time at which the next action is to occur.
+This approach eliminates intermediate Tick actions and could reduce the
+number of reachable states in some models, but it can be more awkward for
+describing some systems. I will not consider it further.
+If an operation of an untimed program is represented by action A, then
+a timing constraint on when that operation may or must occur is expressed
+as a bound τ on the length of time between when some predicate P becomes
+true and when an A step may or must occur. (Typically, P is the predicate
+enabled A that is true iﬀA is enabled.) Such a constraint is expressed by
+having a timer variable that is set to τ when either the value of P changes
+from false to true or an A step occurs that leaves P true. The timer is reset
+when P becomes false. For most timing constraints that occur in practice,
+any A step makes P false.
+There are two kinds of timing constraints. A lower-bound constraint
+requires that the operation not occur until P has been true for at least
+τ seconds.
+An upper-bound constraint requires that the operation must
+occur if P has been true for τ seconds. For each of these constraints, we
+have the choice of allowing the elapsed time before the operation occurs to
+equal exactly τ seconds, or of requiring a strict inequality to hold. With
+continuous time, the choice has no signiﬁcance because an inﬁnitely precise
+measurement would be required to determine whether exactly τ seconds
+had passed. When using count-down timers, it’s a bit more convenient for
+a lower-bound constraint to allow the operation to occur when τ seconds
+or more have elapsed. This is done by representing the program operation
+with the action (timer = 0) ∧A, taking 0 to be the special value indicating
+that the timer has been reset. For an upper-bound constraint, we arbitrarily
+choose to require that the operation occur strictly less than τ seconds after
+P becomes true. This is done by requiring that the Tick action increase now
+by less than the current value of timer. In other words, Tick must imply
+now′ < now +timer. In this case, P must imply enabled A; otherwise, the
+requirement could assert that a step of a disabled action must occur, which
+is impossible.4 It is most convenient to let ∞be the special value indicating
+that the timer is reset.
+We next must decide what speciﬁcation actions set and reset variable
+timer. There are two choices: the Tick action, which increments now, or
+4More precisely, this would result in a Zeno speciﬁcation.
+Such speciﬁcations are
+discussed in Section 5.
+9
+
+--- Page 14 ---
+the “ordinary” actions that modify the ordinary variables. Either is possible,
+but I ﬁnd it easier to let the ordinary actions do it.5 We therefore conjoin,
+to actions of the untimed speciﬁcation, action expressions that specify the
+new values of timer variables. For a multithreaded algorithm like Fischer’s,
+there are three natural ways of doing this. Action expressions describing a
+timer’s new value can be conjoined to:
+• each of the individual actions NCT(t), StmtA(t), etc.,
+• the action TNext(t), which describes the steps of thread t, or
+• the entire next-state action Next.
+Diﬀerent choices could be made for diﬀerent timers in the same speciﬁcation.
+We use the ﬁrst method for our ﬁrst speciﬁcation of the Fischer algo-
+rithm, in which progress is achieved by liveness. We will use the second for
+our second speciﬁcation, in which progress is achieved by timing bounds.
+2.4
+Speciﬁcation FSpec1: Progress Through Liveness
+The speciﬁcation of the untimed algorithm was developed above in a top-
+down fashion, starting with the complete speciﬁcation.
+However, TLA+
+requires that every identiﬁer be deﬁned or declared before it is used, which
+leads to a bottom-up description. (Splitting the speciﬁcation into multiple
+modules would allow it to be read in a more top-down fashion.)
+We put declarations and deﬁnitions shared by both speciﬁcations in mod-
+ule FischerPreface, which appears in Figure 2. The module begins by im-
+porting the standard Reals module that deﬁnes the set Real of real numbers
+and the usual arithmetic operations on them. It then deﬁnes Max(a, b) to
+be the maximum of a and b, if they are real numbers. Next comes the dec-
+laration of the speciﬁcation’s constant parameters: the set Thread of thread
+identiﬁers and the timing bounds Delta and Epsilon. The assume state-
+ment asserts assumptions about those bounds. The constant NotAThread
+is then deﬁned to be an arbitrary value that is not a thread.
+Module FischerPreface next declares the speciﬁcation’s variables and
+deﬁnes some state functions. Variables ubTimer and lbTimer are arrays of
+timers used to express upper and lower time bounds, respectively. For later
+use, vars is deﬁned to be the tuple of all speciﬁcation variables.
+The state predicate Init speciﬁes the initial values of the variables. It
+uses the TLA+ notation that [x ∈S 7→exp] is the function f with domain
+5There are lower-bound constraints for which the corresponding timer must be set by
+the ordinary actions, but such constraints do not seem to occur in practice.
+10
+
+--- Page 15 ---
+module FischerPreface
+extends Reals
+Max(a, b)
+∆= if a ≥b then a else b
+constants Thread, Delta, Epsilon
+assume ∧(Delta ∈Real) ∧(Epsilon ∈Real)
+∧0 < Delta
+∧Delta ≤Epsilon
+NotAThread
+∆= choose t : t /∈Thread
+variables x, pc, ubTimer, lbTimer, now
+vars
+∆= ⟨x, pc, ubTimer, lbTimer, now⟩
+Init
+∆= ∧pc
+= [t ∈Thread 7→“ncs”]
+∧x
+= NotAThread
+∧now
+= 0
+∧ubTimer = [t ∈Thread 7→Inﬁnity]
+∧lbTimer = [t ∈Thread 7→0]
+MutualExclusion
+∆=
+∀t1, t2 ∈Thread : (t1 ̸= t2) ⇒(pc[t1] ̸= “cs”) ∨(pc[t2] ̸= “cs”)
+At(t, loc)
+∆= pc[t] = loc
+GoTo(t, loc)
+∆= pc′ = [pc except ![t] = loc]
+GoFromTo(t, loc1, loc2)
+∆= At(t, loc1) ∧GoTo(t, loc2)
+TimedOut(t, timer)
+∆=
+timer[t] = 0
+Figure 2: Module FischerPreface, containing declarations and deﬁnitions
+common to our two speciﬁcations of Fischer’s algorithm.
+11
+
+--- Page 16 ---
+S such that f [x] = exp for all x in S. (An array indexed by a set S is just a
+function whose domain is S.) Since absolute time values have no signiﬁcance
+to the algorithm, I have chosen to initialize now with the arbitrary value 0.
+Another natural choice would be to let now initially equal any real number—
+a choice expressed by the assertion now ∈Real.
+The state predicate MutualExclusion asserts that two diﬀerent processes
+are not both in their critical section. (The symbol ⇒denotes implication.)
+Mutual exclusion means that this predicate is always true. So, to prove that
+Fischer’s algorithm implements mutual exclusion, we have to prove that
+MutualExclusion is an invariant of the algorithm’s speciﬁcation.
+The module next deﬁnes the operators At, GoTo, and GoFromTo intro-
+duced in Section 2.2 above. It concludes by deﬁning TimedOut(t, timer) to
+be the state predicate asserting that timer variable timer[t] has timed out.
+For count-down timers, this predicate is simply timer[t] = 0.
+Our ﬁrst speciﬁcation continues in Module Fischer1 of Figure 3, which
+begins by importing module FischerPreface.
+It then deﬁnes two action
+expressions for setting timer variables: SetTimer(t, timer, tau) sets timer
+timer[t] to time out in tau seconds and ResetUBTimer(t, timer) resets it
+to Inﬁnity, which is deﬁned in the Reals module to be a value greater than
+any real number.
+The structure of the timed speciﬁcation is similar to that of the un-
+timed one, with the algorithm’s next-state action Next, the next-state action
+TNext(t) of thread t, and actions NCS(t), StmtA(t), . . . , corresponding to
+the program statements. However, there is also the Tick action, so Next is
+deﬁned by
+Next
+∆=
+Tick ∨(∃t ∈Thread : TNext(t))
+Moreover, the actions corresponding to program statements specify the new
+values of lbTimer and ubTimer, and they assert that now is left unchanged.
+An additional enabling condition is also needed in action StmtC(t) to express
+the lower-bound timing constraint on the execution of statement c.
+The Fischer algorithm has one upper-bound timing constraint—that a
+thread must execute statement b within δ seconds after it executes statement
+a. In our speciﬁcation, this means that action StmtB(t) must be executed
+within Delta seconds of when control reaches b. We express this constraint
+with the timer ubTimer[t]. Since control reaches b only by a StmtA(t) step,
+we let StmtA(t) set the timer. As we’ll see, StmtA(t) should leave lbTimer[t]
+12
+
+--- Page 17 ---
+module Fischer1
+extends FischerPreface
+SetTimer(t, timer, tau)
+∆=
+timer′ = [timer except ![t] = tau]
+ResetUBTimer(t, timer)
+∆=
+SetTimer(t, timer, Inﬁnity)
+NCS(t)
+∆= ∧GoFromTo(t, “ncs”, “a”)
+∧unchanged ⟨x, now, lbTimer, ubTimer⟩
+StmtA(t)
+∆=
+Deﬁned on page 14.
+StmtB(t)
+∆=
+Deﬁned on page 14.
+StmtC(t)
+∆=
+Deﬁned on page 14.
+CS(t)
+∆= ∧GoFromTo(t, “cs”, “d”)
+∧unchanged ⟨x, now, lbTimer, ubTimer⟩
+StmtD(t)
+∆= ∧GoFromTo(t, “d”, “ncs”)
+∧x ′ = NotAThread
+∧unchanged ⟨now, lbTimer, ubTimer⟩
+Tick
+∆=
+Deﬁned on page 15.
+TNext(t)
+∆= NCS(t) ∨StmtA(t) ∨StmtB(t) ∨StmtC(t) ∨CS(t) ∨StmtD(t)
+Next
+∆= Tick ∨(∃t ∈Thread : TNext(t))
+SafetySpec
+∆= Init ∧2[Next]vars
+theorem SafetySpec ⇒2MutualExclusion
+Liveness
+∆=
+∧∀t ∈Thread : WFvars(StmtA(t) ∨StmtB(t) ∨StmtC(t) ∨StmtD(t))
+∧∀r ∈Real : 3(now > r)
+FSpec1
+∆= SafetySpec ∧Liveness
+Progress
+∆=
+(∃t ∈Thread : pc[t] ∈{“a”, “b”, “c”}) ; (∃t ∈Thread : pc[t] = “cs”)
+theorem FSpec1 ⇒Progress
+Figure 3: Module Fischer1, containing the speciﬁcation of our ﬁrst version
+of Fischer’s algorithm.
+13
+
+--- Page 18 ---
+unchanged. Therefore, it is deﬁned by
+StmtA(t)
+∆=
+∧x = NotAThread
+∧GoFromTo(t, “a”, “b”)
+∧SetTimer(t, ubTimer, Delta)
+∧unchanged ⟨x, now, lbTimer ⟩
+Setting an upper-bound timer to a real value τ prevents now from advancing
+more than τ seconds. So, an upper-bound timer must be reset to Inﬁnity
+to turn it oﬀwhen it is not in use. A StmtB(t) step must therefore reset
+ubTimer[t], so StmtB(t) needs the conjunct ResetUBTimer(t, ubTimer).
+All other actions corresponding to program statements must leave ubTimer[t]
+unchanged.
+The algorithm has one lower-bound constraint—that a thread may not
+execute statement c until at least ϵ seconds after it executes statement b. We
+use lbTimer[t] to assert that StmtC(t) may not be executed until at least
+Epsilon seconds after control reaches c. Since a StmtB(t) step sets pc[t]
+to “c”, action StmtB(t) must set lbTimer[t]. Remembering that StmtB(t)
+must also reset ubTimer[t], we have:
+StmtB(t)
+∆=
+∧GoFromTo(t, “b”, “c”)
+∧x ′ = t
+∧RestUBTimer(t, ubTimer)
+∧SetTimer(t, lbTimer, Epsilon)
+∧unchanged now
+We express the requirement that a StmtC(t) step may occur only after
+lbTimer[t] has timed out by conjoining to StmtC(t) the enabling condition
+TimedOut(t, lbTimer). A lower-bound timer is turned oﬀwhen it times
+out and reaches 0, so there is no need for StmtC(t) to change lbTimer. The
+deﬁnition is therefore
+StmtC(t)
+∆=
+∧At(t, “c”)
+∧TimedOut(t, lbTimer)
+∧if x ̸= t then GoTo(t, “a”)
+else
+GoTo(t, “cs”)
+∧unchanged ⟨x, now, lbTimer, ubTimer ⟩
+Actions NCS(t), CS(t), and StmtD(t) are the same as in the untimed speci-
+ﬁcation, except that they also leave now, lbTimer, and ubTimer unchanged.
+A Tick step increments now by some positive number d, which must
+be less than the value of all upper-bound timers. It decreases all timers
+14
+
+--- Page 19 ---
+by d, except that lower-bound timers must stop at 0. So, a lower-bound
+timer is set to 0 if its value is less than d. (An upper-bound timer cannot
+become negative because d must be less than its current value.) The Tick
+action leaves the “ordinary” variables x and pc unchanged. Its deﬁnition is
+therefore
+Tick
+∆=
+∃d ∈{r ∈Real : r > 0} :
+∧∀t ∈Thread : ubTimer[t] > d
+∧now′ = now + d
+∧ubTimer′ = [t ∈Thread 7→
+if ubTimer[t] = Inﬁnity then Inﬁnity
+else ubTimer[t] −d]
+∧lbTimer′ = [t ∈Thread 7→Max(0, lbTimer[t] −d)]
+∧unchanged ⟨x, pc⟩
+This completes the deﬁnition of Next, the algorithm’s next-state action. The
+safety part of the speciﬁcation is the formula
+SafetySpec
+∆=
+Init ∧2[Next]vars
+That the algorithm implements mutual exclusion is expressed formally by
+the assertion that the predicate MutualExclusion is true throughout every
+behavior satisfying this speciﬁcation. In TLA+, this assertion is written
+theorem SafetySpec ⇒2MutualExclusion
+In addition to satisfying mutual exclusion, we want an algorithm to ensure
+progress. For the Fischer algorithm, progress means that, if some thread
+is waiting to enter its critical section, then some thread (not necessarily
+the same one) will eventually enter. In the standard terminology of mutual
+exclusion, Fischer’s algorithm is deadlock free but not starvation free. A
+thread is waiting to enter its critical section iﬀcontrol is at statement a, b,
+or c. The progress condition can therefore be expressed in temporal logic as
+Progress
+∆=
+(∃t ∈Thread : pc[t] ∈{“a”, “b”, “c”})
+; (∃t ∈Thread : pc[t] = “cs”)
+where P ; Q (read P leads to Q) asserts that, if P ever becomes true, then
+Q will be true then or at some later point in the execution. Observe that
+this condition is satisﬁed if some thread ever enters its critical section and
+remains there forever.
+15
+
+--- Page 20 ---
+To ensure that the algorithm makes progress, we must conjoin some
+liveness assumption to the safety speciﬁcation. Our ﬁrst speciﬁcation does
+this by placing weak fairness assumptions on program statements a, c, and
+d. (The upper-bound constraint implies that b must be executed within δ
+seconds of when control reaches it, so we don’t need a fairness assumption
+on statement b.) Weak fairness of an action A means that, if A remains
+continuously enabled, then an A step must eventually occur. It is usually
+expressed in TLA by the formula WFv(A), where v is the tuple of all speciﬁ-
+cation variables. To anyone familiar with reasoning about fairness, it is clear
+that the conjunction of weak fairness of each of the three actions StmtA(t),
+StmtC(t) and StmtD(t) is equivalent to weak fairness of their disjunction.
+Hence, the fairness assumption can be expressed as
+∀t ∈Thread : WFvars(StmtA(t) ∨StmtC(t) ∨StmtD(t))
+We must also require now to keep advancing. (Otherwise, the lower-bound
+constraint could keep a StmtC(t) step from ever happening.) This assump-
+tion can be expressed as:6
+∀r ∈Real : 3(now > r)
+Deadlock freedom of Fischer’s algorithm is shown by proving that the con-
+junction of SafetySpec and these two liveness assumptions imply formula
+Progress.
+The deﬁnition of FSpec1, the speciﬁcation of Fischer’s algorithm with
+these liveness assumptions, and the statement of its correctness appear in
+module Fischer1 of Figure 3. As indicated, some deﬁnitions that appear in
+the text are omitted.
+Observe that the variable now appears only in the conjunct of Tick that
+increments it and in unchanged conjuncts. It acts as a history variable,
+recording the passage of time but not aﬀecting the values of other variables.
+Eliminating now would not materially change the speciﬁcation. The ability
+to eliminate now is important for model checking, but there is no reason to
+remove it from the speciﬁcation now.
+Although I have written the speciﬁcation in TLA+, it could be written
+in other languages. Many languages might have diﬃculty expressing a Tick
+action that allows now to be incremented by an arbitrary real number.
+6Had we restricted now to have integral values, then we could instead have required
+strong fairness of the Tick action. However, since now can assume arbitrary real values, its
+value can remain bounded despite an inﬁnite sequence of Tick steps. Therefore, fairness
+of the Tick action does not assure that now increases without bound.
+16
+
+--- Page 21 ---
+However, as mentioned above, little is lost by letting now assume discrete
+values, in which case Tick can just increment now by 1. The speciﬁcation
+can then be written in any language with global variables that can describe
+multithreaded algorithms.
+2.5
+Speciﬁcation FSpec2: Progress Through Timing Bounds
+Speciﬁcation FSpec1 of module Fischer1 uses fairness assumptions on the
+execution of statements a, c, and d to ensure progress. We now write a
+speciﬁcation FSpec2 that ensures progress by placing upper bounds on the
+execution times of these statements.
+More precisely, we place an upper
+bound on the length of time that the action representing the statement’s
+execution can be enabled without its “being executed”. For statements c
+and d, that is simply the maximum length of time between control reaching
+the statement and the statement being executed. For statement a, it means
+that, when control in thread t is at a, it is an upper bound on the length
+of time that x can continuously equal NotAThread without a StmtA(t) step
+occurring.
+For convenience, we use the same upper bound δ for statements a and
+d that we have already used for statement b. To avoid contradictory timing
+conditions, we must make the upper bound on the execution time for c larger
+than its lower bound ϵ, which is greater than or equal to δ. So we let the
+upper bound on the execution time of c be a new parameter γ, which we
+assume to be greater than ϵ.
+We use the timers ubTimer[t] to express these upper bounds.
+As in
+speciﬁcation FSpec1, we could let ubTimer be set by the actions represent-
+ing the individual program statements. However, this is more complicated
+than before because execution of statement d by one thread must set the
+upper-bound timer in any other thread that is waiting to execute statement
+a. Instead, to specify how an action of thread t changes the upper-bound
+timers, we conjoin an action expression to the entire next-state action of
+thread t. For uniformity, we describe the setting of the lower-bound timers
+the same way. The speciﬁcation’s next-state action is therefore
+Next
+∆=
+Tick ∨(∃t ∈Thread : TNext(t) ∧SetTimers(t))
+where Tick is the same as in FSpec1; action TNext(t) is almost the same
+as in the untimed speciﬁcation; and SetTimers(t) describes how an action
+of thread t changes lbTimer and ubTimer, as well as asserting that now is
+17
+
+--- Page 22 ---
+left unchanged. The deﬁnition of SetTimers(t) therefore has the form
+SetTimers(t)
+∆=
+∧lbTimer′
+= . . .
+∧ubTimer′ = . . .
+∧unchanged now
+An action of thread t changes only the t component of lbTimer, setting it
+to Epsilon if the new value of pc[t] is “c” and to Inﬁnity otherwise. So a
+SetTimers(t) step should set lbTimer to
+[lbTimer except ![t] = if pc′[t] = “c” then Epsilon
+else
+Inﬁnity]
+A SetTimers(t) step should change the value of ubTimer[s] as follows:
+• If s = t, so this is a step that changes pc[s], then ubTimer′[s] should
+equal:
+– Delta if the new value of pc[s] is “b” or “d”, or if it is “a” and
+the new value of x equals NotAThread.7
+– Gamma if the new value of pc[s] is “c”.
+– Inﬁnity otherwise.
+• If s ̸= t, so ubTimer[s] is a timer for a diﬀerent thread’s action, then
+ubTimer′[s] should equal:
+– Delta if pc[s] = “a” and the action changes the value of x to
+NotAThread.
+– Inﬁnity if pc[s] = “a” and the action changes the value of x to a
+thread identiﬁer.
+– ubTimer[s] (the current value) otherwise.
+The complete deﬁnition of SetTimers(t) is in Figure 4.
+The next-state action TNext(t) of thread t is the same as for the un-
+timed algorithm, except that action StmtC(t) has the additional conjunct
+TimedOut(t, lbTimer) to describe the lower-bound constraint on its execu-
+tion. The complete speciﬁcation is in module Fischer2, shown in Figure 5.
+The module’s theorem asserts that the speciﬁcation satisﬁes mutual exclu-
+sion. The assertion and proof that it satisﬁes a real-time progress condition
+appears in Section 3.3 below.
+7In the latter case, the step does not change x, so its new and old values are actually
+the same.
+18
+
+--- Page 23 ---
+SetTimers(t)
+∆=
+∧lbTimer′ = [lbTimer except ![t] = if pc′[t] = “c” then Epsilon
+else 0]
+∧ubTimer′ = [s ∈Thread 7→
+if s = t
+then if ∨pc′[s] ∈{“b”, “d”}
+∨(pc′[s] = “a”) ∧(x ′ = NotAThread)
+then Delta
+else if pc′[s] = “c” then Gamma
+else Inﬁnity
+else if ∧pc[s] = “a”
+∧(x ′ = NotAThread) ̸= (x = NotAThread)
+then if x ′ = NotAThread then Delta
+else Inﬁnity
+else ubTimer[s]]
+∧unchanged now
+Figure 4: The action describing how a step of thread t changes lbTimer,
+ubTimer, and now.
+This way of writing the speciﬁcation, conjoining the action expression
+SetTimers(t) to the next-state action TNext(t) of thread t, is quite nat-
+ural with TLA.
+It would be diﬃcult or impossible to do it with most
+programming-language based speciﬁcation methods. In those methods, one
+would have to add the timer-setting actions to the individual statements.
+While this makes the speciﬁcation perhaps less elegant, it presents no fun-
+damental diﬃculties.
+Just as with speciﬁcation FSpec1, we can eliminate the variable now from
+FSpec2 without aﬀecting the algorithm. However, we will use now in the
+next section for expressing the real-time progress property that corresponds
+to the liveness property Progress of module Fischer1.
+3
+Proving Correctness of Fischer’s Algorithm
+Just as an explicit-time speciﬁcation can use existing languages, its correct-
+ness can be proved with existing proof methods. Such methods have been
+around for almost three decades and should by now be well-known. So, I
+will just state what are essentially the fundamental lemmas necessary to
+prove correctness of Fischer’s algorithm. The actual proofs are left to the
+motivated reader.
+19
+
+--- Page 24 ---
+module Fischer2
+extends FischerPreface
+constant Gamma
+assume Epsilon < Gamma
+NCS(t)
+∆= ∧GoFromTo(t, “ncs”, “a”)
+∧unchanged x
+StmtA(t)
+∆= ∧x = NotAThread
+∧GoFromTo(t, “a”, “b”)
+∧unchanged x
+StmtB(t)
+∆= ∧GoFromTo(t, “b”, “c”)
+∧x ′ = t
+StmtC(t)
+∆= ∧At(t, “c”)
+∧TimedOut(t, lbTimer)
+∧if x ̸= t then GoTo(t, “a”)
+else GoTo(t, “cs”)
+∧unchanged x
+CS(t)
+∆= ∧GoFromTo(t, “cs”, “d”)
+∧unchanged x
+StmtD(t)
+∆= ∧GoFromTo(t, “d”, “ncs”)
+∧x ′ = NotAThread
+Tick
+∆=
+Same deﬁnition as in Module Fischer1 (page 13).
+SetTimers(t)
+∆=
+Deﬁned on page 19
+TNext(t)
+∆= NCS(t) ∨StmtA(t) ∨StmtB(t) ∨StmtC(t) ∨CS(t) ∨StmtD(t)
+Next
+∆= Tick ∨(∃t ∈Thread : TNext(t) ∧SetTimers(t))
+FSpec2
+∆= Init ∧2[Next]vars
+theorem FSpec2 ⇒2MutualExclusion
+Figure 5: Module Fischer2, containing the speciﬁcation FSpec2 of our sec-
+ond version of Fischer’s algorithm.
+20
+
+--- Page 25 ---
+3.1
+Proof of Mutual Exclusion
+In TLA, one proves that an algorithm with speciﬁcation Spec satisﬁes a prop-
+erty F by proving the theorem Spec ⇒F. Often, F has the same form as
+Spec. In that case, one usually says that the algorithm implements the high-
+level speciﬁcation F, or that it implements the abstract model/algorithm de-
+scribed by F. To show that the Fischer algorithm satisﬁes mutual exclusion,
+we take F to be the invariance property 2MutualExclusion.
+The basic method of proving this invariance property was ﬁrst published
+by Ashcroft in 1975 [5].
+It involves ﬁnding an inductive invariant that
+implies MutualExclusion. An inductive invariant for a speciﬁcation Init ∧
+2[Next]vars is a state predicate Inv satisfying
+I1. Init ⇒Inv
+I2. Inv ∧Next ⇒Inv′
+where Inv′ is obtained from Inv by priming all variable occurrences.
+The diﬀerences between our two versions of Fischer’s algorithm do not
+aﬀect the basic mutual exclusion protocol, and the same inductive invariant
+Inv proves mutual exclusion for both of them. That invariant is deﬁned
+in Figure 6.
+It contains the conjunct TypeOK, which is a simple type-
+correctness invariant asserting that each variable is an element of the appro-
+priate set. For example, it asserts that ubTimer is a function from Thread
+to Real ∪{Inﬁnity}. In a typed formalism, TypeOK would be implicit in
+the type declarations, and its invariance would be shown by type checking.8
+We prove mutual exclusion by proving I 1 and I 2, which imply that
+Inv is always true, and then proving Inv ⇒MutualExclusion, which shows
+that MutualExclusion is always true. This is all straightforward. In other
+formalisms, I2 is replaced by some veriﬁcation condition. For example, in the
+Owicki-Gries method [35], Inv is written as a program annotation, and I2 is
+expressed as “sequential correctness” and “interference freedom” conditions.
+3.2
+Proof of Eventual Progress
+We want to prove that the speciﬁcation SafetySpec ∧Liveness of Fischer’s
+algorithm in module Fischer1 satisﬁes property Progress.
+This property
+has the form P ; Q. The basic method of proving such a property was
+8Simple type checking proves a type-correctness invariant only if all operators are
+“total”.
+For example, if the tail of an empty list is undeﬁned, then proving a type-
+correctness invariant requires showing that the algorithm never takes the tail of an empty
+list.
+21
+
+--- Page 26 ---
+Inv
+∆=
+∧TypeOK
+∧∀t ∈Thread :
+∧now ≤ubTimer[t]
+∧(pc[t] = “b”) ⇒(ubTimer[t] < now + Epsilon)
+∧(pc[t] = “c”) ⇒
+∀s ∈Thread : (x = t) ∧(pc[s] = “b”)
+⇒(lbTimer[t] > ubTimer[s])
+∧(pc[t] ∈{“cs”, “d”}) ⇒(x = t) ∧(∀s ∈Thread : pc[s] ̸= “b”)
+Figure 6: The inductive invariant for the proof of mutual exclusion, where
+TypeOK is a simple type-correctness invariant.
+explained two decades ago [36]. One decomposes the proof of P ; Q into
+the proof of simpler ; formulas using a proof lattice. A lattice for the proof
+of P ; Q is an acyclic directed graph, whose nodes are temporal formulas,
+having P as the only source and Q as the only sink, and such that every
+path from P to Q is ﬁnite. A node G is a successor of a node F in the
+lattice iﬀthere is an arc from F to G. A non-sink node F represents the
+assertion that F leads to the disjunction of its successor nodes—that is, the
+formula F ; (∃i ∈S : Gi), where {Gi : i ∈S} is the set of successors of
+F. The conjunction of the formulas represented by all the non-sink nodes
+of the proof lattice implies P ; Q.
+Formula P ; Q asserts that, if P ever becomes true, then Q is true then
+or at some later point in the execution. This is usually proved by proving
+(P ∧2¬Q) ; false, which asserts that P true and Q never again true
+leads to a contradiction.
+A proof lattice for proving eventual progress of Fischer’s algorithm ap-
+pears in Figure 7. For compactness, it uses the following deﬁnitions. State
+predicates A, B, C, and D assert that control in some thread is at the
+corresponding control point—for example:
+B
+∆=
+∃t ∈Thread : pc[t] = “b”
+State predicate Crit asserts that some thread is in its critical section:
+Crit
+∆=
+∃t ∈Thread : pc[t] = “cs”
+State predicates ABC, DCrit, BDCrit, and X are deﬁned by:
+ABC
+∆=
+A ∨B ∨C
+DCrit
+∆=
+D ∨Crit
+BDCrit
+∆=
+B ∨D ∨Crit
+X
+∆=
+x ∈Thread
+22
+
+--- Page 27 ---
+ABC ∧2¬Crit
+?
+HHH
+j
+ABC ∧D ∧2¬Crit
+©
+©
+©
+
+ABC ∧¬D ∧2¬Crit
+?
+ABC ∧2¬DCrit
+?
+£
+£
+£
+£
+
+
+
+
+)
+?
+C ∧¬X ∧2¬DCrit
+@@
+R
+-
+A ∧¬X ∧2¬DCrit
+z
+@@
+R
+B ∧2¬DCrit
+@@
+R
+C ∧X ∧2¬DCrit
+?
+C ∧2(¬DCrit ∧X )
+?
+C ∧2(¬BDCrit ∧X )
+?
+false
+Figure 7: A proof lattice for ABC ∧2¬Crit ; false, used in the proof of
+SafetySpec ∧Liveness ⇒Progress.
+Hence, Progress equals ABC ; Crit, which can be proved by proving
+ABC ∧2¬Crit ; false
+Figure 7 is a proof lattice for the latter formula. Thick arrows from a node
+indicate that the node implies the disjunction of its successors. (Obviously,
+F ⇒G implies F ; G, for any formulas F and G.)
+Intuitive proofs that SafetySpec∧Liveness implies each of the ten formu-
+las of this proof lattice are straightforward. Those proofs can be formalized
+with the proof rules of TLA [23]. They require the easily proved lemma that
+the following state predicate is an invariant of the speciﬁcation.
+LInv
+∆=
+(x ∈Thread) ⇒(pc[x] ∈{“c”, “cs”, “d”})
+23
+
+--- Page 28 ---
+Essentially the same proof should be possible in any formalism that can
+prove liveness properties of multithreaded algorithms.
+The proof lattice of Figure 7 is ﬁne grained, in the sense that when any
+non-sink node formula becomes true, it remains true until one of its suc-
+cessors becomes true. This implies that each thin arrow indicates a change
+eﬀected by a single step. For example, once C ∧¬X ∧2¬DCrit becomes
+true, it remains true until one of its two successors becomes true. The thin
+arrow from it to C ∧X ∧2¬DCrit indicates a state change that is caused
+by a StmtB(t) step, for some thread t.
+3.3
+Proof of Real-Time Progress
+An eventual progress property P ; Q asserts that, whenever P is true,
+Q will eventually become true. In the real-time version of this property,
+eventually is replaced by within Ωseconds, for some Ω. Proving this property
+can be reduced to proving an invariant by introducing a history variable [1].
+A history variable is an auxiliary variable, meaning that adding it does not
+change the behavior of the other variables. Formally, HSpec is said to be
+a speciﬁcation obtained by adding an auxiliary variable h to a speciﬁcation
+Spec if hiding h in HSpec produces a speciﬁcation that is equivalent to Spec.
+In TLA, this condition is expressed as
+AV. Spec ≡∃h : HSpec
+A history variable h is added to a speciﬁcation Spec as follows. Suppose
+Spec equals Init ∧2[Next]vars, where vars is the tuple of all the speciﬁcations
+variable, and h is not one of those variables. Condition AV is then satisﬁed
+if HSpec equals HInit ∧2[HNext]⟨vars, h ⟩, where
+HInit
+∆=
+Init ∧(h = hIni)
+HNext
+∆=
+Next ∧(h′ = hNew)
+for some hIni and hNew such that h does not occur in hIni and h′ does
+not occur in hNew. Other formalisms also have rules for introducing history
+variables [35, 40].9
+Suppose we introduce a history variable h that is set to now when P∧¬Q
+becomes true, is set to ∞when Q is true, and otherwise remains unchanged.
+Then Q must become true within Ωseconds of when P does iﬀnow −Ωis
+always less than h. Hence, proving the real-time progress property is then
+9Most formalisms cannot express condition AV; they must instead deﬁne semantically
+what it means to add an auxiliary variable.
+24
+
+--- Page 29 ---
+module HFischer2
+extends Fischer2
+variable h
+HInit
+∆= ∧Init
+∧h = Inﬁnity
+HNext
+∆= ∧Next
+∧h′ = if ∃t ∈Thread : pc′[t] = “cs”
+then Inﬁnity
+else if ∧h = Inﬁnity
+∧∃t ∈Thread : pc′[t] ∈{“a”, “b”, “c”}
+then now
+else h
+HFSpec2
+∆= HInit ∧2[HNext]⟨vars, h⟩
+theorem HFSpec2 ⇒2(now −(4 ∗Delta + 2 ∗Gamma −Epsilon) < h)
+Figure 8: The speciﬁcation HFSpec2, obtained by adding the history variable
+h to speciﬁcation Spec of module Fischer2.
+reduced to proving the invariance of now −Ω< h. This particular history
+variable h is deﬁned as indicated above by letting
+hIni
+∆=
+if P ∧¬Q then now else ∞
+hNew
+∆=
+if Q′ then ∞
+else
+if P′ ∧(¬P ∨Q) then now else h
+A little thought reveals that hNew can also be deﬁned by:
+hNew
+∆=
+if Q′ then ∞
+else
+if P′ ∧(h = ∞) then now else h
+For the Fischer algorithm, P asserts that some thread is at statement a,
+b, or c, and Q asserts that some thread is in its critical section. Figure 8
+contains the TLA+ speciﬁcation HFSpec2 obtained by adding the history
+variable h to speciﬁcation FSpec2 of Fischer’s algorithm.
+Proving real-time progress requires showing that now −Ω< h is an
+invariant of HFSpec2, for a suitable constant Ω. Although this is a standard
+invariance problem, few people have experience ﬁnding Ωand constructing
+the necessary inductive invariant. So, I will show how it is done.
+25
+
+--- Page 30 ---
+Speciﬁcation FSpec2 satisﬁes essentially the same progress property as
+FSpec1, except with “eventually” replaced by “within some period of time”.
+The proof that it does is also essentially the same as for FSpec1, except with
+each eventuality assertion replaced by a real-time progress assertion. We
+obtain the proof of the real-time property from the proof of the eventuality
+property by converting the proof lattice of Figure 7 into the timing graph
+of Figure 9.
+A timing graph is a directed graph whose nodes are state
+predicates, labeled with certain timing information. To obtain this timing
+graph, we ﬁrst modify the proof lattice as follows:
+• We replace every formula of the form 2F with F. (A state predicate
+describes only the current state, not future behavior.)
+• We make gray the sink and every state predicate that implies the
+disjunction of its successors—that is, the sources of the thick arrows
+in the lattice. (Any state satisfying such a grayed node satisﬁes one of
+its successors.)
+We then transform this in the obvious way into a graph containing only the
+black nodes—that is, with an edge from node F to node G iﬀthere is a
+path from F to G in the original graph with no intermediate black nodes.
+To keep the correspondence with the proof lattice clear, I have omitted this
+transformation in Figure 9.
+Throughout an execution of the algorithm, a black predicate of Figure 9
+is true iﬀh < ∞. Suppose that, as the algorithm executes, we move a token
+according to the following rules.
+1. The token is initially oﬀthe graph.
+2. When h is set to a ﬁnite value, the token is placed on some black
+predicate that is true.
+3. As soon as one or more black successors (in the transformed graph) of
+a predicate containing the token becomes true, the token is moved to
+one of those successors.
+4. When all black predicates become false (so h is changed to ∞), the
+token is removed from the graph.
+Obviously, the token will be on the graph iﬀh < ∞. Because the original
+proof lattice was ﬁne grained, a successor of a formula F in the timing graph
+must become true before F can become false. This ensures that the token
+will never be on a predicate that is false.
+26
+
+--- Page 31 ---
+ABC ∧¬Crit
+?
+HHH
+j
+h [δ]
+ABC ∧D ∧¬Crit
+©
+©
+©
+
+ABC ∧¬D ∧¬Crit
+?
+ABC ∧¬DCrit
+?
+£
+£
+£
+£
+
+
+
+
+)
+?
+h+δ [γ]
+C ∧¬X ∧¬DCrit
+@@
+R
+-
+h+δ+γ [δ]
+A ∧¬X ∧¬DCrit
+z
+@@
+R
+h+2δ+γ [δ]
+B ∧¬DCrit
+@@
+R
+C ∧X ∧¬DCrit
+?h+3δ+γ [δ]
+C ∧¬DCrit ∧X
+?h+4δ+γ [γ]
+C ∧¬BDCrit ∧X
+?
+false
+Figure 9: The timing graph for Fischer’s algorithm obtained from the proof
+lattice of Figure 7.
+27
+
+--- Page 32 ---
+The invariant now −Ω< h asserts that the token can remain on the
+graph for a period of at most Ωseconds. To calculate Ω, we simply have to
+know how long the token can remain on each black predicate. This length
+of time is indicated by the number (either δ or γ) in square brackets besides
+the node. It is obtained from the upper-bound constraints on the actions
+that must make the predicate false. When the token is on the graph, h
+equals the value now had when it was last moved onto the graph. From
+the numbers in brackets and the graph structure, it is easy to calculate, as
+a function of h, the greatest value that now can have when the token ﬁrst
+reaches each node. Those values are also placed next to the nodes. The sum
+of the two numbers attached to a node is the largest value that now can
+have while the token is still on that node. The largest of those sums, in this
+case, h + 4δ + 2γ, is the largest value now can have while the token is on
+the graph. Hence, 4δ + 2γ is the desired value Ω.
+We can now use this timing graph to construct the inductive invariant
+HInv used to prove the invariance of now −4δ + 2γ < h. The interesting
+conjunct of this invariant equals
+(h = ∞) ∨TD(F 1) ∨. . . ∨TD(F k)
+where F 1, . . . , F k are the (black) nodes of the timing graph, and TD(F) is
+constructed from F as follows. Suppose h + α [β] is the timing information
+associated with node F, asserting that now < h + α + β holds when the
+token is on that node. The state predicate TD(F) essentially implies F
+and now < h + α + β. It implies the bound on now by implying now +
+ubTimer[t] ≤h + α + β, for some upper-bound timer ubTimer[t].
+This
+implies the bound on now because HInv will also imply 0 < ubTimer[t].
+For example, consider the predicate A ∧¬X ∧¬DCrit, which has the
+associated timing information h + δ + γ [δ]. The upper-bound timer used to
+imply now < h+2δ+γ is the one for the thread whose control is at statement
+a. (The existence of such a thread is asserted by the state predicate A.) We
+deﬁne TCond(t, ctl, tau) to assert that thread t is at control point ctl, and
+its upper-bound timer will time out before time h + tau.
+TCond(t, ctl, tau)
+∆=
+(pc[t] = ctl) ∧(now + ubTimer[t] < h + tau)
+The predicate TD(A ∧¬X ∧¬DCrit) can then be written:
+∧¬X ∧¬DCrit
+∧∃t ∈Thread : TCond(t, “a”, 2 ∗Delta + Gamma)
+The ﬁrst conjunct does not assert A because A is implied by the second
+conjunct.
+28
+
+--- Page 33 ---
+One slight complication is that the strict inequality of TCond does not
+hold for the source node of the graph, since h is set to now and ubTimer[t]
+is set to δ when thread t exits the critical section. Its condition is expressed
+with the operator
+TCondIni(t, ctl, tau)
+∆=
+(pc[t] = ctl) ∧(now + ubTimer[t] ≤h + tau)
+The deﬁnition of HInv appears in Figure 10. The fourth conjunct is the
+interesting one. The ﬁrst two conjuncts are the invariants Inv and LInv,
+deﬁned in Figure 6 and Section 3.2, respectively. The third conjunct asserts
+bounds on the values of upper-bound timers as a function of the threads’
+control states. These bounds hold because, if an upper-bound timer was
+last set to time out in τ seconds, its current value is at most now + τ. The
+two penultimate disjuncts of the fourth conjunct, which correspond to the
+nodes B ∧¬DCrit and C ∧¬DCrit ∧X of Figure 9, contain an additional
+conjunct asserting a property of the upper-bound timers of all threads with
+control at statement b.
+The observant reader will have noted that the value of Ωderived from
+the timing diagram of Figure 9 is larger than the one that appears in the
+theorem of module HFischer2 in Figure 8.
+Fischer’s algorithm actually
+satisﬁes a smaller bound on the waiting time than the one proved with the
+invariant HInv. The proof of the stronger bound requires a more complicated
+invariant; it is left as an exercise.
+4
+A Simple Distributed Algorithm
+Because they are subtle and hard to debug, distributed algorithms are an
+important application domain for speciﬁcation and veriﬁcation. Such algo-
+rithms typically have features not present in the simple Fischer algorithm.
+These features include queues or sets of messages in transit—each message
+with a separate upper bound on its delivery time—and dynamically com-
+puted timeout delays. Uppaal [27] is the only real-time model checker I know
+of that can handle algorithms with such features. But Uppaal’s modeling
+language lacks the high-level data structures of TLA+, so it must use a lower-
+level encoding of these algorithms. Language limitations can be a signiﬁcant
+barrier to the practical veriﬁcation of complex distributed algorithms.
+We now consider an algorithm that, while very simple, exhibits the inter-
+esting features of more complicated distributed algorithms. It is inspired by
+a classic algorithm of Radia Perlman [37]. The original algorithm constructs
+29
+
+--- Page 34 ---
+HInv
+∆=
+∧Inv
+∧LInv
+∧∀t ∈Thread :
+∧(pc[t] ∈{“b”, “d”}) ⇒(ubTimer[t] ≤Delta)
+∧(pc[t] = “a”) ∧(x = NotAThread) ⇒(ubTimer[t] ≤Delta)
+∧(pc[t] = “c”) ⇒(ubTimer[t] ≤Gamma)
+∧∨∧h = Inﬁnity
+∨∧ABC ∧¬Crit
+∧∃t ∈Thread : TCondIni(t, “d”, Delta)
+∨∧¬X ∧¬DCrit
+∧∃t ∈Thread : TCond(t, “c”, Delta + Gamma)
+∨∧¬X ∧¬DCrit
+∧∃t ∈Thread : TCond(t, “a”, 2 ∗Delta + Gamma)
+∨∧¬DCrit
+∧∀t ∈Thread : (pc[t] = “b”) ⇒TCond(t, “b”, 4 ∗Delta + Gamma)
+∧∃t ∈Thread : TCond(t, “b”, 3 ∗Delta + Gamma)
+∨∧X ∧¬DCrit This conjunct and LInv imply C
+∧∀t ∈Thread : (pc[t] = “b”) ⇒TCond(t, “b”, 4 ∗Delta + Gamma)
+∧∃t ∈Thread : TCond(t, “b”, 4 ∗Delta + Gamma)
+∨∧¬DCrit ∧X ∧¬B
+∧TCond(x, “c”, 4 ∗Delta + 2 ∗Gamma)
+Figure 10: The inductive invariant HInv for proving real-time progress of
+Fischer’s algorithm.
+30
+
+--- Page 35 ---
+a spanning tree and maintains that tree by having the root periodically prop-
+agate an “I am alive” message down it. A new tree is constructed if a failure
+caused some node to time out before receiving the message.
+Our simple algorithm assumes an arbitrary network of nodes. Each node
+can send messages to its neighbors. The network need not be connected.
+Deﬁne the leader of a connected component to be the lowest-numbered node
+in the component. The goal of the algorithm is for each node n to learn its
+leader—that is, the leader of its connected component.
+As in Perlman’s algorithm, the leader of a component maintains its lead-
+ership by periodically sending messages that are forwarded to all nodes in
+its component. A message contains a hops ﬁeld, indicating how many times
+it has been forwarded. A node uses that ﬁeld to determine its distance to
+the leader. (The distance between two nodes is the number of links in the
+shortest path joining them.) A node forwards messages that have reached
+it via a shortest path from the leader, and it ignores all other messages.
+After sending a message, the leader sets a timer that will “awaken” it
+to send the next message. A node that receives a message from the leader
+sets its timer to awaken it if the leader’s next message does not arrive when
+it should. When a node is awakened by the timeout, it assumes itself to be
+the leader and sends the appropriate message to its neighbors. Initially and
+after failure of a node or communication link, nodes can have a mistaken
+idea of who their leaders are. However, within a ﬁxed period of time, every
+non-failed node learns who its leader is.
+A node that believes itself to be the leader sets its timer to awaken it
+Period seconds after sending a message. We assume that the node can be
+awakened up to TODelay seconds after the timeout.
+(By letting Period
+be the minimum timeout interval, this models both delay in reacting to
+a timeout and variation in the running rate of physical timers.) We also
+assume that a message is received at most MsgDelay seconds after it is sent.
+A simple calculation shows that the algorithm achieves stability if, upon
+receiving a message from its leader, a node n sets its timer to time out no
+sooner than Period + TODelay + dist[n] ∗MsgDelay seconds in the future,
+where dist[n] is the distance from n to its leader.
+Correctness of this algorithm means that if no failure or repair has oc-
+curred for a suﬃciently long period of time, then every node knows its leader.
+Stating this condition formally requires adding a history variable to record
+the time of the last failure or repair. To simplify the algorithm’s descrip-
+tion and the statement of its correctness, we assume that nodes do not fail.
+Correctness then means that, by a certain time, every node n knows its
+leader.
+31
+
+--- Page 36 ---
+For simplicity, the TLA+ speciﬁcation assumes that there are N nodes,
+numbered from 1 to N . The set Node of node numbers equals 1 . . N . The
+network topology is described by a constant parameter Nbrs, where Nbrs(n)
+is the set of neighbors of node n—that is, the set of nodes with a link to n.
+The speciﬁcation LSpec is deﬁned in module Leader of Figure 11, on
+pages 33–34. A node n maintains the following variables:
+ldr[n]
+The node that n believes to be its leader.
+dist[n]
+What n believes to be its distance to ldr[n].
+timer[n] A countdown timer for node n’s timeout action. To further sim-
+ply the speciﬁcation, we use this timer to express both upper-
+and lower-bound constraints by allowing the action to occur
+only after timer[n] becomes negative and requiring it to occur
+before timer[n] reaches −TODelay.
+The variable msgs represents the messages in transit. A message has the
+following ﬁelds:
+src
+The sender.
+dest
+The destination node.
+ldr
+The leader that originated the message.
+hops
+The number of times the message has been forwarded.
+rcvTimer A countdown timer used to express the upper-bound con-
+straint on message-delivery time.
+There could be multiple copies of the same message in transit at the same
+time. The value of msgs is therefore a bag. A bag (also called a multiset)
+is like a set, except that it can contain more than one copy of an element.
+The following operators on bags are deﬁned in the standard Bags module:
+BagToSet(B) The set of distinct elements in bag B.
+SetToBag(S) A bag containing one copy of each element in set S.
+B1 ⊕B2
+The union of bags B1 and B2.
+B1 ⊖B2
+Bag B1 with elements of bag B2 removed, one copy of
+an element being removed from B1 for every copy of the
+same element in B2.
+32
+
+--- Page 37 ---
+module Leader
+extends Reals, Bags
+constants N , Nbrs( ), MsgDelay, TODelay, Period
+Node
+∆= 1 . . N
+variables ldr, dist, timer, msgs, now
+Init
+∆= ∧ldr
+= [n ∈Node 7→n]
+∧dist
+= [n ∈Node 7→0]
+∧timer = [n ∈Node 7→Period]
+∧msgs = EmptyBag
+∧now
+= 0
+MsgsSent(n, S)
+∆= SetToBag([src : {n}, dest : S, ldr : {ldr′[n]},
+hops : {dist′[n]}, rcvTimer : {MsgDelay}])
+TimeOut(n)
+∆= ∧timer[n] < 0
+∧ldr′
+= [ldr
+except ![n] = n]
+∧dist′
+= [dist except ![n] = 0]
+∧msgs′ = msgs ⊕MsgsSent(n, Nbrs(n))
+∧timer′ = [timer except ![n] = Period]
+∧unchanged now
+RcvMsg(n)
+∆=
+∧∃ms ∈BagToSet(msgs) :
+∧ms.dest = n
+∧if ∨ms.ldr < ldr[n]
+∨∧ms.ldr = ldr[n]
+∧ms.hops + 1 ≤dist[n]
+then ∧ldr′
+= [ldr except ![n] = ms.ldr]
+∧dist′
+= [dist except ![n] = ms.hops + 1]
+∧msgs′ = (msgs ⊖SetToBag({ms}))
+⊕
+MsgsSent(n, Nbrs(n) \ {ms.src})
+∧timer′ =
+[timer except ![n] = Period + TODelay +
+(ms.hops + 1) ∗MsgDelay]
+else
+∧msgs′ = msgs ⊖SetToBag({ms})
+∧unchanged ⟨ldr, dist, timer⟩
+∧unchanged now
+Figure 11a: Module Leader (beginning).
+33
+
+--- Page 38 ---
+Tick
+∆= ∃d ∈{r ∈Real : r > 0} :
+∧∀n ∈Node : timer[n] + TODelay ≥d
+∧∀ms ∈BagToSet(msgs) : ms.rcvTimer ≥d
+∧now′ = now + d
+∧timer′ = [n ∈Node 7→timer[n] −d]
+∧msgs′ = let Updated(ms)
+∆=
+[ms except !.rcvTimer = ms.rcvTimer −d]
+in
+BagOfAll(Updated, msgs)
+∧unchanged ⟨ldr, dist⟩
+Next
+∆= (∃n ∈Node : TimeOut(n) ∨RcvMsg(n)) ∨Tick
+LSpec
+∆= Init ∧2[Next]⟨ldr, dist, msgs, timer, now⟩
+We now state the assumptions about the constants, and deﬁne the predicate Correctness
+whose invariance asserts correctness of the algorithm.
+assume ∧N ∈Nat
+∧∀n ∈Node : ∧Nbrs(n) ⊆Node
+∧∀m ∈Nbrs(n) : n ∈Nbrs(m)
+∧{MsgDelay, TODelay, Period} ⊆{r ∈Real : r > 0}
+Ball(i, n)
+∆=
+The set of nodes a distance of at most i from node n.
+let B[j ∈0 . . i]
+∆= if j = 0
+then {n}
+else B[j −1] ∪union {Nbrs(m) : m ∈B[j −1]}
+in
+B[i]
+Min(S)
+∆= choose i ∈S : ∀j ∈S : i ≤j
+The minimum of a non-empty set S of numbers
+Dist(m, n)
+∆= Min({i ∈0 . . N : m ∈Ball(i, n)})
+The distance between nodes m and n, if it is ﬁnite.
+Correctness
+∆=
+let Ldr(n)
+∆= Min(Ball(N , n)) The leader of node n.
+in
+∀n ∈Node :
+(now > Period + TODelay + Dist(n, Ldr(n)) ∗MsgDelay)
+⇒(ldr[n] = Ldr(n))
+theorem LSpec ⇒2Correctness
+Figure 11b: Module Leader (end).
+34
+
+--- Page 39 ---
+The actions of node n are TimeOut(n), which is enabled by a timeout,
+and RcvMsg(n), which describes the receipt of a message. The operator
+MsgsSent is used in these two actions to describe the bag of messages being
+sent.
+The Tick action advances now and and decreases the timers.
+Its
+ﬁrst two conjuncts (the enabling conditions) enforce the upper bounds on
+message delay and on the execution of TimeOut(n).
+The last part of module Leader asserts the algorithm’s correctness, start-
+ing with the required assumptions about the parameters. The state predi-
+cate Correctness asserts that, for each node n, if now is large enough, then
+ldr[n] equals n’s leader. (The deﬁnition relies on the observation that, in
+a graph of N nodes, the distance between any two nodes is less than N .)
+Invariance of Correctness implies that, whenever enough time has elapsed,
+every node knows its leader.
+An inductive invariance proof of correctness is straightforward and is left
+as an exercise for the reader.
+5
+Avoiding Zeno Speciﬁcations
+If now is just another variable, nothing prevents us from writing speciﬁca-
+tions in which it does not behave like time. It is easy to convince ourselves
+that the value of now is always a real number that never decreases. How-
+ever, more subtle unphysical behaviors are possible. For example, our second
+speciﬁcation of Fischer’s algorithm allows “Zeno” behaviors, in which now
+remains bounded. We could disallow such behaviors by conjoining to the
+speciﬁcation the formula
+NZ
+∆=
+∀r ∈Real : 3(now > r)
+requiring that now increase without bound. But there is no need to do that.
+We don’t care what happens in behaviors in which time is bounded, because
+such behaviors do not represent actual executions of the algorithm.
+We
+showed that both the physically possible behaviors and the Zeno behaviors
+satisfy mutual exclusion and the real-time progress property.
+While allowing Zeno behaviors is not a problem, forcing them is.
+A
+speciﬁcation would be incorrect, in the sense of not being physically imple-
+mentable, if it ever required time to remain bounded—that is, if it could
+reach a state from which time was unable to increase without bound. A
+nonZeno speciﬁcation is deﬁned to be one such that any ﬁnite behavior that
+satisﬁes it can be extended to an inﬁnite behavior satisfying it in which now
+is unbounded [2]. A sensible real-time speciﬁcation must be nonZeno.
+35
+
+--- Page 40 ---
+As an example of Zeno (non-nonZeno) and nonZeno speciﬁcations, con-
+sider our second speciﬁcation of Fischer’s algorithm. Statement c must be
+executed when less than Gamma seconds and more than Epsilon seconds
+has elapsed after control reaches it. This implies that, if Gamma ≤Epsilon,
+then now can advance by at most Gamma seconds after control reaches c.
+The speciﬁcation is therefore Zeno if Gamma ≤Epsilon. It is nonZeno if
+Gamma > Epsilon.
+Conjoining formula NZ does not solve the problem of Zeno speciﬁcations.
+If a speciﬁcation is Zeno, requiring time to be unbounded simply rules out
+all ﬁnite behaviors that reach states in which now must remain bounded.
+But those behaviors were probably allowed because of an error in the speci-
+ﬁcation. If Gamma ≤Epsilon, conjoining NZ to our second speciﬁcation of
+Fischer’s algorithm asserts that thread t cannot execute statement b when
+x = t.
+The problem of avoiding Zeno speciﬁcations exists for implicit-time as
+well as explicit-time speciﬁcations.
+Implicit-time languages can be con-
+strained to permit only nonZeno speciﬁcations, but at a cost to their ex-
+pressiveness. Such constraints would probably turn out to be instances of
+a general theorem for showing that speciﬁcations written in a conjunctive
+style are nonZeno [2, Theorem 1]. However, that theorem does not apply to
+the kind of simple explicit-time speciﬁcations considered here.
+Being nonZeno means that for any real number r, from any reachable
+state it is possible to reach a state in which now is greater than r. This
+assertion can be expressed and proved in some logics, but not in the linear-
+time logic underlying TLA. There is a general method of using TLA to prove
+that a speciﬁcation is nonZeno. Let Next be the speciﬁcation’s next-state
+action and let s
+A
+−→t mean that the pair s, t of successive states is an action
+A step. Deﬁne a subaction of the speciﬁcation to be an action A satisfying
+the following condition: for any reachable state s, if there exists a state t such
+that s
+A
+−→t, then there exists a state u such that s A ∧Next
+−→
+u. In particular,
+A is a subaction if A implies Next. To prove that a speciﬁcation is nonZeno,
+one ﬁnds weak and/or strong fairness conditions on subactions of the next-
+state action such that they and the speciﬁcation imply NZ [2]. (This is an
+instance of a general method for proving possibility properties [24].) For
+speciﬁcation FSpec1 of Fischer’s algorithm, it suﬃces to take weak fairness
+of StmtB(t) for every thread t and strong fairness of Tick∧(now′ ≥now+1).
+An analogous method for proving that a speciﬁcation is nonZeno should
+be possible with other formalisms. However, in most other formalisms, ac-
+tions are linguistic constructs rather than formulas, so the corresponding
+36
+
+--- Page 41 ---
+proof may require using semantic reasoning to rewrite the speciﬁcation.
+I expect that in most applications, the intended speciﬁcation will be
+obviously nonZeno—as is the case with our examples. However, when writ-
+ing a formal speciﬁcation, it is easy to make small mistakes that yield a
+speciﬁcation quite diﬀerent from the intended one. It’s therefore a good
+idea to check a speciﬁcation in as many ways as we can. Verifying that an
+“obviously” nonZeno speciﬁcation is really nonZeno provides a useful check.
+6
+Model Checking
+6.1
+General Observations
+Model checking a speciﬁcation consists of mechanically verifying that all
+possible executions satisfy the desired correctness properties. Speciﬁcations
+typically contain unspeciﬁed parameters, such as the number of processes
+or the size of a buﬀer. Ordinary model checking is performed for speciﬁc
+instances of the speciﬁcation obtained by substituting actual values for the
+parameters. The likelihood that model checking has missed an error in the
+speciﬁcation depends on the variety of diﬀerent instances that have been
+checked. There are more sophisticated forms of model checking that employ
+abstraction techniques, sometimes with simple mechanical theorem check-
+ing, to verify the speciﬁcation for all values of the parameters. However,
+these approaches are still primarily topics of research and are not widely
+used. I will restrict my attention to ordinary, naive model checking algo-
+rithms.
+Model checking requires that the set of reachable states be ﬁnite. In
+practice, not only must that set be ﬁnite, but it must not be too large.
+The size of the state space is often an exponential function of the parame-
+ters. This usually means that one cannot check large enough instances of
+the speciﬁcation to obtain complete conﬁdence in its correctness. However,
+checking even small instances usually catches many bugs.
+Real-time speciﬁcations have an inﬁnite set of reachable states because
+time is unbounded. A simple method for checking inﬁnite-state speciﬁca-
+tions is to restrict model checking to a ﬁnite subset of the set of reachable
+states. The TLC model checker can be instructed to limit itself to examining
+states that satisfy a constraint, which can be an arbitrary state predicate.
+For a discrete-time speciﬁcation that starts with now = 0, we can remove
+the inﬁnite number of times by using the constraint now ≤MaxNow for
+some constant MaxNow. Of course, the model checker can then ﬁnd only
+errors that manifest themselves within MaxNow seconds.
+37
+
+--- Page 42 ---
+There is a better way to model-check real-time speciﬁcations than by
+explicitly bounding time. A clue to how it can be done is provided by the
+speciﬁcations of Fischer’s algorithm. As observed above, we could simply
+eliminate now from those speciﬁcations without changing the algorithm.
+The resulting speciﬁcations then have a ﬁnite number of reachable states
+and can easily be model checked. Fischer’s algorithm illustrates the fact
+that almost all real-time speciﬁcations are symmetric with respect to time
+translation. What a system does next generally depends on the amount of
+time that has elapsed since other events have occurred, not on the actual
+time. To explain how to take advantage of this time symmetry, I ﬁrst explain
+what symmetry means and how it can be used in model checking.
+6.2
+Model Checking with Symmetry
+6.2.1
+Speciﬁcations and Temporal Properties
+For now, I take a semantic view in which a state is an assignment of values
+to the sequence vars of all the speciﬁcation’s variables10. The state space of
+a speciﬁcation is the set of all such states. Semantically, a state predicate
+is a predicate (Boolean function) on states, and an action is a predicate on
+pairs of states. The formula s
+A
+−→t asserts that action A is true on the pair
+s, t of states.
+A behavior is a sequence of states. A temporal property is a predicate on
+behaviors. Temporal properties are represented syntactically as temporal
+formulas. We usually conﬂate the property and the formula that represents
+it.
+I assume a speciﬁcation S that consists of an initial predicate Init, a
+next-state action Next, and a liveness assumption L. (If the speciﬁcation
+has no liveness assumption, then L = true.) For TLA, Next is an action
+of the form [N ]vars that allows stuttering steps. The initial predicate and
+next-state action form the safety part of the speciﬁcation S, which I write S.
+A behavior s1, s2, . . . satisﬁes S iﬀs1 satisﬁes Init and si
+Next
+−→si+1 for all i.
+The behavior satisﬁes S iﬀit satisﬁes both S and the liveness assumption L.
+6.2.2
+Symmetry
+A symmetry is an equivalence relation on states. A state predicate P is
+symmetric with respect to a symmetry ∼iﬀ, for any states s and t with
+10This is diﬀerent from the usual semantics of TLA in which a state is an assignment
+of values to all variables.
+38
+
+--- Page 43 ---
+s ∼t, predicate P is true in state s iﬀit is true in state t. An action A is
+symmetric with respect to ∼iﬀfor any states s1, s2, and t1,
+s1
+A
+−→
+t1
+s1
+A
+−→
+t1
+≀
+implies there exists t2 such that
+≀
+≀
+s2
+s2
+A
+−→
+t2
+In other words, for any states s1 and s2 with s1 ∼s2 and any state t1, if
+s1
+A
+−→t1 then there exists a state t2 with t1 ∼t2 such that s2
+A
+−→t2. I
+usually omit with respect to ∼when it is clear what the relation ∼is.
+A symmetry ∼is extended to an equivalence relation on behaviors in the
+obvious way by letting two behaviors be equivalent iﬀthey have the same
+length and their corresponding states are equivalent. A temporal property
+is symmetric (with respect to ∼) iﬀ, for every pair of behaviors σ and τ with
+σ ∼τ, the property is true of σ iﬀit is true of τ.
+A temporal formula is constructed from state predicates and actions
+by applying temporal operators, logical connectives, and ordinary (non-
+temporal) quantiﬁcation.
+The formula is obviously symmetric if each of
+its component state predicates and actions is symmetric. The converse is
+not true. For example, the formula 2P ∨3¬P is symmetric even if the
+predicate P is not symmetric, because it is true for all behaviors.
+6.2.3
+Model Checking
+An explicit-state model checker such as TLC works by computing the di-
+rected graph G of a speciﬁcation’s reachable states.
+The nodes of G are
+states, and G is the smallest graph satisfying the following two conditions:
+(i) G contains all states satisfying the initial predicate Init, and (ii) if state
+s is a node of G and s Next
+−→t, then G contains the node t and an edge
+from s to t. Paths through G (which may traverse the same node many
+times) starting from an initial state correspond to behaviors satisfying the
+speciﬁcation’s safety part S. Those behaviors that also satisfy its liveness
+assumption are the ones that satisfy the speciﬁcation.
+The model checker constructs G by the following algorithm, using a set
+U of unexamined reachable states.
+• Let U equal the set of states satisfying Init and let G be the graph
+with set of nodes U and no edges. More precisely, start with U and G
+empty, sequentially enumerate the states satisfying Init, and add each
+state not already in G to both U and G.
+39
+
+--- Page 44 ---
+• While U is nonempty, choose some state s in U and enumerate all
+states t satisfying s Next
+−→t. For each such t: (i) if t is not in G then
+add it to G and to U; (ii) if there is no edge from s to t in G, then add
+one.
+When model checking under a constraint, a state is added to U and G only
+if it satisﬁes the constraint.
+Model checking under a symmetry ∼consists of constructing a smaller
+graph E by adding a state to U and E only if E does not already contain an
+equivalent state. The graph E constructed in this way satisﬁes the following
+properties:
+• s ̸∼t for every distinct pair of nodes s, t of E.
+• For every state s satisfying Init, there is a node t in E such that t
+satisﬁes Init and s ∼t.
+• For every node s of E and every state t such that s Next
+−→t, the graph
+E contains a node t′ with t ∼t′ and an edge from s to t′.
+The model checker then checks the speciﬁcation as if E were the reachable-
+state graph.
+A real model checker can execute such an algorithm only if the graph it
+constructs is ﬁnite. Otherwise, it will never ﬁnish and will eventually run
+out of storage. However, we can deﬁne a theoretical model checker that
+performs these algorithms even for an inﬁnite state space. Such a model
+checker can check all the speciﬁcations in Sections 2–4, with or without
+symmetry, despite their inﬁnite state spaces. I will show in Section 6.3 how
+these speciﬁcations can be checked with a real model checker. For now, I
+ignore practical concerns and assume a theoretical model checker that can
+handle an inﬁnite state graph. All the results apply a fortiori if the state
+graph is ﬁnite.
+We would like model checking with symmetry to be equivalent to ordi-
+nary model checking. For this to be the case, the following condition must
+hold:
+SS. A behavior satisﬁes S iﬀit is equivalent (under ∼) to a behavior de-
+scribed by a path through E starting from an initial state.
+This condition does not imply that the behaviors described by paths through
+E satisfy S. It asserts only that those behaviors are equivalent to ones that
+satisfy S.
+40
+
+--- Page 45 ---
+A simple induction argument shows that condition SS is true if the spec-
+iﬁcation satisﬁes two properties:
+S1. (a) Init is symmetric, or
+(b) No two states satisfying Init are equivalent.
+S2. Next is symmetric.
+Let us call the speciﬁcation safety symmetric (with respect to ∼) iﬀit sat-
+isﬁes S1 and S2.
+An explicit-state model checker checks that a correctness property holds
+for every behavior described by a path through the state graph starting from
+an initial state. More precisely, if the speciﬁcation’s liveness assumption is
+L, a property F is checked by checking that L ⇒F holds for every such
+behavior. A symmetric property is true of a behavior iﬀit is true of any
+equivalent behavior. Condition SS therefore implies that if L is symmetric,
+then model checking with symmetry is equivalent to ordinary model checking
+for verifying a symmetric property F.
+Thus, model checking and model
+checking with symmetry are equivalent for a safety symmetric speciﬁcation
+with a symmetric liveness assumption.
+The simplest kind of temporal property is a state predicate P, which
+as a temporal formula asserts that P is true initially. It is obvious that
+if the speciﬁcation satisﬁes S1(b), then model checking with symmetry is
+equivalent to ordinary model checking for verifying that P is satisﬁed, even
+if P is not symmetric.
+6.2.4
+Expressing Symmetry
+TLC provides two ways of describing symmetries. The ﬁrst is symmetry
+under a set Π of permutations of a constant set C.
+States s and t are
+equivalent under this symmetry iﬀthere is a permutation π in Π such that
+replacing every c in C by π(c) transforms s to t. The general deﬁnition of
+symmetry under a set of permutations is diﬃcult, but its meaning is fairly
+obvious for the permutation sets that TLC handles.
+In the Fischer algorithm, we can let Π be all permutations of the set
+Thread of threads. It is easy to see that the initial condition and the next-
+state action of the two Fischer algorithm speciﬁcations FSpec1 and FSpec2
+are symmetric under this set of permutations, so those speciﬁcations are
+safety symmetric. The invariant MutualExclusion is also symmetric. Hence,
+we can (theoretically) check that our speciﬁcations of Fischer’s algorithm
+guarantee mutual exclusion by model checking with symmetry under per-
+mutations of threads.
+41
+
+--- Page 46 ---
+The liveness property Progress of the speciﬁcation FSpec1 is symmetric
+under this symmetry relation, since it has the form P ; Q where predicates
+P and Q are symmetric.
+However, the liveness assumption Liveness is
+not. This is not obvious, since performing a permutation of the threads
+throughout a behavior does not change whether or not the behavior satisﬁes
+Liveness. However, the deﬁnition of symmetry requires that the truth of the
+property not change even if we permute the threads diﬀerently in diﬀerent
+states of the behavior.
+Property Liveness is the conjunction of fairness
+conditions on all the individual threads. By choosing the permutation for
+the threads separately in each state, we can transform a behavior satisfying
+Liveness into an equivalent one in which some particular thread never takes a
+step. (There is no requirement that the equivalent behavior satisfy the safety
+part of the speciﬁcation.) In general, we can be sure that the conjunction
+of fairness conditions for diﬀerent actions is symmetric only if each of those
+actions is symmetric. This is not the case for property Liveness, since each
+of its fairness conditions is for an action of a particular thread. We therefore
+cannot check liveness property of FSpec1 by model checking with symmetry
+under permutations of threads.
+The second method TLC provides for describing a symmetry is view
+symmetry. A view symmetry is deﬁned by an arbitrary state function called
+a view. (A state function is an expression that contains only constants and
+unprimed variables.) Two states are equivalent under a view V iﬀthe value
+of V is the same in the two states. Many explicit-state model checkers test
+if a state s is in the state graph G constructed so far by keeping the set of
+ﬁngerprints of nodes in G and testing if G contains a node with the same
+ﬁngerprint as s. Such a checker is easily modiﬁed to implement checking
+under view symmetry by keeping ﬁngerprints of the views of states rather
+than of the states themselves.
+For the Fischer algorithm, we let V consist of the tuple of all the spec-
+iﬁcation’s variables except now. This means that two states are equivalent
+iﬀthey diﬀer only in the value of now. It is easy to see that our two speci-
+ﬁcations of the algorithm are safety symmetric under this symmetry. (The
+Init predicates are not symmetric, but condition S1(b) holds.) The invariant
+MutualExclusion is symmetric, so we can use model checking with symmetry
+under this view to verify mutual exclusion. Both the property Progress and
+the liveness assumption Liveness of module Fischer1 are symmetric under
+this view. We can therefore use model checking under this view to check
+that FSpec1 satisﬁes its liveness property.
+We can try using this same idea for any real-time speciﬁcation, deﬁning
+a view to consist of the tuple of all variables except now. The speciﬁcation
+42
+
+--- Page 47 ---
+LSpec of the leader algorithm in Section 4 is safety symmetric, but its invari-
+ant Correctness is not symmetric because it depends on the value of now.
+The speciﬁcation HFSpec2 of the Fischer algorithm with history variable h
+in Section 3.3 is not safety symmetric under this view because its next-state
+action can set h to a value that depends on the value of now. Its correctness
+condition is the invariance of a state predicate that is also not symmetric
+under this view because it depends on the value of now.
+View symmetry is equivalent to abstraction [12, 15] for a symmetric spec-
+iﬁcation S. Abstraction consists of checking S by model checking a diﬀerent
+speciﬁcation A called an abstraction of S.
+The view corresponds to the
+abstraction mapping from states of S to states of A. For our speciﬁcations
+of Fischer’s algorithm, view symmetry under the view V deﬁned above is
+equivalent to an abstraction in which A is obtained from S by eliminating
+the variable now.
+A model checker may support checking under view symmetry or abstrac-
+tion. If not, one must construct the abstract speciﬁcation A by hand.
+6.2.5
+Symmetry Under Time Translation
+We have seen above that our two versions of Fischer’s algorithm are safety
+symmetric under the view consisting of the tuple of all variables except now.
+That symmetry is a special case of time-translation symmetry, in which two
+states are equivalent iﬀthey are the same except for absolute time. I now
+deﬁne what this means, using the notation that s.v is the value of variable
+v in state s.
+A time translation is a family of mappings T d on the state space of the
+speciﬁcation S that satisﬁes the following properties, for all states s and all
+real numbers d and e.
+• T d(s).now = s.now + d
+• T 0(s) = s
+• T d+e(s) = T d(T e(s))
+Speciﬁcation S is invariant under this time translation iﬀit satisﬁes the
+following two conditions, for all real numbers d.
+T1. (a) A state s satisﬁes Init iﬀT d(s) does, or
+(b) s.now = t.now for any states s and t satisfying Init.
+T2. s Next
+−→t iﬀT d(s) Next
+−→T d(t), for any states s and t.
+43
+
+--- Page 48 ---
+Given a time translation, we deﬁne the time-translation symmetry ∼by
+s ∼t iﬀs = T d(t) for some d. It is easy to check that T1 and T2 imply S1
+and S2 for this symmetry. Hence, a speciﬁcation that is invariant under a
+time translation is symmetric under the corresponding time-translation sym-
+metry. Invariance under time translation is stronger than time-translation
+symmetry because, in addition to implying SS, it implies the following prop-
+erty.
+TT. Let s1, . . . , sk and t1, t2, . . . be two behaviors satisfying S (the second
+behavior may be ﬁnite or inﬁnite). If sk = T d(tj ), then the behavior
+s1, . . . , sk, T d(tj+1), T d(tj+2), . . . also satisﬁes S.
+To deﬁne a time translation, we must deﬁne T d(s).v for every real number
+d, state s, and variable v.
+Explicit-time speciﬁcations have three kinds
+of variables: now, timer variables, and “ordinary” variables that are left
+unchanged by the Tick action. We know that T d(s).now equals s.now + d.
+Time translation should not change the value of an ordinary variable v, so
+we should have T d(s).v = s.v for such a variable. For a timer variable t, we
+should deﬁne T d(s).t so that the number of seconds in which t will time out
+is the same in s and T d(s). We have deﬁned three kinds of timer variables:
+countdown timers, count-up timers, and expiration timers. The value of a
+countdown or count-up timer directly indicates the number of seconds until
+it times out, so T d(s).ct should equal s.ct for such a timer ct. Whether or
+not an expiration timer et has timed out depends on the value of et −now.
+The time translation T d preserves the number of seconds until et times out
+iﬀT d(s).et −T d(s).now equals s.et −s.now. Since T d(s).now = s.now +d,
+this is true iﬀT d(s).et = s.et + d.
+With this deﬁnition of the T d, any explicit-time speciﬁcation is invariant
+under time translation, and hence safety symmetric under time-translation
+symmetry, if it expresses real-time requirements only through timer vari-
+ables. Let v1, . . . , vm be the speciﬁcation’s ordinary variables and count-
+down and count-up timer variables, and let et1, . . . , etn be its expiration
+timer variables. Then symmetry under time translation is the same as view
+symmetry with the view
+⟨v1, . . . , vm, et1 −now, . . . , etn −now ⟩
+(In case an expiration timer can have the value ∞or −∞, we deﬁne ±∞−r
+to equal ±∞for any real number r.)
+Since the speciﬁcations FSpec1 and FSpec2 of Fischer’s algorithm and
+LSpec of the leader algorithm use only countdown timers, time symmetry is
+44
+
+--- Page 49 ---
+the same as view symmetry with the view consisting of the tuple of all vari-
+ables other than now. In the speciﬁcation HFSpec2 of module HFischer2,
+the variable h is an expiration timer, being set to now when a certain con-
+dition becomes true and reset to Inﬁnity when it becomes false. Variables
+ubTimer and lbTimer are countdown timers and pc and x are ordinary
+variables, so this speciﬁcation is invariant under time translation, and time
+symmetry is the same as view symmetry under the view
+⟨pc, x, ubTimer, lbTimer, h −now ⟩
+This is not quite correct in TLA+because the standard Reals module deﬁnes
+Inﬁnity only to satisfy −Inﬁnity < r < Inﬁnity for any real r, not to satisfy
+Inﬁnity −r = Inﬁnity. We therefore deﬁne ⊖by
+s ⊖r
+∆=
+if s = Inﬁnity then Inﬁnity else s −r
+and write the view as
+⟨pc, x, ubTimer, lbTimer, h ⊖now ⟩
+Speciﬁcation HFSpec2 is safety symmetric under this view. Moreover, its
+correctness property
+2(now −(4 ∗Delta + 2 ∗Gamma −Epsilon) < h)
+simply asserts that the timer h never times out, so it is also symmetric
+under this view. It is easy to see this symmetry directly, since the condition
+is equivalent to
+2(−(4 ∗Delta + 2 ∗Gamma −Epsilon) < h ⊖now)
+which depends only on h ⊖now. We can therefore use model checking under
+this view symmetry to check that HFSpec2 satisﬁes its correctness property.
+6.2.6
+Periodicity and Zeno Behaviors
+A nonZeno behavior is one that satisﬁes property NZ, which asserts that
+time increases without bound. Property NZ is not symmetric under time
+translation.
+By replacing states of a behavior with ones translated back
+to the behavior’s starting time, we can construct an equivalent behavior in
+which now never changes.
+A speciﬁcation S is nonZeno iﬀevery ﬁnite behavior satisfying S can be
+extended to an inﬁnite one satisfying S and NZ. Since NZ is not symmet-
+ric under time translation, model checking with time-translation symmetry
+45
+
+--- Page 50 ---
+cannot be used to check that a speciﬁcation is nonZeno. However, we can
+take advantage of time-translation invariance when using ordinary model
+checking to show that a speciﬁcation is nonZeno. I now explain how this is
+done.
+Let S be a speciﬁcation that is invariant under time translation. For sim-
+plicity, let’s assume that the initial condition of S asserts that now equals 0,
+so s.now ≥0 for all reachable states s.
+For any reachable state s, let
+LeastTime(s) be the greatest lower bound of the values t.now for all states
+t equivalent to s (under time-translation symmetry). The period of S is de-
+ﬁned to be the least upper bound of the values LeastTime(s) for all reachable
+states s of S. Intuitively, if a system’s speciﬁcation has a ﬁnite period λ,
+then all its possible behaviors are revealed within λ seconds.
+More pre-
+cisely, any λ-second segment of a system behavior is the time translation of
+a segment from the ﬁrst λ seconds of some (possibly diﬀerent) behavior.
+Let us deﬁne the condition NZλ as follows, where λ is a positive real
+number.
+NZλ. Every ﬁnite behavior satisfying S that ends in a state s with s.now ≤λ
+can be extended to a behavior satisfying S that ends in a state t with
+t.now ≥λ + 1.
+Assume that speciﬁcation S is time-translation invariant, has a period less
+than or equal to the real number λ, and satisﬁes NZλ. The following proof
+shows that S is then nonZeno.
+1. Assume: Any ﬁnite behavior σ satisfying S with ﬁnal state s can be
+extended to a behavior τ satisfying S with ﬁnal state t such
+that t.now ≥s.now + 1.
+Prove:
+S is nonZeno.
+1.1. For any natural number k, any ﬁnite behavior σ satisfying S with
+ﬁnal state s can be extended to a behavior τ k satisfying S with ﬁnal
+state t such that t.now ≥s.now + k.
+Proof: By simple induction from the step 1 assumption.
+1.2. Q.E.D.
+Proof: To prove that S is nonZeno, we must show that any ﬁnite
+behavior σ satisfying S can be extended to an inﬁnite behavior τ
+satisfying S in which the value of now grows without bound. We can
+let τ equal the limit as k →∞of the behaviors τ k whose existence is
+asserted by step 1.1. The behavior τ satisﬁes S because every ﬁnite
+preﬁx of it does.
+2. Assume: σ is a ﬁnite behavior satisfying S with ﬁnal state s.
+46
+
+--- Page 51 ---
+Prove:
+There exists a behavior τ satisfying S that extends σ and has
+ﬁnal state t with t.now ≥s.now + 1.
+2.1. Choose real number d and reachable state u with u.now ≤λ and
+s = T d(u).
+Proof: d and u exist by the reachability of s and the assumption
+that S has period at most λ.
+2.2. Let ρ be a behavior satisfying S that ends in u.
+Proof: ρ exists by step 2.1, which asserts that u is reachable.
+2.3. Extend ρ by appending a sequence of states w1, . . . , wn to obtain a
+behavior satisfying S such that wn.now ≥λ + 1.
+Proof: This can be done because ρ satisﬁes S by 2.2 and S is
+assumed to satisfy NZλ.
+2.4. The behavior τ obtained by appending T d(w1), . . . , T d(wn) to σ
+satisﬁes S.
+Proof: Since s = T d(u) (step 2.1) and ρ has ﬁnal state u (step 2.2),
+TT and 2.3 imply that τ satisﬁes S. (TT holds because S is assumed
+to be invariant under time translation.)
+2.5. Q.E.D.
+Since T d(wn) is the ﬁnal state of τ, 2.4 implies that to complete the
+proof of step 2, we need only show that T d(wn).now ≥s.now + 1.
+This follows from u.now ≤λ (step 2.1) , wn.now ≥λ + 1 (step 2.3),
+and
+T d(wn).now = wn.now + d
+≥u.now + d + 1 [by w n.now ≥λ + 1 ≥u.now + 1]
+= s.now + 1
+[because s = T d(u) by 2.1]
+3. Q.E.D.
+Proof: Steps 1 and 2 trivially imply that S is nonZeno.
+Let us review what has just been proved. Under the assumption that the
+initial states of S all have now = 0, I showed that if S is invariant under
+time translation, has a period of at most λ, and satisﬁes NZλ, then it is
+nonZeno. To use model checking to prove that S is nonZeno, the checker
+must be able to verify that S has a period of at most λ and that it satisﬁes
+NZλ.
+Here is how we can use model checking under time-translation symme-
+try to ﬁnd an upper bound on the period of S. Let E be the state graph
+constructed by model checking under this symmetry. Because every reach-
+able state is equivalent to a node in E, the period of S is less than or equal
+47
+
+--- Page 52 ---
+to the least upper bound of the values s.now for all nodes s of E. (Since
+all initial states have now = 0, the period of most speciﬁcations will equal
+this least upper bound if the model checker uses a breadth-ﬁrst construc-
+tion of the state graph.) Debugging features allow the TLC user to insert in
+the speciﬁcation expressions that always equal true, but whose evaluation
+causes TLC to perform certain operations. Using these features, it is easy
+to have TLC examine each state s that it ﬁnds and print the value of s.now
+iﬀs.now > t.now for every state t it has already found.11 This makes com-
+puting an upper bound on the period of S trivial, if the graph E is ﬁnite.
+An explicit-state model checker that lacks the ability to compute the upper
+bound can verify that λ is an upper bound on the period by performing
+model checking under time-translation symmetry to verify the invariance of
+now ≤λ.
+To check that S satisﬁes NZλ, we must show that from every reachable
+state with now ≤λ, it is possible to reach a state with now ≥λ+1. We can
+do this by model checking with the constraint now ≤λ + 1, in which the
+model checker ignores any state it ﬁnds with now > λ+1. This is easy to do
+with a model checker that can check possibility properties. With one that
+checks only linear-time temporal properties, we must show that S together
+with fairness assumptions about subactions of its next-state action imply
+that the value of now must eventually reach λ + 1. That is, we add fairness
+assumptions on certain actions and check the property 3(now ≥λ + 1)
+under the constraint now ≤λ + 1.
+There is one tricky point to checking a liveness property F under a
+constraint. The liveness assumption L might be violated by all behaviors
+satisfying the constraint, in which case the checker would decide that the
+property F holds because it ﬁnds L ⇒F to be trivially true. In particular, a
+fairness assumption on the Tick action could imply that now grows without
+bound, which would be false for every path through the state graph con-
+structed under the constraint now ≤λ+1. Model checking with a constraint
+P is equivalent to ordinary model checking of the speciﬁcation obtained by
+conjoining the condition P′ to the next-state action. For our speciﬁcations,
+model checking with the constraint now ≤λ + 1 is equivalent to chang-
+ing the Tick action to Tick ∧(now′ ≤λ + 1). The fairness conditions we
+use to check NZλ must be on subactions of the modiﬁed next-state action.
+Recall that we can prove that the speciﬁcation FSpec1 of Fischer’s algo-
+rithm is nonZeno by proving NZ under the assumptions of weak fairness on
+StmtB(t) for every thread t and strong fairness of Tick ∧(now′ ≥now + 1).
+11One of the features needed was added to TLC after publication of [25].
+48
+
+--- Page 53 ---
+For verifying NZλ by model checking with the constraint now ≤λ + 1,
+we must replace the latter assumption with strong fairness of the action
+Tick ∧(λ + 1 ≥now′ ≥now + 1).
+All of this, including the deﬁnition of period, has been under the assump-
+tion that now = 0 for all initial states. Extending the deﬁnition of period to
+the general case is not hard, but there is no need to do it. Invariance under
+time translation (in particular, condition T1) requires that either (a) the
+set of initial states is invariant under time translation, or (b) the value of
+now is the same in all initial states. In case (b), that value will probably
+either be 0 or else a parameter of the speciﬁcation that we can set equal to
+0. In case (a), we conjoin the requirement now = 0 to the initial predicate.
+Invariance under time translation implies that, in either case, modifying the
+speciﬁcation in this way does not aﬀect whether or not it is nonZeno.
+6.2.7
+Checking Inductive Invariance
+Model checking can at best verify speciﬁc instances of a speciﬁcation. At-
+taining suﬃcient conﬁdence in a speciﬁcation’s correctness may require a
+proof. Hand proofs are error-prone, but mechanical veriﬁcation is usually
+too time-consuming to be practical. A compromise is to make hand proofs
+more reliable by using a model checker to ﬁnd errors in it.
+At the heart of any assertional proof is an inductive invariant—an in-
+variant Inv such that, for any state s (not necessarily reachable) satisfying
+Inv, every state t satisfying s Next
+−→t also satisﬁes Inv. A model checker can
+easily check that Inv is an invariant of the speciﬁcation. In principle, it can
+just as easily check that Inv is inductive by checking that it is an invariant
+of the speciﬁcation obtained by replacing the initial predicate with Inv.
+While this works in principle, it seldom works in practice. There are
+usually too many states that satisfy the inductive invariant—many more
+than are reachable. Moreover, even if the set of states satisfying the in-
+variant is not too large, computing it may take too long. Most inductive
+invariants start with conjuncts that express type correctness. To compute
+the set of states satisfying such an invariant Inv, TLC enumerates all type-
+correct states and throws away the ones not satisfying the rest of Inv. This
+process can sometimes be made more eﬃcient by using a more sophisticated
+type-correctness invariant that takes advantage of relations among the vari-
+ables. However, it is still usually feasible only for very small instances of the
+speciﬁcation.
+For a time-translation invariant speciﬁcation and a time-symmetric in-
+ductive invariant, model checking can use time symmetry.
+However, the
+49
+
+--- Page 54 ---
+type invariant for a discrete-time speciﬁcations asserts only that now is a
+natural number. To bound the state space, we must modify the type invari-
+ant to assert that 0 ≤now ≤µ for some suﬃciently large µ. The value of
+µ is large enough if every reachable state found by the model checker is an
+initial state. TLC ﬁnds reachable states by a breadth-ﬁrst search and prints
+the depth of the search tree, which equals 1 iﬀevery reachable state is an
+initial state. TLC’s ability to print the maximum value of now allows one to
+ﬁnd a large enough value of µ. For a speciﬁcation that uses only countdown
+or count-up timers and no expiration timers, µ can be taken to equal 0.
+Even if checking cannot be performed with a large enough µ to ensure that
+the invariant is inductive, it is still a good way to try to ﬁnd errors.
+An explicit-state model checker can seldom check inductive invariance
+on large enough instances of a speciﬁcation to gain much conﬁdence in the
+invariant’s correctness. However, because they don’t enumerate states, sym-
+bolic model checkers based on Boolean decision diagrams or satisﬁability
+solving may be better at checking inductive invariance. I don’t know if they
+have been used in this way. It is worth testing an inductive invariant with a
+model checker even on tiny instances of the speciﬁcation because any kind
+of mechanical checking usually reveals errors. It’s best to correct all errors
+the model checker can ﬁnd before trying to write a proof.
+6.3
+Model Checking Our Speciﬁcations
+6.3.1
+Modifying the Speciﬁcations
+TLA+ was not designed with model checking in mind.
+It is much too
+expressive for every possible speciﬁcation to be model checked. However,
+the natural way of writing TLA+ speciﬁcations of systems and algorithms
+yields speciﬁcations that TLC can almost always check—at least for small
+instances. TLC was designed so that, in most cases, one can check the spec-
+iﬁcation without having to modify it. For example, one can check particular
+instances by instructing TLC to substitute speciﬁc constants for constant
+parameters. In practice, one usually writes a “test harness” module that
+imports the speciﬁcation module and adds things like the deﬁnition of the
+view.
+Our speciﬁcations use continuous time. For model checking, we must
+modify them to make time discrete. We do this by modifying their Tick
+actions to increment now by 1. In all our speciﬁcations, this can be done
+by simply replacing
+Tick
+∆=
+∃d ∈{r ∈Real : r > 0} : . . .
+50
+
+--- Page 55 ---
+with
+Tick
+∆=
+let d = 1 in . . .
+I could have avoided having to make this change by writing
+PosReal
+∆=
+{r ∈Real : r > 0}
+Tick
+∆=
+∃d ∈PosReal : . . .
+and then instructing TLC to substitute {1} for PosReal.
+However, that
+would have been “cheating”, since I would have written the speciﬁcation
+that way only for this purpose.
+Had we allowed now to assume any real value in the initial state, then
+we would also have to modify the initial predicate by replacing the conjunct
+now ∈Real with now = 0.
+Speciﬁcation FSpec1 of Fischer’s algorithm has as liveness assumption
+formula NZ, which equals ∀r ∈Real : 3(now > r). TLC cannot handle
+such a conjunction over an inﬁnite set of values, so we must change this
+condition for model checking. Since now is advanced only by a Tick action,
+a behavior that satisﬁes NZ must take inﬁnitely many Tick steps. Hence,
+NZ implies strong fairness of a Tick action. Therefore, to verify a liveness
+property, it suﬃces to replace the assumption NZ by SFvars(Tick). I have
+done this for model checking. In discrete-time speciﬁcations, strong fairness
+of Tick is better than NZ for asserting that time advances, since it allows
+one to ensure syntactically that the fairness properties are on subactions of
+the speciﬁcation.
+6.3.2
+Measurements
+The execution-time results reported here for TLC were obtained on a dual
+processor 2.4 GHz PC running Windows XP. TLC is written in Java, and it
+was run under the BEA WebLogic JRockitTM version 1.4.2 04 Java Virtual
+Machine (JVM). TLC uses multiple threads when building the state graph
+and checking safety properties. With a thread-friendly JVM, TLC achieves
+speedups of close to N with N processors. With 2 processors, the speedup
+under the BEA JVM is roughly a factor of 1.5. When checking a liveness
+property on the completed state graph, TLC is single threaded.
+The execution times include a ﬁxed startup time of a little over 3 sec-
+onds. For example, model checking Fischer’s algorithm with an empty set
+of threads, so there is a single reachable state, takes about 3.2 seconds.
+51
+
+--- Page 56 ---
+I made no eﬀort to achieve great precision in the timing measurements,
+often using the computer concurrently for other tasks like editing and read-
+ing mail that were not processor intensive. The time to model check the
+same instance of a speciﬁcation could vary by several seconds on short runs
+and several percent on longer ones.
+TLC stores on disk the state graph and the list of states whose next states
+it has not yet examined. This means that, for checking safety properties, it
+is usually limited in the size of the instance it can handle only by time and
+not by space. When checking liveness properties, TLC uses a data structure
+that must ﬁt in memory. For most of the instances tested here, disk was not
+needed. TLC was run with the Java runtime’s maximum memory allocation
+parameter set to 700 MBytes, but most instances used much less memory
+than that.
+6.3.3
+Speciﬁcation FSpec1
+Fischer’s algorithm is so simple that model checking it should be easy. If
+not, it would be unlikely for model checking real speciﬁcations to be feasible.
+To model check speciﬁcation FSpec1, we must choose speciﬁc values
+for the parameters Delta and Epsilon and for the set of threads. Clearly,
+only the number of threads matters. Since Delta is an upper-bound tim-
+ing constraint, decreasing its value just eliminates possible behaviors. The
+algorithm assumes Delta ≤Epsilon, so it makes most sense to let Delta =
+Epsilon for model checking. I have done that for all the tests reported, so
+only the value of Delta is mentioned.
+I have used TLC to check the invariance of the predicate MutualExclusion
+deﬁned in module FischerPreface and the predicates Inv and LInv used in
+the correctness proof. These invariants were checked by TLC using sym-
+metry under both time translation and permutations of threads.
+Time-
+translation symmetry is expressed in TLC with the view described in Sec-
+tion 6.2.5.
+The number of reachable states, and hence the execution time, increases
+with the number of threads and the value of Delta. For complicated algo-
+rithms, one is lucky to be able to test an instance with as many as 3 threads.
+Fischer’s algorithm is so simple that TLC can check invariance properties for
+small values of Delta with 6 threads in less than a minute. With N threads,
+we expect the number of states to be roughly proportional to DeltaN . The
+graph of Figure 12 shows the dependence of the number of states on Delta
+for 4 threads. With this number of threads, TLC checks the speciﬁcation
+at an asymptotic rate of about 2700 reachable states per second, taking 102
+52
+
+--- Page 57 ---
+×
+×
+×
+×
+×
+×
+10
+20
+30
+5
+15
+25
+Delta
+100K
+200K
+300K
+reachable
+states
+Figure 12: Number of reachable states for the speciﬁcation in module Fis-
+cher1 with 4 threads, under time-translation and thread-permutation sym-
+metries.
+seconds to ﬁnd the 273134 reachable states for Delta = 30.
+Figure 13 shows how the number of states grows with the number of
+threads when Delta = 5. The execution time increases much more dramat-
+ically than the number of reachable states:
+5 threads
+3311 states
+7 seconds
+950 states/second
+6 threads
+8213 states
+35 seconds
+260 states/second
+7 threads
+18530 states
+556 seconds
+35 states/second
+where the number of states per second is obtained by subtracting the es-
+timated 3.2 seconds overhead from the execution times. (Execution times
+for fewer than 4 threads are too short for the timing measurements to be
+meaningful.) There are two reasons for this increase:
+• Although symmetry under permutations reduces the total number of
+states in the state graph, it does not reduce the number of states t
+satisfying s Next
+−→t for each state s in the graph. That number increases
+with the number of threads that can take a step. As a result, the
+number of times TLC generates and examines each reachable state
+increases with the number of threads—from an average of 1.7 for a
+single thread to 4.6 for 7 threads.
+53
+
+--- Page 58 ---
+×
+×
+×
+×
+×
+×
+×
+1
+2
+3
+4
+5
+6
+7
+20K
+10K
+reachable
+states
+threads
+Figure 13: Number of reachable states for the speciﬁcation in module Fis-
+cher1 with Delta=5, under time-translation and thread-permutation sym-
+metries.
+• The invariants are universally quantiﬁed over the set of threads, so the
+time required to check that they hold in an individual state increases
+with the number of threads.
+For all instances that I have checked having more than one thread, the
+period equals 2 ∗Delta −1. In light of the many instances tested, it would
+be remarkable if this were not true in general.
+Symmetry under thread permutations is very eﬀective at reducing the
+number of reachable states.
+For N threads, this symmetry reduces the
+number of reachable states by a factor approaching N ! as Delta goes to
+inﬁnity. For smaller values of Delta, a larger proportion of the states are
+symmetric under some permutations of threads, so the number of reachable
+states is reduced by a smaller factor. With 4 threads (N ! = 24), the number
+of reachable states is reduced by a factor of 14.1 for Delta = 5 and by a factor
+of 20.7 for Delta = 20.
+Since we cannot use thread permutation under symmetry to check the
+liveness property, we cannot check liveness for as large an instance of the
+speciﬁcation. The largest instance I have tested has 6 threads and Delta = 5,
+which produces 2037987 reachable states and for which it takes TLC almost
+3 hours to check liveness. However, TLC can check liveness with 6 threads
+and Delta = 10 (138644 reachable states) in about 61
+2 minutes. It is unlikely
+54
+
+--- Page 59 ---
+for the speciﬁcation to have an error that does not manifest itself in this
+instance.
+As explained in Section 6.2.6, we check that a time-translation invariant
+speciﬁcation with period at most λ is nonZeno by checking that it satisﬁes
+condition NZλ. This is done by adding a suitable fairness assumption to the
+safety part and checking the property 3(now ≥λ + 1) under the constraint
+now ≤λ+1. For arbitrary theoretical model checking, the fairness assump-
+tion includes strong fairness of the action Tick ∧(λ + 1 ≥now′ ≥now + 1).
+For a discrete-time speciﬁcation in which the Tick action increments now by
+1, this is equivalent to strong fairness of Tick ∧(λ ≥now). For this version
+of Fischer’s algorithm, we also need weak fairness of the action StmtB(t) for
+each thread t to ensure that t resets its upper-bound timer and allows now
+to advance.
+Because the property to be checked is not symmetric under time trans-
+lation and the liveness assumption is not symmetric under thread permu-
+tation, we can use neither of those two symmetries. The set of reachable
+states is bounded by the constraint now ≤λ+1. However, since states that
+diﬀer only in the value of now yield distinct nodes in the state graph, we
+expect the graph to have about λ + 1 times as many nodes as under time-
+translation symmetry. Because the lower-bound timing constraint rules out
+some combinations of values of now and the other variables, there are only
+about 60-80% that many nodes in the graph for checking that FSpec1 satis-
+ﬁes NZλ. Checking that an instance with four threads is nonZeno takes 11
+2
+minutes for Delta = 5 and 30 minutes for Delta = 10.
+The Fischer algorithm is simple enough that we can hope to check
+its inductive invariant on large enough instances to gain conﬁdence in its
+correctness—especially since we can use symmetry under thread permuta-
+tions as well as time symmetry. The limiting factor in the size of instance
+that TLC can handle is that the current implementation gives up if it ﬁnds
+more than one million initial states. (We have not yet encountered an engi-
+neer who writes inductive invariants, and real speciﬁcations are unlikely to
+have more than a few hundred initial states, so there has been little incentive
+to remove this limit.) The largest instances for which TLC can check that
+Inv ∧LInv is an invariant of this speciﬁcation are
+2 threads
+Delta = 12
+490347 states
+checked in 11
+2 minutes
+3 threads
+Delta = 3
+99372 states
+checked in 1 minute
+4 threads
+Delta = 1
+7140 states
+checked in 1
+2 minute
+(TLC can also check it for a single thread with Delta in the hundreds.)
+These instances are large enough to give me much more conﬁdence in my
+hand proof.
+55
+
+--- Page 60 ---
+6.3.4
+Speciﬁcation FSpec2
+Speciﬁcation FSpec2 has the additional parameter Gamma, which must be
+greater than Epsilon. It is an upper-bound constraint, so increasing its value
+increases the set of possible behaviors. As with FSpec1, I checked instances
+with Epsilon equal to Delta.
+The additional upper-bound timing constraints of FSpec2 give it more
+reachable states than FSpec1 for comparable parameters. For example, using
+the same symmetries under time translation and thread permutation, and
+letting Gamma equal Delta + 5, speciﬁcation FSpec2 has roughly 3 times as
+many reachable states as FSpec1 for values of Delta ranging from 5 to 25.
+Invariance checking takes a little longer per state—2400 states per second
+instead of 2700. For 6 threads and Delta = 5, speciﬁcation FSpec2 with
+Gamma = 12 has about 4 times as many states and takes about 50% longer
+per state. For two or more threads, the period of FSpec2 appears to equal
+the maximum of 2 ∗Delta −1 and Gamma −1.
+To verify that FSpec2 is nonZeno, we check condition NZλ using the
+fairness property
+∧∀t ∈Thread :
+WFvars( ∧StmtA(t) ∨StmtB(t) ∨StmtC(t) ∨StmtD(t)
+∧SetTimers(t))
+∧SFvars((now ≤λ) ∧Tick)
+which clearly implies the speciﬁcation’s next-state action. Its larger number
+of reachable states makes checking that FSpec2 is nonZeno correspondingly
+harder than checking FSpec1, though still not very hard. For example, with
+4 threads, Delta = 5 and Gamma = 8, so the period is 9, checking that
+FSpec2 is nonZeno produces a state graph with 248489 states and takes
+about 51
+4 minutes.
+Checking that Inv is an inductive invariant of FSpec2 is also quite feasi-
+ble. Maximal instances for which TLC can check it are
+2 threads
+Delta = 10
+Gamma = 15
+492305 states
+11
+2 minutes
+2 threads
+Delta = 12
+Gamma = 13
+467670 states
+11
+2 minutes
+3 threads
+Delta = 2
+Gamma = 5
+121088 states
+11
+2 minutes
+6.3.5
+Speciﬁcation HFSpec2
+Speciﬁcation HFSpec2 is obtained from FSpec2 by adding the history vari-
+able h. As observed in Section 6.2.5, we check that
+now −(4 ∗Delta + 2 ∗Gamma −Epsilon) < h
+56
+
+--- Page 61 ---
+is an invariant of HFSpec2 using view symmetry under the view
+⟨pc, x, ubTimer, lbTimer, h ⊖now ⟩
+We also use symmetry under permutations of threads.
+The invariant asserts that the value of h can vary from now to now +4∗
+Delta + 2 ∗Gamma −Epsilon −1. Hence, the number of reachable states of
+HFSpec2 should be larger than the number for FSpec2 by at most a factor
+of 4 ∗Delta + 2 ∗Gamma −Epsilon −1. In the tests I’ve run, the actual
+factor lies between Delta and 2 ∗Delta. The running time per reachable
+state seems to be roughly the same for the two speciﬁcations. For example,
+with 6 threads, Delta = 5, and Gamma = 10, speciﬁcation HFSpec2 had
+5.1 times as many reachable states (175071) and took 7.6 times as long (20
+minutes 10 seconds).
+As with FSpec1 and FSpec2, the period of HFSpec2 appears to be inde-
+pendent of the number of threads. However, it does not seem to be a very
+simple function of Delta and Gamma.
+We can check that HFSpec2 is nonZeno using the same fairness assump-
+tion as for FSpec2. (As explained in Section 5, fairness must be on a sub-
+action of the speciﬁcation. In general, if A is a subaction of a speciﬁcation
+S, then it is also a subaction of the speciﬁcation obtained from S by adding
+a history variable.) In addition to having a larger state space than FSpec2
+for the same parameter values, HFSpec2 also has a larger period. With 4
+threads, Delta = 3 and Gamma = 5, verifying NF15 for HFSpec2 required
+examining 6 times as many reachable states (444638) and took 7.5 times as
+long (9.5 minutes) as verifying NF9 for FSpec2.
+As expected, inductive invariance checking for HFSpec2 can be per-
+formed only on smaller instances than for FSpec2.
+The maximal values
+of parameters for which TLC can check that HInv is an inductive invariant
+are
+2 threads
+Delta = 2
+Gamma = 8
+18182 states
+3 minutes
+2 threads
+Delta = 3
+Gamma = 6
+20414 states
+31
+2 minutes
+3 threads
+Delta = 1
+Gamma = 3
+3514 states
+21
+2 minutes
+Although small, these instances were large enough to reveal an error in an
+earlier version of HInv.
+6.3.6
+Speciﬁcation LSpec
+The speciﬁcation LSpec of the leader algorithm uses only countdown timers
+and is invariant under time translation. It has no other symmetries; even if
+57
+
+--- Page 62 ---
+the node graph is symmetric, the speciﬁcation uses the node identiﬁers and
+is therefore not symmetric under permutations of nodes.
+Although LSpec is time-translation symmetric, the invariant Correctness
+is not because it explicitly mentions now. We could add a timer as a history
+variable and restate the correctness property in terms of it, but that is not
+necessary. Instead, we model check under a symmetry other than simple
+time translation. Formula Correctness has the form
+∀n ∈Node : (now > c(n)) ⇒(ldr[n] = Ldr(n))
+for a constant expression c(n) independent of now. Let Σ be the maximum
+of the c(n) for all nodes n. Deﬁne a symmetry ∼by s ∼t iﬀs.now and
+t.now are either equal or are both greater than Σ. It is easy to see that
+Correctness is symmetric under ∼. It is a little less obvious, but also true,
+that speciﬁcation LSpec is symmetric under ∼. This symmetry is described
+by the view
+⟨ldr, dist, timer, msgs, if now > Σ then Σ + 1 else now ⟩
+We check the invariance of Correctness by model checking under this view
+symmetry.
+The parameters of the speciﬁcation are N and Nbrs, which describe the
+graph, and the timing constants Period, TODelay, and MsgDelay.
+The
+latter two are upper-bound constraints, so the number of reachable states
+is an increasing function of their values.
+Figure 14 shows the results of
+checking the invariance of Correctness on three diﬀerent graphs, with 3–5
+nodes, for some haphazardly chosen values of the timing bounds. Some of
+those results are followed with the results of nonZeno checking for the same
+instance, indicating the value of λ for which NZλ was veriﬁed. In about a
+dozen instances checked for each, the periods are 2 ∗Period + MsgDelay +
+TODelay+1 for the 3-node graph and Period+3∗MsgDelay+2∗TODelay+1
+for the 4-node graph.
+We expect that increasing a timing bound will increase the number of
+reachable states, since it increases the number of possible values of the timer
+variables. However, the ﬁrst three rows for N = 3 and N = 4 show that
+increasing Period decreases the number of states. By slowing the system
+down, increasing a lower-bound constraint can sometimes reduce the set of
+possible behaviors. Increasing Period decreases the rate at which messages
+are sent. Since Period is a lower bound on the time between the sending
+of messages and MsgDelay is an upper bound on how long a message can
+remain in the multiset msgs before being delivered, the maximum num-
+ber of messages that can be in transit at any time depends on the ratio
+58
+
+--- Page 63 ---
+MsgDelay/Period. The following table gives some idea of what’s going on,
+where the results are for the 3-node graph.
+MsgDelay
+msgs in transit
+Period MsgDelay TODelay
+Period
+states
+max
+mean
+2
+2
+1
+1
+6579
+6
+3.46
+1
+2
+1
+2
+240931
+12
+6.57
+3
+2
+2
+.67
+20572
+6
+3.69
+10
+3
+5
+.33
+247580
+6
+3.85
+(The maximum and mean number of messages in transit were measured
+using TLC’s debugging features.)
+The ﬁrst two rows show the dramatic
+eﬀect of changing Period and leaving the other parameters the same. The
+second two rows show that the MsgDelay/Period ratio is just one of the
+factors determining the number of messages in transit and the number of
+reachable states.
+Checking inductive invariance seems to be infeasible for LSpec, even on
+a 2-node graph.
+6.4
+Comparison With Uppaal
+A number of algorithms have been developed and implemented in model
+checkers for real-time systems [3, 18, 27, 43]. We would like to know how
+they compare with the simple method described here.
+Most real-time model checkers use continuous-time models and employ
+clock-region constructions to check them that are more expensive than the
+simpler algorithms of ordinary model checkers. On the other hand, their
+execution speed depends only on the ratios of the timing parameters, not on
+the absolute values. With the simple discrete-time method described here,
+multiplying the parameters by a constant c usually increases the number
+of reachable states by a power of c. So the two methods are not directly
+comparable, and it would be easy to bias a comparison by the proper choice
+of parameters. So we can at best hope for a qualitative comparison of how
+the two approaches might work in practice.
+Most real-time model checkers require the system to be described in
+timed-automata languages that are not expressive enough to describe the
+leader algorithm of Section 4. The only real-time model checker I know of
+that can handle this algorithm is Uppaal [27]. I have therefore restricted my
+attention to Uppaal, one of the most widely used real-time model checkers.
+This section describes the use of Uppaal on two speciﬁcations—the leader
+algorithm and a version of Fischer’s algorithm. The leader algorithm is the
+59
+
+--- Page 64 ---
+N = 3
+N = 4
+N = 5
+1 ©
+H
+2
+3
+1
+2
+3
+4
+1
+2
+3
+4
+5
+©
+H
+N
+Period MsgDelay TODelay
+states
+time
+states/sec
+3
+3
+2
+1
+5760
+7 sec
+800
+2
+2
+1
+6579
+10 sec
+625
+1
+2
+1
+240931
+41
+2 min
+900
+5
+2
+5
+82105
+70 sec
+1150
+NZ18
+83890
+140 sec
+590
+5
+3
+5
+264225
+41
+2 min
+1000
+NZ19 270109
+81
+2 min
+530
+5
+4
+5
+836152
+16 min
+850
+3
+2
+2
+20572
+20 sec
+1050
+NZ11
+21260
+35 sec
+630
+10
+3
+5
+247580
+4 min
+975
+NZ29 251708
+8 min
+530
+4
+3
+2
+1
+5606
+12 sec
+475
+2
+2
+1
+6656
+13 sec
+490
+1
+2
+1
+172531
+61
+2 min
+440
+5
+2
+5
+179860
+61
+2 min
+460
+NZ22 185228
+61
+2 min
+480
+5
+3
+5
+728411
+29 min
+410
+NZ25 749163
+281
+2 min
+440
+5
+4
+5
+2974572
+1125 min
+440
+3
+2
+2
+27576
+45 sec
+620
+NZ15
+29859
+50 sec
+600
+10
+3
+5
+586504
+23 min
+425
+NZ35 604620
+221
+2 min
+450
+5
+3
+1
+1
+20961
+75 sec
+280
+5
+3
+1
+331292
+34 min
+160
+3
+2
+2
+691394
+69 min
+170
+Figure 14: Checking that Correctness is an invariant of LSpec for the in-
+dicated graphs with 3, 4, and 5 nodes, together with nonZeno checking for
+some instances.
+60
+
+--- Page 65 ---
+more interesting example, because it is representative of the class of systems
+for which one would most likely want to use existing languages and tools
+that are not specialized for handling real time.
+However, since Fischer’s
+algorithm is so popular a benchmark, I include it as well.
+Uppaal and TLC diﬀer not only in their basic model-checking algorithms,
+but also in the level of their input languages. Like most model checkers, Up-
+paal uses a lower-level modeling language that can be compiled into eﬃcient
+code. TLA+ is a very high-level language, so TLC must “execute” a speciﬁ-
+cation interpretively. TLC is therefore signiﬁcantly slower than conventional
+model checkers for verifying simple systems. To explore the diﬀerence this
+makes, I also present data for Fischer’s algorithm obtained with two pop-
+ular model checkers, Spin [20] and SMV [31], whose models are written in
+lower-level languages.
+Uppaal maintains all its working data in memory. Its use of memory
+appears to cause the Windows XP memory management system to thrash.
+I therefore ran Uppaal (with its default settings) under Linux, on a 3.1
+GHz uniprocessor with 3 GBytes of memory.
+For the leader algorithm,
+Uppaal was also run at Aalborg University on a 30-node network of 2.6
+GHz processors, each with 1 GByte of memory. Uppaal can easily be used to
+check that a speciﬁcation is nonZeno, but such checking was not performed
+on either of the examples.
+6.4.1
+The Leader Algorithm
+Arne Skou, an experienced Uppaal user at Aalborg University, with the as-
+sistance of Gerd Behrmann and Kim Larsen, translated LSpec to an Uppaal
+model. Since Uppaal’s system modeling language is not as expressive as
+TLA+, this required some encoding. In particular, Uppaal cannot represent
+a potentially unbounded multiset, so the Uppaal model encodes the TLA+
+variable msgs in a ﬁxed-length array. Uppaal checks that this array does
+not overﬂow to ensure that the model is a faithful representation of the
+algorithm.
+I ran the Uppaal speciﬁcation with the same 3- and 4-node graphs on
+which I ran TLC. Uppaal proved to be very sensitive to the MsgDelay/Period
+ratio. As observed above, this ratio is related to the maximum number of
+messages in transit at any time. On a single computer, Uppaal usually fails
+by running out of memory at a MsgDelay/Period ratio around .6. (Whether
+it runs out of memory also depends on the value of TODelay.) To get a bet-
+ter picture of what was happening, Skou also ran Uppaal on the Aalborg
+University 30-processor network. The results are tabulated in Figure 15.
+61
+
+--- Page 66 ---
+MsgDelay
+30-proc
+N
+Period MsgDelay TODelay
+Period
+TLC
+Uppaal
+Uppaal
+3
+10
+3
+5
+.3
+255
+9.4
+2.9
+3
+1
+1
+.33
+4
+9.4
+13.4
+5
+2
+5
+.5
+70
+11.2
+2.9
+5
+3
+1
+.6
+13
+30.8
+3.0
+5
+3
+5
+.6
+265
+fail
+20.9
+3
+2
+1
+.67
+7
+10.2
+3.0
+3
+2
+2
+.67
+20
+fail
+16.6
+5
+4
+1
+.8
+27
+32.5
+9.2
+5
+4
+5
+.8
+980
+fail
+fail
+2
+2
+1
+1
+11
+fail
+fail
+1
+2
+1
+2
+270
+fail
+fail
+1
+2
+2
+2
+1280
+fail
+fail
+4
+10
+3
+5
+.3
+1385
+42.2
+2.5
+3
+1
+1
+.33
+6
+43.9
+2.7
+5
+2
+2
+.4
+42
+48.3
+4.2
+5
+2
+5
+.4
+390
+93.0
+4.3
+2
+1
+1
+.5
+6
+48.2
+3.7
+5
+3
+1
+.6
+28
+72.8
+3.8
+5
+3
+5
+.6
+1770
+fail
+84.6
+3
+2
+1
+.67
+12
+73.1
+9.8
+3
+2
+2
+.67
+44
+fail
+73.1
+5
+4
+5
+.8
+6760
+fail
+fail
+2
+2
+1
+1
+13
+fail
+fail
+1
+2
+1
+2
+390
+fail
+fail
+1
+2
+2
+2
+1650
+fail
+fail
+Figure 15: Comparison of Uppaal and TLC execution times in seconds for
+the same graphs with 3 and 4 nodes as in Figure 14.
+62
+
+--- Page 67 ---
+For MsgDelay/Period ratios signiﬁcantly less than .6, Uppaal’s execution
+time depends almost entirely on the graph and not on the other parameters.
+TLC’s execution time depends on the magnitude of the parameters as well
+as on this ratio. Hence, if Uppaal succeeds, it is usually faster than TLC
+for small values of the parameters and much faster for larger values. Using
+30 processors extends the range of parameters for which Uppaal succeeds.
+TLC can be run on multiple computers using Java’s RMI mechanism. Tests
+have shown that using C computers typically speeds it up by a factor of
+about .7C.
+This suggests that, run on a network of processors, TLC’s
+execution speed is comparable to Uppaal’s for the range of instances tested.
+However, TLC will be slower than Uppaal for large enough values of the
+timing-constraint parameters.
+The overall result is that Uppaal can check models with larger timing-
+constraint parameters, and hence with a ﬁner-grained choice of ratios be-
+tween the parameters.
+However, TLC can check a wider range of ratios
+among the parameters. For ﬁnding bugs, the ability to check parameter ra-
+tios of both 1:2 and 2:1 is likely to be more useful than the ability to check
+ratios of both 1:2 and 11:20.
+Skou and his colleagues subsequently rewrote the Uppaal model to im-
+prove its performance. Because the TLA+ speciﬁcation was written to be
+as simple and elegant as possible, with no consideration of model-checking
+eﬃciency, the fairest comparison seems to be with the ﬁrst, unoptimized
+Uppaal model. When checking the new model on a single computer, Uppaal
+fails on only four of the instances of Figure 15. It is an average of 4.5 times
+faster for the N = 3 instances and 50 times faster for the N = 4 instances.
+However, it still fails when MsgDelay/Period is greater than about 1. The
+new model therefore does not alter the basic result that Uppaal is faster
+than TLC for the range of parameter ratios it can handle, but it cannot
+handle as wide a range.
+It is possible that these results reﬂect some special property of this ex-
+ample.
+However, the sensitivity to the MsgDelay/Period ratio suggests
+that it is the messages in transit that pose a problem for Uppaal. Each
+message carries a timer, and the performance of real-time model checkers
+tends to depend on the number of concurrently running timers. Perhaps
+the most common use of real time in systems is for timing constraints on
+message transmission—constraints that are modeled by attaching timers to
+messages. This suggests that Uppaal might have diﬃculty checking such
+systems if there can be many messages in transit. However, more examples
+must be tried before we can draw any such conclusion.
+63
+
+--- Page 68 ---
+6.4.2
+Fischer’s Algorithm
+Comparisons with Uppaal for Fischer’s algorithm were made with a version
+of the algorithm described by a model distributed with Uppaal. It is similar
+to the version described by FSpec1, except that each thread has 4 control
+points instead of 6. The Uppaal version has no explicit liveness assumption,
+but Uppaal has a built-in assumption that time advances. The model has
+a single parameter K, related to the parameters of FSpec1 by Epsilon =
+Delta = K + 1.
+The safety properties checked were mutual exclusion and absence of
+deadlock. The liveness property checked is that a process with control at
+statement b eventually reaches statement c.
+(This seems to be the only
+liveness property satisﬁed by the Uppaal model.) TLC and Uppaal were
+run as described above. For checking safety, TLC was run both with and
+without symmetry under permutations of threads. (The liveness property
+is not symmetric.)
+Spin is an explicit-state model checker developed by Gerard Holzmann.
+The Spin model was written by Holzmann, who executed it on a 3 GHz, 3
+GByte uniprocessor. For checking liveness, Spin uses a separate model that
+contains an extra process. This increases the number of states by a factor
+of 2.3–2.7, depending on the value of K.
+SMV is a symbolic model checker, based on binary decision diagrams,
+that was developed by Ken McMillan.
+The SMV model was written by
+McMillan, who executed it on a 3 GHz uniprocessor with 2 GBytes of mem-
+ory.
+The representations of Fischer’s algorithm used in all four model checkers
+are essentially the same. For both Spin and SMV, there are other ways to
+model the algorithm that can be checked more eﬃciently.
+All the models were tested for 6 threads, which is the smallest number
+for which Uppaal takes a signiﬁcant amount of time. The results for diﬀerent
+values of K are shown in Figure 16. Checking for deadlock is essentially free
+for explicit-state model checkers, and TLC and Spin do it unless explicitly
+instructed not to. Uppaal and symbolic model checkers like SMV must be
+instructed to check for deadlocks. The SMV model was run without deadlock
+checking. About 49 seconds of Uppaal’s execution times was spent checking
+for deadlock. TLC’s liveness tests also checked for safety; checking only for
+liveness would reduce the execution times by a few percent.
+Since Uppaal’s execution time is independent of K, we know that it
+will be faster than a model checker whose running time depends on K.
+All of the model checkers could check the speciﬁcation for large enough
+64
+
+--- Page 69 ---
+Safety
+Liveness
+K
+states
+TLCs TLC
+Spin
+SMV
+TLC
+Spin
+SMV
+2
+155976
+9
+29
+.7
+1.3
+128
+3.7
+2.5
+3
+450407
+10
+78
+2.4
+3.8
+385
+13
+6.3
+4
+1101072
+16
+194
+6.9
+6.5
+1040
+49
+10
+5
+2388291
+26
+399
+19
+10
+3456
+171
+16
+6
+4731824
+47
+784
+51
+14
+5566
+468
+22
+7
+8730831
+78
+1468
+142
+25
+13654
+1317
+40
+8
+15208872
+132
+2546
+378
+35
+3593
+54
+9
+25263947
+244
+4404
+977
+46
+5237
+73
+10
+40323576
+446
+7258
+2145
+62
+95
+Uppaal
+82
+135
+Figure 16: Execution times in seconds for a simple version of Fischer’s al-
+gorithm with 6 threads, where TLCs is TLC with symmetry under thread
+permutations.
+values of K to provide reasonable conﬁdence of its correctness, though the
+numbers do not bode well for the ability of TLC and Spin to check liveness
+for more complicated examples. We do not expect TLC’s performance on
+liveness checking to be good enough for large applications.
+But because
+Fischer’s algorithm is so simple, it would be dangerous to infer from these
+numbers that the performance of Uppaal and SMV would be good enough.
+For example, SMV does much better than Spin, even though explicit-state
+model checkers generally perform better than symbolic model checkers for
+this kind of asynchronous algorithm.
+One observation from which we can generalize is the dependence of exe-
+cution time on the number of reachable states. For TLC without symmetry,
+this dependence is linear because the time to compute possible next states
+and to evaluate the invariant is independent of K. We expect the same to be
+true for any explicit-state model checker. (Spin’s execution time increased
+faster than the number of states because it was run with naive default set-
+tings; this should not occur in practice when run by a knowledgeable user.)
+SMV’s execution time increases more slowly than the number of reachable
+states. Execution time for a symbolic model checker does not depend di-
+rectly on the number of states, and I expect that it typically increases more
+slowly with increasing values of a speciﬁcation’s parameters than does the
+number of states.
+When using symmetry under permutations of threads, TLC does quite
+65
+
+--- Page 70 ---
+well, even running faster than Spin for larger values of K. (Spin and SMV
+cannot use symmetry under permutations in this way.)
+However, these
+results should not be taken very seriously. In real examples, symmetry sets
+usually contain only 2 or 3 elements, and the resulting speedups are much
+more modest.
+It might also be a mistake to extrapolate from TLC’s relatively poor
+performance on this simple example. The ineﬃciency of interpreting a spec-
+iﬁcation may be less important than other factors for large problems.
+I
+know of only one case in which TLC and a more conventional model checker
+were applied to a large industrial speciﬁcation—one that required days to
+check. The conventional model checker was Murphi [13], which also runs
+many times faster than TLC on small examples. On the large speciﬁcation,
+the execution times of TLC and Murphi were comparable. Of course, the
+only conclusion we can draw from that example is that we should not try to
+draw conclusions from any one example.
+7
+Conclusion
+7.1
+Objections
+I have encountered three objections to explicit-time speciﬁcations. The ﬁrst
+is that they model system operations as happening at a particular instant of
+time. Some people feel that, since an operation takes a ﬁnite length of time,
+it should have a beginning and an ending time. But these people generally
+ﬁnd nothing wrong with the usual practice of modeling the execution of an
+untimed system’s operation as a single atomic event. We typically model
+execution of the statement y := 0 as one event, even though its actual ex-
+ecution involves voltages changing continuously over some interval of time.
+A discrete system is by deﬁnition one whose execution can be modeled as
+a sequence of atomic events. Discrete real-time systems are no diﬀerent. If
+we need to distinguish between the starting and stopping times of the exe-
+cution of an operation, we can model that execution by separate start and
+stop events.
+The second objection to explicit-time speciﬁcations is that they express
+upper-bound timing constraints with a timer that prevents now from be-
+coming too large. Some people feel that a timer should not be allowed to
+prevent time from advancing. They seem to think that a program’s spec-
+iﬁcation is causing the program’s actions to occur. In fact, a speciﬁcation
+causes nothing to happen. It just describes the program’s possible execu-
+tions. When describing allowed behaviors, saying that time is not allowed to
+66
+
+--- Page 71 ---
+reach noon unless an event has occurred is completely equivalent to saying
+that the event must occur before noon. A speciﬁcation does not express
+causality.
+The third objection is that, because time advances in discrete steps,
+a behavior may skip over an error state—allowing us to prove correctness
+of an incorrect speciﬁcation. For example, suppose correctness requires a
+property P to hold during some time interval I . We verify this by showing
+that (now ∈I ) ⇒P is an invariant of the system. A behavior could satisfy
+this speciﬁcation by skipping over the interval I when P is false, so the
+value of now is never in I . This objection fails to take into account that
+proving invariance of (now ∈I ) ⇒P shows that it holds in all states of all
+behaviors. If there is a behavior in which now advances past the interval I
+in a single step, then there is also a behavior in which now advances past I
+in two steps, the ﬁrst step assigning to it a value in I . In general, proving
+correctness in a model in which time advances in discrete steps is suﬃcient
+if time may advance in small enough steps.
+7.2
+Hybrid-System Speciﬁcations
+A hybrid-system speciﬁcation relates the behavior of a system to the val-
+ues of physical quantities in its environment. A real-time speciﬁcation is a
+special case of a hybrid-system speciﬁcation in which time is the only rele-
+vant physical quantity. Like time, any physical quantity can be represented
+by an ordinary speciﬁcation variable. The basic idea behind explicit-time
+speciﬁcations can therefore be applied as well to all hybrid-system speciﬁ-
+cations. The changes to variables representing physical quantities can be
+speciﬁed as solutions to diﬀerential equations [25]. Although the resulting
+TLA+speciﬁcations are straightforward [22], TLC may not be able to handle
+them unless the equations describing the evolution of the physical quanti-
+ties are very simple—for example, if they are linear. (Most model checking
+algorithms for hybrid systems assume linear equations of evolution [17].)
+7.3
+Concluding Remarks
+The main reason for using an explicit-time approach is to be able to use ex-
+isting languages and tools, instead of having to develop new ones. There is
+no reason to develop new languages and tools unless they oﬀer some advan-
+tages over existing ones. Implicit-time speciﬁcations are not inherently any
+easier to read or write than explicit-time ones. Nor are they any easier to
+reason about mathematically. One justiﬁcation for implicit-time languages
+67
+
+--- Page 72 ---
+is to take advantage of special algorithms for model checking real-time spec-
+iﬁcations. However, the results of Section 6 suggest that conventional model
+checking will work fairly well.
+There are practical reasons for using a higher-level language like TLA+
+instead of one designed expressly for model checking.
+As one industrial
+user observed, “The prototyping and debug phase through TLA+/TLC is so
+much more eﬃcient than in a lower-level language.”
+Acknowledgements
+I wish to thank Gerd Behrmann, Gerard Holzmann, Kim Larsen, Ken
+McMillan, and Arne Skou for the help they provided that is described in
+Section 6.4. I also wish to thank Tom Henzinger for his helpful comments; a
+number of them have found their way into my discussion of model checking.
+Lee Pike informed me of the prior work by Dutertre and Sorea, and Frits
+Vaandrager informed me of the work by Brinksma, Mader, and Fehnker.
+References
+[1] Mart´ın Abadi and Leslie Lamport. The existence of reﬁnement map-
+pings. Theoretical Computer Science, 82(2):253–284, May 1991.
+[2] Mart´ın Abadi and Leslie Lamport.
+An old-fashioned recipe for real
+time.
+ACM Transactions on Programming Languages and Systems,
+16(5):1543–1571, September 1994.
+[3] Rajeev Alur, Costas Courcoubetis, and David Dill. Model-checking in
+dense real-time. Information and Control, 104(1):2–34, May 1993.
+[4] Krzysztof R. Apt and Ernst-R¨udiger Olderog. Veriﬁcation of Sequential
+and Concurrent Programs. Texts and Monographs in Computer Science.
+Springer-Verlag, New York, Berlin, Heidelberg, London, Paris, Tokyo,
+Hong Kong, Barcelona, 1990.
+[5] E. A. Ashcroft. Proving assertions about parallel programs. Journal of
+Computer and System Sciences, 10:110–135, February 1975.
+[6] Brannon Batson and Leslie Lamport. High-level speciﬁcations: Lessons
+from industry. To appear in the Proceedings of the First International
+Symposium on Formal Methods for Components and Objects, held 5-8
+November 2002 in Leiden, The Netherlands, 2003.
+68
+
+--- Page 73 ---
+[7] Arthur Bernstein and Paul K. Harter, Jr. Proving real time properties of
+programs with temporal logic. In Proceedings of the Eighth Symposium
+on Operating Systems Principles, pages 1–11, New York, 1981. ACM.
+Operating Systems Review 15, 5.
+[8] Egon B¨orger and Robert St¨ark. Abstract State Machines: A Method
+for High-Level System Design and Analysis. Springer-Verlag, 2003.
+[9] Ed Brinksma, Angelika Mader, and Ansgar Fehnker. Veriﬁcation and
+optimization of a PLC control schedule. International Journal on Soft-
+ware Tools for Technology Transfer (STTT), 4(1):21–33, 2002.
+[10] Manfred Broy. Functional speciﬁcation of time-sensitive communicating
+systems. ACM Transactions on Software Enginnering and Methodology,
+2(1):1–46, 1993.
+[11] K. Mani Chandy and Jayadev Misra.
+Parallel Program Design.
+Addison-Wesley, Reading, Massachusetts, 1988.
+[12] Edmund M. Clarke, Orna Grumberg, and David E. Long. Model check-
+ing and abstraction. ACM Transactions on Programming Languages
+and Systems, 16(5):1512–1542, September 1994.
+[13] David L. Dill. The Murϕ veriﬁcation system. In Computer Aided Ver-
+iﬁcation. 8th International Conference, pages 390–393, 1996.
+[14] Bruno Dutertre and Maria Sorea. Modeling and veriﬁcation of a fault-
+tolerant real-time startup protocol using calendar automata. In Formal
+Techniques, Modelling and Analysis of Timed and Fault-Tolerant Sys-
+tems, Joint International Conferences on Formal Modelling and Analy-
+sis of Timed Systems, FORMATS 2004 and Formal Techniques in Real-
+Time and Fault-Tolerant Systems, FTRTFT 2004, Grenoble, France,
+September 22-24, 2004, Proceedings, volume 3253 of Lecture Notes in
+Computer Science, pages 199–214. Springer, 2004.
+[15] Susanne Graf and Claire Loiseaux. Property preserving abstractions
+under parallel composition. In Marie-Claude Gaudel and Jean-Pierre
+Jouannaud, editors, TAPSOFT’93: Theory and Practice of Software
+Development, volume 668 of Lecture Notes in Computer Science, pages
+644–657. Springer, 1993.
+[16] Thomas A. Henzinger and Orna Kupferman. From quantity to quality.
+In Oded Maler, editor, Proceedings of the International Workshop on
+69
+
+--- Page 74 ---
+Hybrid and Real-Time Systems (HART ’97), volume 1997 of Lecture
+Notes in Computer Science, pages 48–62. Springer-Verlag, 1997.
+[17] Thomas A. Henzinger and Rupak Majumdar. Symbolic model check-
+ing for rectangular hybrid systems.
+In Susanne Graf and Michael
+Schwartzbach, editors, Proceedings of the Sixth International Workshop
+on Tools and Algorithms for the Construction and Analysis of Systems
+(TACAS 2000), Lecture Notes in Computer Science, pages 142–156.
+Springer-Verlag, 2000.
+[18] Thomas A. Henzinger, Xavier Nicollin, Joseph Sifakis, and Sergio
+Yovine. Symbolic model checking for real-time systems. Information
+and Control, 111(2):193–244, June 1994.
+[19] C. A. R. Hoare. Communicating sequential processes. Communications
+of the ACM, 21(8):666–677, August 1978.
+[20] Gerard J. Holzmann.
+The Spin Model Checker.
+Addison-Wesley,
+Boston, 2004.
+[21] Leslie Lamport. An assertional correctness proof of a distributed al-
+gorithm. Science of Computer Programming, 2(3):175–206, December
+1982.
+[22] Leslie Lamport. Hybrid systems in TLA+. In Robert L. Grossman, Anil
+Nerode, Anders P. Ravn, and Hans Rischel, editors, Hybrid Systems,
+volume 736 of Lecture Notes in Computer Science, pages 77–102, Berlin,
+Heidelberg, 1993. Springer-Verlag.
+[23] Leslie Lamport. The temporal logic of actions. ACM Transactions on
+Programming Languages and Systems, 16(3):872–923, May 1994.
+[24] Leslie Lamport. Proving possibility properties. Theoretical Computer
+Science, 206(1–2):341–352, October 1998.
+[25] Leslie Lamport. Specifying Systems. Addison-Wesley, Boston, 2003. A
+link to an electronic copy can be found at http://lamport.org.
+[26] Leslie Lamport and Stephan Merz.
+Specifying and verifying fault-
+tolerant systems.
+In H. Langmaack, W.-P. de Roever, and J. Vy-
+topil, editors, Formal Techniques in Real-Time and Fault-Tolerant Sys-
+tems, volume 863 of Lecture Notes in Computer Science, pages 41–76.
+Springer-Verlag, September 1994.
+70
+
+--- Page 75 ---
+[27] Kim Guldstrand Larsen, Paul Pettersson, and Wang Yi.
+UPPAAL
+in a nutshell. International Journal of Software Tools for Technology
+Transfer, 1(1/2):134–152, December 1997.
+[28] K. Rustan M. Leino. Toward Reliable Modular Programs. PhD thesis,
+California Institute of Technology, January 1995. Technical Report CS-
+TR-95-03.
+[29] Nancy Lynch and Mark Tuttle. Hierarchical correctness proofs for dis-
+tributed algorithms. In Proceedings of the Sixth Symposium on the Prin-
+ciples of Distributed Computing, pages 137–151. ACM, August 1987.
+[30] Nancy Lynch and Frits Vaandrager. Forward and backward simulations
+ii. timing-based systems. Information and Computation, 128(1):1–25,
+July 1996.
+[31] K. L. McMillan. Symbolic Model Checking. Kluwer, 1993.
+[32] R. Milner. A Calculus of Communicating Systems, volume 92 of Lecture
+Notes in Computer Science. Springer-Verlag, Berlin, Heidelberg, New
+York, 1980.
+[33] Jonathan S. Ostroﬀ. Formal methods for the speciﬁcation and design of
+real-time safety critical systems. The Journal of Systems and Software,
+18(1):33–60, April 1992.
+[34] Jonathan S. Ostroﬀ. Composition and reﬁnement of discrete real-time
+systems. ACM Transactions on Software Engineering and Methodology,
+8(1):1–48, January 1999.
+[35] Susan Owicki and David Gries.
+Verifying properties of parallel
+programs:
+An axiomatic approach.
+Communications of the ACM,
+19(5):279–284, May 1976.
+[36] Susan Owicki and Leslie Lamport. Proving liveness properties of con-
+current programs. ACM Transactions on Programming Languages and
+Systems, 4(3):455–495, July 1982.
+[37] Radia Perlman. An algorithm for distributed computation of a span-
+ningtree in an extended LAN. In Proceedings of the Ninth Symposium
+on Data Communications, pages 44–53. SIGCOMM, ACM Press, 1985.
+[38] G. M. Reed and A. W. Roscoe.
+A timed model for communicating
+sequential processes. Theoretical Computer Science, 58:249–261, 1988.
+71
+
+--- Page 76 ---
+[39] Wolfgang Reisig. Elements of Distributed Algorithms: Modeling and
+Analysis with Petri Nets. Springer-Verlag, 1998.
+[40] Fred B. Schneider. On Concurrent Programming. Graduate Texts in
+Computer Science. Springer, 1997.
+[41] Fred B. Schneider, Bard Bloom, and Keith Marzullo. Putting time into
+proof outlines. In J. W. de Bakker, C. Huizing, W.-P. de Roever, and
+G. Rozenberg, editors, Real-Time: Theory in Practice, volume 600 of
+Lecture Notes in Computer Science, pages 618–639, Berlin, Heidelberg,
+New York, 1992. Springer-Verlag.
+[42] Jiacun Wang.
+Timed Petri Nets: Theory and Application.
+Kluwer
+Academic Publishers, Boston, 1998.
+[43] Sergio Yovine.
+KRONOS: A veriﬁcation tool for real-time sys-
+tems. International Journal of Software Tools for Technology Transfer,
+1(1/2):123–133, December 1997.
+72

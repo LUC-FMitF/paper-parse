@@ -1,0 +1,75 @@
+
+--- Page 1 ---
+module Chameneos
+A speciﬁcation of a ’concurrency game’ requiring concurrent and symmetrical cooperation -
+https://cedric.cnam.fr/ﬁchiers/RC474.pdf
+extends Integers
+N - number of total meeting after which chameneoses fade
+M - number of chameneoses
+constant N , M
+assume N ∈(Nat \ {0}) ∧M ∈(Nat \ {0})
+variable chameneoses, meetingPlace, numMeetings
+vars
+∆= ⟨chameneoses, meetingPlace, numMeetings⟩
+Color
+∆= {“blue”, “red”, “yellow”}
+Faded
+∆= choose c : c /∈Color
+ChameneosID
+∆= 1 . . M
+MeetingPlaceEmpty
+∆= choose e : e /∈ChameneosID
+recursive Sum( , )
+Sum(f , S)
+∆= if S = {} then 0
+else let x
+∆= choose x ∈S : true
+in
+f [x] + Sum(f , S \ {x})
+TypeOK
+∆= ∧chameneoses ∈[ChameneosID →(Color ∪{Faded}) × (0 . . N )]
+∧meetingPlace ∈ChameneosID ∪{MeetingPlaceEmpty}
+Complement(c1, c2)
+∆= if c1 = c2
+then c1
+else choose cid ∈Color \ {c1, c2} : true
+Meet(cid)
+∆= if meetingPlace = MeetingPlaceEmpty
+then if numMeetings < N
+chameneos enters meeting empty meeting place
+then ∧meetingPlace′ = cid
+∧unchanged ⟨chameneoses, numMeetings⟩
+chameneos takes on faded color
+else
+∧chameneoses′ = [chameneoses except ![cid] = ⟨Faded, @[2]⟩]
+∧unchanged ⟨meetingPlace, numMeetings⟩
+meeting place is not empty - two chameneoses mutate
+else
+∧meetingPlace ̸= cid
+∧meetingPlace′ = MeetingPlaceEmpty
+∧chameneoses′ =
+let newColor
+∆= Complement(chameneoses[cid][1],
+chameneoses[meetingPlace][1])
+in
+[chameneoses except ![cid] = ⟨newColor, @[2] + 1⟩,
+1
+
+--- Page 2 ---
+![meetingPlace] = ⟨newColor, @[2] + 1⟩]
+∧numMeetings′ = numMeetings + 1
+Init
+∆= ∧chameneoses ∈[ChameneosID →Color × {0}]
+∧meetingPlace = MeetingPlaceEmpty
+∧numMeetings = 0
+repeatedly try to enter meeting place for chameneoses that are not faded yet
+Next
+∆= ∧∃c ∈{x ∈ChameneosID : chameneoses[x][1] ̸= Faded} : Meet(c)
+Spec
+∆= Init ∧2[Next]vars
+SumMet
+∆= numMeetings = N ⇒let f [c ∈ChameneosID]
+∆= chameneoses[c][2]
+in
+Sum(f , ChameneosID) = 2 ∗N
+2

@@ -1,0 +1,813 @@
+
+--- Page 1 ---
+La quatri`eme tour de Hano¨ı
+Thierry Bousch∗
+15 juin 2014
+Abstract
+In the four-peg variant of the Towers of Hanoi game, it is well known that N disks can
+be transferred from a column to another in 2∇0 +2∇1 +···+2∇(N−1) moves, where ∇n
+denotes the largest integer p such that p(p+1)/2 6 n, and it was conjectured that this
+number of moves was the minimum possible. We shall see, in this article, that is is indeed
+the case.
+R´esum´e
+Danslavariante`aquatrecolonnesdesToursdeHano¨ı,onsaitbienqu’onpeuttransf´erer
+N disques d’une colonne vers une autre en
+2∇0+2∇1+···+2∇(N−1)
+mouvements, ou` ∇n
+d´esigne le plus grand entier p tel que p(p+1)/2 6 n, et on conjecturait que ce nombre de
+mouvements ´etait le minimum possible. Nous verrons, dans cet article, que c’est effective-
+ment le cas.
+Titre anglais: The fourth tower of Hanoi
+Mots-cl´es: Tours de Hano¨ı, Conjecture de Frame-Stewart
+Classification AMS (2000): 05C12 (distance in graphs)
+Table des mati`eres
+1 Pr´esentation du probl`eme 2
+2 D´efinitions et r´esultats pr´eliminaires 3
+3 D´emonstration du th´eor`eme 7
+3.1 Pr´eliminaires . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 7
+3.2 Le cas ∆K > T . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 8
+3.3 Le cas ∆K 6 T . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . 9
+4 Une cons´equence du th´eor`eme 12
+5 Remarques sur la d´emonstration 13
+R´ef´erences 16
+∗
+Laboratoire de Math´ematique (UMR 8628 du CNRS), bˆat. 425/430, Universit´e de Paris-Sud, 91405 Orsay
+Cedex, France. E-mail: Thierry.Bousch@math.u-psud.fr
+1
+--- Page 2 ---
+1 Pr´esentation du probl`eme
+Le jeu des Tours de Hano¨ı, invent´e par le math´ematicien franc¸ais Edouard Lucas en 1883, a
+inspir´e de nombreuses variantes. Une des plus int´eressantes, The Reve’s Puzzle, est donn´ee par
+le puzzliste anglais Henry Ernest Dudeney en 1908 dans son recueil de jeux math´ematiques The
+Canterbury Puzzles [Dud]: on dispose d’un plateau muni de quatre aiguilles, et N disques de
+taille strictement d´ecroissante enfil´es initialement sur une de ces aiguilles; le probl`eme consiste
+`a transf´erer tous ces disques sur une autre aiguille, en ne d´eplac¸ant qu’un seul disque `a la fois,
+et sans jamais poser un disque sur un disque plus petit. Dudeney pr´ecise ´egalement que ceci
+doit ˆetre effectu´e en un nombre minimum de mouvements, et demande quel est ce nombre.
+Dudeney montre (au moins pour certaines valeurs de N) qu’on peut transf´erer N disques en
+Φ(N)= 2∇0+2∇1+···+2∇(N−1) (1.1)
+mouvements, ou` ∇nd´esigne la “racine triangulaire” (par d´efaut) den, c’est-`a-dire le plusgrand
+entier p tel que p(p+1)/2 6 n.
+L’argument de Dudeney a ´et´e repris et pr´ecis´e par Frame et Stewart en 1941 [Fra, St1, St2] et
+´etendu `a un nombre quelconque d’aiguilles > 3. Je rappelle ici en quoi consiste cet argument.
+D’abord, des calculs simples montrent que Φ v´erifie l’´equation fonctionnelle
+Φ(N) = Min 2Φ(M)+2N−M −1 (N > 1) (1.2)
+06M<N
+ce qui fournit l’algorithme r´ecursif suivant, pour transf´erer N disques d’une colonne vers une
+autre, en Φ(N) mouvements.
+Pour d´eplacer N disques (avec N > 0) de la colonne a vers la colonne b, on supposele probl`eme
+r´esolu quand le nombre de disques est strictement plus petit, et on choisit un entier M < N
+qui r´ealise le minimum dans la formule ci-dessus. En premier lieu, on d´eplace les M plus
+petits disques de a vers une colonne interm´ediaire c, diff´erente de a et b, ce qui demande Φ(M)
+mouvements; puis on d´eplace les N −M disques restants de a vers b sans utiliser la colonne
+c, ce qui demande 2N−M −1 mouvements (puisqu’il n’y a plus que trois aiguilles disponibles);
+enfin, on transf`ere `a nouveau les M plus petits disques, cette fois de c vers b, ce qui demande
+encore Φ(M) mouvements. Ainsi, les N disques ont ´et´e transf´er´es de a vers b en
+2Φ(M)+2N−M −1= Φ(N)
+mouvements, `a cause de notre choix de M.
+Ce raisonnement montre qu’on peuttransf´erer N disques d’unecolonne vers uneautre en Φ(N)
+mouvements, mais ne permet nullement d’affirmer que ce nombre est optimal. Ce point crucial
+a imm´ediatement ´et´e not´e par O. Dunkel [Dun] `a propos des “solutions” de Frame et Stewart.
+Le but du pr´esent article est de d´emontrer que, dans le probl`eme de Dudeney, c’est-`a-dire avec
+quatre aiguilles, toute fac¸on de transf´erer N disques d’une aiguille vers une autre demande au
+moins Φ(N) mouvements. Les solutions r´ecursives propos´ees par Dudeney et Frame-Stewart
+pour quatre aiguilles sont donc bien optimales. Il faut dire que c’´etait consid´er´e comme tr`es
+vraisemblable, essentiellement `a cause des calculs sur ordinateur, qui ont v´erifi´e la conjecture
+jusqu’`a N = 30 [BH, KF]. Il y avait aussi, en faveur de la conjecture, les arguments non ri-
+goureux, mais tr`es plausibles, donn´es par Frame et Stewart (discut´es dans [H+], §5.2) et, dans
+une moindre mesure, des minorations asymptotiques du nombre de mouvements qui sont assez
+proches de Φ(N) quand N est grand; voir [Sze, CS].
+Le lecteur d´esireux d’en savoir plus sur le probl`eme de Dudeney et ses variantes pourra se
+reporter `a l’article de Stockmeyer [Sto], ou au Chapitre 5 du livre [H+].
+2
+--- Page 3 ---
+2 D´efinitions et r´esultats pr´eliminaires
+On note N l’ensemble des entiers naturels {0,1,2,...}, comme d’habitude. Pour tout entier
+naturel n, on note [n] l’ensemble des n plus petits entiers naturels, c’est-`a-dire {0,1,...,n−1}.
+En particulier [0] = ∅.
+On d´efinit ∆n = 1+2+···+n = n(n+1)/2, pour n ∈ N; les nombres de cette forme sont les
+nombres triangulaires: 0,1,3,6,10,15,21... Ils jouent un rˆole particulier dans le probl`eme de
+Dudeney. Pour n ∈ N, on note ∇n la racine triangulaire (par d´efaut) de n, c’est-`a-dire le plus
+grand p ∈ N tel que ∆p 6 n. On a par exemple ∇8= 3, parce que ∆36 8 < ∆4. Les fonctions
+∆ : N→ N et ∇ :N → N sont en correspondance galoisienne:
+∀m,n∈ N ∆m6 n ⇐⇒ m 6 ∇n.
+Voici leurs premi`eres valeurs:
+n 0 1 2 3 4 5 6 7 8 9 10
+∆n 0 1 3 6 10 15 21 28 36 45 55
+∇n 0 1 1 2 2 2 3 3 3 3 4
+La fonction Φ: N → N est d´efinie par la formule (1.1). En voici les premi`eres valeurs:
+n 0 1 2 3 4 5 6 7 8 9 10
+Φ(n) 0 1 3 5 9 13 17 25 33 41 49
+Lemme 2.1. Si n,p sont deux entiers naturels tels que p 6 n+1, on a
+Φ(∆n+p) = 1+(n+p−1)2n.
+Cette formule est bien connue, et se d´eduit sans peine de (1.1). Par exemple, en prenant n = 10
+et p = 9, on obtient Φ(64) = 1+18·210 = 18433.
+L’identit´e (1.2) est´egalement classique, mais moins facile `a v´erifier. Dans le pr´esent article, j’en
+utiliserai une forme affaiblie, `a savoir, l’in´egalit´e
+∀a,b∈ N Φ(a+b)6 2Φ(a)+2b−1. (2.1)
+On d´efinit maintenant une fonction Ψ : P (N) → N, ou` P (N) d´esigne le treillis des parties
+fin fin
+finies de N, qui jouera un rˆole essentiel.
+Soit E une partie finie de N. Pour tout entier naturel L, posons
+Ψ (E) = (1−L)2L−1+ 2min(∇n,L)
+L
+n∈E
+X
+et d´efinissons
+Ψ(E) = SupΨ (E).
+L
+L∈N
+Comme Ψ (E) → −∞ quand L → ∞, cette borne sup´erieure est en fait un maximum, et Ψ(E)
+L
+est un entier; un entier relatif, a priori, mais il est minor´e par Ψ(∅)= 0, les fonctions Ψ et Ψ
+L
+´etant ´evidemment croissantes pour l’inclusion.
+Lemme 2.2. Pour tout entier naturel n,
+Φ(n+1)−1
+Ψ[n]= = 1 2∇1+2∇2+···+2∇n .
+2 2
+(cid:0) (cid:1)
+3
+--- Page 4 ---
+D´emonstration. On a d´ej`a vu que Ψ[0] = 0. Supposons donc n > 1, et ´ecrivons n = ∆m+p
+avec m = ∇n, si bien que m > 1 et 0 6p 6 m. Par le lemme 2.1,
+Φ(∆m)= 1+(m−1)2m
+Φ(n+1) = 1+(m+p)2m
+Pour tout entier naturel L, on a
+Ψ [n]−Ψ [n]= −(L+1)2L + 2min(∇k,L+1)−2min(∇k,L)
+L+1 L
+k∈[n]
+X
+= 2L # k ∈ [n]: k > ∆(L+1) −(L+1)
+= 2L h n(cid:8)−∆(L+1) + −(L+1(cid:9)) i
+h i
+Cette expression est strictement positiv(cid:2)e si et seuleme(cid:3)nt si
+n > ∆(L+1)+L+2 = ∆(L+2)
+ce qui ´equivaut `a ∇n > L+2, ou encore L < m−1. Par cons´equent, la suite des Ψ [n] atteint
+L
+son maximum pour L = m−1, et
+Ψ[n]= Ψ [n]= (2−m)2m−1 −1+ 2∇k + 2m−1
+m−1
+06k<∆m ∆m6k<n
+X X
+= (2−m)2m−1−1+Φ(∆m)+(n−∆m)2m−1
+= (2−m)2m−1+(m−1)2m +p2m−1
+Φ(n+1)−1
+= (m+p)2m−1 =
+2
+ce qu’il fallait d´emontrer.
+De ce r´esultat et de l’in´egalit´e classique (2.1) pour Φ, on d´eduit une in´egalit´e fonctionnelle
+similaire pour Ψ:
+∀a,b ∈N Ψ[a+b] 6 2Ψ[a]+2b−1. (2.2)
+Lemme 2.3. On a Ψ[n+2] > 2(∇n)+1 pour tout n entier naturel.
+D´emonstration. Soit s = ∇n. Comme Ψ[·] est croissante, il suffit de montrer que Ψ[∆s+2] >
+2s+1. Cette in´egalit´e est satisfaite (avec ´egalit´e) pour s = 0 et 1, car Ψ[2] = 2 et Ψ[3] = 4.
+Pour s > 2, les Lemmes 2.2 et 2.1 donnent Ψ[∆s+2] = (s+2)2s−1, qui est > 2s+1 puisque
+s+2> 4.
+Lemme 2.4. Pour toute partie finie E de N, on a
+n 6 Ψ[n]6 Ψ(E) 6 2n−1
+ou` n est le cardinal de E.
+D´emonstration. Premi`ere in´egalit´e. On a Ψ[n]> Ψ [n]= n.
+0
+Deuxi`eme in´egalit´e. Soient e < e < ··· < e les n´el´ements de E. Comme e > k pour tout
+0 1 n−1 k
+k, on a
+Ψ (E) = (1−L)2L−1+ 2min(∇ek,L)
+L
+06k<n
+X
+> (1−L)2L−1+ 2min(∇k,L) = Ψ [n]
+L
+06k<n
+X
+4
+--- Page 5 ---
+pour tout L, et donc Ψ(E) > Ψ[n].
+Troisi`eme in´egalit´e. Pour tout L entier naturel,
+Ψ (E) = (1−L)2L−1+ 2min(∇k,L)
+L
+k∈E
+X
+6 (1−L)2L−1+ 2L = (1+n−L)2L−1
+k∈E
+X
+Mais on sait que 2s > 1 + s pour tout entier relatif s, ce qui donne 2n > (1 + n − L)2L en
+prenant s = n−L, et par cons´equent Ψ (E) 6 2n −1.
+L
+Lemme 2.5. Soient A,B deux parties finies de N. On a
+Ψ(A)−Ψ(B) 6 2∇k
+k∈A−B
+X
+D´emonstration. Soit L un entier naturel pour lequel Ψ(A) = Ψ (A). Alors,
+L
+Ψ(A)−Ψ(B)6 Ψ (A)−Ψ (B) 6 Ψ (A)−Ψ (A∩B)
+L L L L
+= 2min(∇k,L) 6 2∇k
+k∈A−B k∈A−B
+X X
+ce qu’il fallait d´emontrer.
+Lemme 2.6. Soit A une partie finie de N, et s un entier naturel tel que l’ensemble A−[∆s]
+contienne au plus s ´el´ements. Alors
+Ψ(A)−Ψ(A−{a}) 6 2s−1
+pour tout a dans A.
+D´emonstration. On peut supposer A non vide, et donc s > 1. Alors, pour tout L >s−1,
+Ψ (A)−Ψ (A) = 2L # n ∈ A:n > ∆(L+1) −(L+1)
+L+1 L
+h i
+6 2L #(cid:8)n ∈ A:n > ∆s −s (cid:9)6 0
+h i
+(cid:8) (cid:9)
+par hypoth`ese, ce qui montre que la suite des Ψ (A) est d´ecroissante `a partir de L = s−1. Il
+L
+existe donc un L 6 s−1 tel que Ψ(A) = Ψ (A), et
+L
+Ψ(A)−Ψ(A−{a}) 6 Ψ (A)−Ψ (A−{a}) = 2min(∇a,L) 6 2L 6 2s−1
+L L
+ce qu’il fallait d´emontrer.
+Lemme 2.7. Soient n,s deux entiers naturels tels que s > 1 et n > ∆(s−1), et A une partie
+de [n]. Alors
+Ψ(A∪{b ,...,b })−Ψ(A) 6 Ψ[n+s]−Ψ[n]
+1 s
+quels que soient b ,...,b (non n´ecessairement distincts) dans N.
+1 s
+5
+--- Page 6 ---
+D´emonstration. Posons A = A∪{b ,...,b } pour 0 6 t 6 s. Il suffit de montrer que
+t 1 t
+Ψ(A )−Ψ(A )6 Ψ[n+t]−Ψ[n+t−1]
+t t−1
+pour tout t tel que 1 6 t 6 s. Bien suˆr, on peut supposer que l’inclusion de A dans A est
+t−1 t
+stricte. Par le Lemme 2.2, le membre de droite s’´ecrit 2σ−1, ou` σ = ∇(n + t), et l’in´egalit´e
+r´esultera du Lemme 2.6, `a condition de montrer que l’ensemble A −[∆σ] est de cardinal 6 σ.
+t
+Notons d’abord que ∆(σ+1) > n+t, ce qui revient `a dire que ∆σ+σ > n+t. Ensuite,
+# A −[∆σ] 6 t+# [n]−[∆σ] = t+(n−∆σ)+
+t
+= max(t, t+n−∆σ) 6 max(t,σ)
+(cid:0) (cid:1) (cid:0) (cid:1)
+et il reste `a v´erifier que t 6 σ. Pour cela, observons que
+∆t−t = ∆(t−1) 6 ∆(s−1) 6 n
+et donc ∆t 6 n+t, ce qu’il fallait d´emontrer.
+Lemme 2.8. Soient A,B deux parties finies de N. On a
+Φ(n+3)−5
+Ψ(A)+Ψ(B)> = 1Ψ[n+2]−1
+4 2
+= 1 2∇3+2∇4+···+2∇(n+2)
+4
+(cid:0) (cid:1)
+ou` n est le cardinal de A∪B.
+D´emonstration. Notons E = A∪ B. Soit L un entier naturel quelconque. On a vu, dans la
+preuve du Lemme 2.4, qu’on a toujours Ψ (E) > Ψ [n]. Par cons´equent,
+L L
+Ψ(A)+Ψ(B) >Ψ (A)+Ψ (B) = Ψ (A∩B)+Ψ (A∪B)
+L L L L
+>Ψ (∅)+Ψ (E) > Ψ [0]+Ψ [n].
+L L L L
+Ecrivons maintenant n+3 = ∆m+p, avec m = ∇(n+3), si bien que m >2 et 0 6 p 6 m. On
+voit que n > ∆(m−2), et
+Φ(n+3) = 1+(m+p−1)2m
+Φ(∆(m−2)) = 1+(m−3)2m−2
+Prenons maintenant L = m−2. On a
+Ψ [0]+Ψ [n] = (1−L)2L+1−2+ 2min(∇k,L)
+L L
+06k<n
+X
+= (3−m)2m−1−2+ 2∇k + 2m−2
+06k<∆(m−2) ∆(m−2)6k<n
+X X
+= (3−m)2m−1−2+Φ(∆(m−2))+(n−∆(m−2))2m−2
+= (3−m)2m−1−1+(m−3)2m−2 +(p+2m−4)2m−2
+Φ(n+3)−5
+= (m+p−1)2m−2 −1 =
+4
+d’ou` le r´esultat.
+6
+--- Page 7 ---
+Revenonsauprobl`emedeDudeney. L’ensembledestiges(oudescolonnes), not´eC,seraunquel-
+conque ensemble `a quatre ´el´ements, par exemple {0,1,2,3}. Les N disques seront repr´esent´es
+par les entiers de 0 `a N −1, les plus grands entiers correspondant aux plus grands disques.
+Un empilement (de N disques sur C) d´esignera une configuration autoris´ee du jeu, c’est-`a-
+dire une mani`ere de r´epartir les N disques entre les quatre colonnes, ou` dans chaque colonne les
+disquessont empil´es partaille d´ecroissante. Unempilement peutˆetre repr´esent´e parun´el´ement
+(unique, et arbitraire) de C[N], c’est-`a-dire une fonction
+[N] −→ C
+quelconque (il y en a donc 4N en tout). Cette fonction indique dans quelle colonne se trouve
+chacun des disques.
+La distance d(u,v) entre deux empilements u,v : [N] → C est le nombre minimum de mou-
+vements de disques pour passer de u `a v, en respectant les r`egles du jeu bien suˆr. Le r´esultat
+principal de cet article est le suivant.
+Th´eor`eme 2.9. On pose C = {0,1,2,3}. Soit N un entier naturel, et u,v : [N] → C deux
+empilements de N disques. On suppose que dans l’empilement v, les colonnes 0 et 1 sont vides,
+c’est-a`-dire v[N] ⊆ {2,3}. Alors
+d(u,v) > Ψ k ∈ [N] :u(k) = 0 . (2.3)
+(cid:8) (cid:9)
+La d´emonstration de ce th´eor`eme constitue le chapitre suivant de cet article.
+3 D´emonstration du th´eor`eme
+3.1 Pr´eliminaires
+On fixe le nombre de disques N, et on suppose que le r´esultat est vrai pour tout nombre de
+disques strictement plus petit. Soient u,v deux empilements de N disques, avec v[N] ⊆ {2,3}.
+On note E = k ∈[N] : u(k) = 0 , c’est-`a-dire le contenu de la colonne 0 dans l’empilement u.
+On peut supposer E non vide, sinon c’est trivial, et en particulier N > 1.
+(cid:8) (cid:9)
+Si u′,v′ :[N −1] → C d´esignent les restrictions `a [N −1] des fonctions u,v (on “oublie” le plus
+grand disque), ces empilements n’ont que N −1 disques, et on peut leur appliquer l’hypoth`ese
+de r´ecurrence:
+d(u,v) > d(u′,v′) > Ψ k ∈ [N −1] : u′(k) = 0
+= Ψ k ∈ [N −1] : u(k) = 0
+(cid:8) (cid:9)
+= Ψ E −{N −1} .
+(cid:8) (cid:9)
+Si E ne contient pas N −1, il vient d(u,v)
+>(cid:0)
+ΨE, qui est
+(cid:1)
+le r´esultat cherch´e. Ce cas trivial
+´etant r´egl´e, je supposerai dans toute la suite que E contient N − 1, c’est-`a-dire que le plus
+grand disquede l’empilement u est dans la colonne 0. Ce mˆeme disque, dans l’empilement v, se
+trouvera dans la colonne 2 ou 3. Je peux supposer sans perte de g´en´eralit´e que c’est la colonne
+2, i.e. u(N −1) = 0 et v(N −1) = 2.
+Notons D la distance entre u et v, et soit γ : [D+1] → C[N] un chemin g´eod´esique allant de
+u `a v dans le graphe C[N], c’est-`a-dire que γ(0) = u, γ(D) = v, et d(γ(i),γ(j)) = |i−j| pour
+tous i,j dans [D+1]. Par la suite, je noterai parfois γ au lieu de γ(i).
+i
+7
+--- Page 8 ---
+Notons E′ = k ∈ E : ∃t ∈ [D + 1] γ (k) = 3 , c’est-`a-dire l’ensemble des disques qui sont
+t
+initialement dans la colonne 0, et qui passent au moins une fois dans la colonne 3.
+(cid:8) (cid:9)
+Consid´erons d’abord le cas ou` E′ est vide. Cela signifie que les disques de E ne passent jamais
+dans la colonne 3. En particulier, ils finissent leur course dans la colonne 2. Et comme ils ne
+peuvent utiliser que trois tiges parmi les quatre, leur d´eplacement demande au moins 2#E −1
+mouvements, ce qui implique D > 2#E −1. Mais on sait d’autre part que ΨE 6 2#E −1, par
+le Lemme 2.4, donc l’in´egalit´e D > ΨE est clairement satisfaite dans ce cas.
+On supposera donc d´esormais que E′ est non vide, et on notera T son plus grand ´el´ement.
+D´efinissons ´egalement l’ensemble E′′ = k ∈ E : k > T ; on notera K son cardinal (qui peut
+ˆetre nul), et b < b < ··· < b ses ´el´ements. On voit que
+1 2 K
+(cid:8) (cid:9)
+E ⊆ [T]⊔{T}⊔{b ,...,b } ⊆ [N] (3.1)
+1 K
+contientE′ E′′
+et en particulier | {z } | {z }
+T +K +1 6 N. (3.2)
+Soit t le premier instant ou` le disque T n’est plus dans la colonne 0, c’est-`a-dire le plus petit
+0
+´el´ement de [D+1] pour lequel γ (T)6= 0. Comme c’est le plus petit, on a γ (T) = 0, ce qui
+t0 t0−1
+veut dire qu’entre les dates t −1 et t , c’est le disque T qui est d´eplac´e, de la colonne 0 vers
+0 0
+une autre. Mais un tel mouvement n’est possible que si la colonne 0 et la colonne destination
+ne contiennent aucun disque < T. Notons x = γ(t −1), c’est-`a-dire l’empilement juste avant
+0 0
+le mouvement du disque T. Dans cet empilement, la colonne 0 contient le disque T et aucun
+disque < T, et une autre colonne ne contient aucun disque 6 T.
+Soit t le premier instant ou` le disque T se trouve dans la colonne 3, c’est-`a-dire le plus petit
+1
+entier pour lequel γ (T) = 3, et x = γ(t ) l’empilement correspondant. Par des arguments
+t1 3 1
+similaires, dans cet empilement la colonne 3 contient le disque T et aucun disque < T, et une
+autre colonne ne contient aucun disque 6 T. Les dates t ,t satisfont 16 t 6 t 6 D.
+0 1 0 1
+Soit t le premier instant ou` le disque N −1 n’est plus dans la colonne 0, i.e. γ (N −1) 6= 0,
+2 t2
+et z = γ(t − 1). Dans cet empilement, la colonne 0 contient uniquement le disque N − 1,
+0 2
+et une autre colonne est vide. Enfin, soit t le dernier instant ou` le disque N − 1 n’est pas
+3
+dans la colonne 2, i.e. γ (N −1) 6= 2, et z = γ(t +1). Dans cet empilement, la colonne 2
+t3 2 3
+contient uniquement le disque N −1, et une autre colonne est vide. Les dates t ,t satisfont
+2 3
+1 6 t 6 t +16 D.
+2 3
+Comme pour u et v, les notations x′,z′ d´esigneront les restrictions des x ,z `a [N −1], c’est-
+a b a b
+`a-dire en oubliant le plus grand disque. Je noterai d’autre part u′′,v′′,x′′,z′′ les empilements
+a b
+restreints `a [T], c’est-`a-dire en oubliant tous les disques > T.
+On observe que dans l’empilement z′, la colonne 0 est vide ainsi qu’une autre, ce qui permet
+0
+d’appliquer l’hypoth`ese de r´ecurrence:
+d(u,z ) > d(u′,z′) > Ψ k ∈ [N −1] :u(k) = 0
+0 0
+(3.3)
+= Ψ(E−{N −1})
+(cid:8) (cid:9)
+et de mani`ere similaire,
+d(u,x ) > d(u′′,x′′)> Ψ(E ∩[T]). (3.4)
+0 0
+D’ailleurs, quand T = N −1 c’est exactement la mˆeme in´egalit´e.
+3.2 Le cas ∆K > T
+Examinons d’abord le cas ∆K > T, qui est le plus simple. Tout d’abord, cela entraˆıne K > 1,
+et T < b = N −1; le plus grand disque ne passe jamais par la colonne 3. Ensuite, l’ensemble
+K
+8
+--- Page 9 ---
+x ∈ E : x > ∆K est contenu dans x ∈ E : x > T = E′′ et donc de cardinal au plus K, ce
+qui entraˆıne
+(cid:8) (cid:9) (cid:8) (cid:9)
+ΨE−Ψ(E −{N −1}) 6 2K−1 (3.5)
+par le Lemme 2.6. Avec (3.3), il en r´esulte que
+d(u,z ) > ΨE−2K−1. (3.6)
+0
+Comme t 6 t +1, le chemin γ parcourt les configurations u,z ,z ,v dans l’ordre suivant (au
+2 3 0 2
+sens large, certains empilements peuvent co¨ıncider):
+u−→ z −→ z −→ v
+0 2
+Dans l’empilement z , la colonne 2 et la colonne c = γ (N−1), qui vaut 0 ou 1, ne contiennent
+2 t3
+aucun disque < N −1. Les disques b ,...,b sont donc tous dans la colonne 1−c. Dans
+1 K−1
+l’empilement final v, tous ces disques devront ˆetre dans la colonne 2. Le d´eplacement de ces
+disques, qui n’ont pas le droit de passer dans la colonne 3, demandera au moins 2K−1 − 1
+mouvements:
+d(z ,v) > 2K−1−1.
+2
+Enfin d(z ,z )> 1, car le disque N −1 doit passer de la colonne 0 `a la colonne 2, et donc
+0 2
+D = d(u,v) = d(u,z )+d(z ,z )+d(z ,v)
+0 0 2 2
+> (ΨE −2K−1)+1+(2K−1−1) = ΨE
+ce qu’il fallait d´emontrer.
+3.3 Le cas ∆K 6 T
+Nous devons `a pr´esent traiter le cas ∆K 6 T.
+Maintenant l’in´egalit´e (3.5) n’est plus valable, mais on a une in´egalit´e similaire
+ΨE −Ψ(E −{N −1}) 6 2∇(T+K+1)−1 (3.7)
+qui peut elle aussi se d´eduire du Lemme 2.6, en montrant que E − [∆s] contient au plus s
+´el´ements, ou` s = ∇(T +K +1). Comme E est inclus dans [T +1]∪E′′, la diff´erence E−[∆s]
+contient au plus (T +1−∆s)+ +K ´el´ements, et il suffit de montrer que ce nombre est 6 s.
+Cela revient `a dire qu’on a les deux in´egalit´es
+K 6 s
+(T +1−∆s+K 6 s
+Ladeuxi`emein´egalit´e´equivaut`aT+K+1< ∆(s+1),uneconditionautomatiquementsatisfaite
+vu la d´efinition de s. Quant `a la premi`ere in´egalit´e, elle r´esulte de ce que s > ∇T > K. Ceci
+termine la d´emonstration de la formule (3.7).
+Avec (3.3), il en r´esulte que
+d(u,z )> d(u′,z′)> ΨE−2∇(T+K+1)−1. (3.8)
+0 0
+On peut avoir K = 0, ce qui ´equivaut `a T = N −1. Nous allons examiner en premier ce cas
+particulier. Cela signifie que le plus grand disque, qui est initialement dans la colonne 0, et
+9
+--- Page 10 ---
+finalement dans la colonne 2, passe au moins une fois dans la colonne 3. Ici T et N −1 sont le
+mˆeme disque, donc t 6 t , et le chemin γ parcourt les configurations dans l’ordre suivant:
+1 3
+u−→ z = x −→ x −→ z −→ v
+0 0 3 2
+Notons c = γ (N −1), qui est 6= 2. Dans l’empilement z′, les colonnes 2 et c sont vides, et
+t3 2
+tous les disques sont dans les deux autres colonnes. Ecrivons
+{0,1,2,3}−{2,c} = {a,b}
+avec a ∈ {0,3} et b ∈{0,1}, selon la table suivante:
+c 0 1 3
+a 3 3 0
+b 1 0 1
+D´efinissons maintenant
+A= k ∈[N −1] :z (k) = a
+2
+B = k ∈[N −1] :z (k) = b .
+(cid:8) 2 (cid:9)
+(cid:8) (cid:9)
+Ces ensembles v´erifient A⊔B = [N −1] donc, par le Lemme 2.8,
+ΨA+ΨB > 1Ψ[N +1]−1
+2
+= 1 2∇(N+1) +2∇N + 1Ψ[N −1]−1 (3.9)
+4 2
+> 2∇ (cid:0) (T+K+1)−1+ 1Ψ(cid:1)[N −1]−1.
+2
+Dans l’empilement x′, la colonne a est vide ainsi qu’une autre, ce qui permet d’appliquer
+a
+l’hypoth`ese de r´ecurrence
+d(z′,x′)> ΨA
+2 a
+et de mˆeme, dans v′ la colonne b est vide ainsi que la colonne 1−b, donc
+d(z ,v) > d(z′,v′) > ΨB.
+2 2
+Entre les empilements z et z , les disques < N −1 effectuent au moins d(x′,z′) mouvements,
+0 2 a 2
+et le disque N −1 effectue au moins deux mouvements (pour passer dans les colonnes 0,3,2),
+donc
+d(z ,z )> ΨA+2
+0 2
+et finalement
+D = d(u,v) = d(u,z )+d(z ,z )+d(z ,v)
+0 0 2 2
+> ΨE−2∇(T+K+1)−1+ΨA+2+ΨB
+> ΨE+1+ 1Ψ[N −1] > ΨE
+2
+ce qu’il fallait d´emontrer.
+On supposera donc maintenant K > 1 (et toujours ∆K 6 T), d’ou` T < b = N −1 (le plus
+K
+grand disque ne passe jamais par la colonne 3).
+Maintenant, rien ne permet de comparer t et t +1, les dates ou` apparaissent les empilements
+1 3
+x et z respectivement. On peut seulement dire que ces deux instants sont diff´erents, car le
+3 2
+dernier disque d´eplac´e n’est pas le mˆeme dans les deux cas. Cela nous oblige `a une derni`ere
+disjonction de cas, selon la position relative de ces deux instants.
+10
+--- Page 11 ---
+Supposons d’abord t > t +1.
+1 3
+Le chemin γ parcourt les configurations dans l’ordre suivant:
+u−→ z −→ z −→ x −→ v
+0 2 3
+Dans l’empilement x , la colonne 3 ne contient aucun disque < T, et il en est de mˆeme pour
+3
+la colonne d = γ (T). Les disques < T sont donc r´epartis dans les deux colonnes restantes.
+t1−1
+Posons c= γ (N −1) ∈ {0,1} comme pr´ec´edemment, et ´ecrivons
+t3
+{0,1,2,3}−{3,d} = {a,b}
+avec a ∈ {2,c} et b∈ {0,1}, selon la table suivante:
+d 0 ou 1 2
+a 2 c
+b 1−d 1−c
+D´efinissons les ensembles
+A = k ∈ [T] :x (k) = a
+3
+B = k ∈ [T] :x (k) = b
+(cid:8) 3 (cid:9)
+qui sont compl´ementaires dans [T]. Da(cid:8)ns l’empilement z′′(cid:9), la colonne a est vide ainsi qu’une
+2
+autre, donc
+d(x ,z ) > d(x′′,z′′)> ΨA
+3 2 3 2
+et dans v′′, la colonne b est vide ainsi que 1−b, donc
+d(x ,v) > d(x′′,v′′) > ΨB
+3 3
+et ici encore d(z ,z ) > 1, donc
+0 2
+D =d(u,v) = d(u,z )+d(z ,z )+d(z ,x )+d(x ,v)
+0 0 2 2 3 3
+> ΨE−2∇(T+K+1)−1+1+ΨA+ΨB
+> ΨE−2∇(T+K+1)−1+ 1Ψ[T +2].
+2
+Posons s = ∇(T + K + 1). L’hypoth`ese T > ∆K ´equivaut `a T + K + 1 > ∆(K + 1), soit
+s > K+1. Mais alors T = (T +K+1)−(K+1) > ∆s−s= ∆(s−1), c’est-`a-dire ∇T > s−1.
+Par le Lemme 2.3, il en r´esulte que Ψ[T +2] > 2s , et donc D > ΨE, ce qu’il fallait d´emontrer.
+Il reste finalement le cas t < t +1.
+1 3
+Le chemin γ parcourt les configurations dans l’ordre suivant:
+u −→ x −→ x ,z −→ z −→ v
+0 3 0 2
+Dans l’empilement z′, les colonnes 2 et c = γ (N−1) ∈ {0,1} sont vides, donc tous les disques
+2 t3
+sontdanslescolonnes 3etb = 1−c. Enparticulier, les disquesb ,...,b sontdanslacolonne
+1 K−1
+b.
+Dans l’empilement x′′, la colonne 3 est vide ainsi qu’un autre, donc d(z′′,x′′) > ΨA, ou`
+3 2 3
+A = k ∈ [T] :z (k) = 3
+2
+et dans l’empilement v′, la colonne b es(cid:8)t vide ainsi que 1−(cid:9)b, donc
+d(z ,v) > d(z′,v′)> ΨB
+2 2
+11
+--- Page 12 ---
+ou`
+B = k ∈ [N −1] :z (k) = b
+2
+⊇ k ∈ [T] :z (k) = b ⊔{b ,...,b }.
+(cid:8) 2 (cid:9)1 K−1
+L’ensemble A∪B contient [T]⊔(cid:8) {b ,...,b }, do(cid:9)nc poss`ede au moins T +K−1 ´el´ements, et
+1 K−1
+ΨA+ΨB > 1Ψ[T +K +1]−1.
+2
+Entre x et z , les disques < T effectuent au moins ΨA mouvements; et, entre u et x , ils
+3 2 0
+effectuent au moins Ψ(E∩[T]) mouvements. De plus, dans u les disques b ,...,b sont tous
+1 K−1
+dansla colonne 0, tandis que dansz ils sonttous dansuneautrecolonne (qui peutˆetre 1 ou 2).
+0
+Comme ces disques ´evitent la colonne 3, ils doivent effectuer au moins 2K−1 −1 mouvements
+entre u et z . Enfin, le disque T effectue au moins un mouvement entre x et x , et le disque
+0 0 3
+N − 1 effectue au moins un mouvement entre z et z . Le nombre total de mouvements de
+0 2
+disques entre u et z satisfait donc la minoration
+2
+d(u,z ) > Ψ(E ∩[T])+ΨA+2K−1+1
+2
+d’ou` il r´esulte que
+D = d(u,v) = d(u,z )+d(z ,v)
+2 2
+> Ψ(E ∩[T])+ΨA+2K−1+1+ΨB
+> Ψ(E ∩[T])+ 1Ψ[T +K +1]+2K−1.
+2
+D’autre part, on a E = (E ∩[T])⊔{T,b ,...,b } et T > ∆K, donc
+1 K
+ΨE−Ψ(E ∩[T])6 Ψ[T +K +1]−Ψ[T]
+par le Lemme 2.7. Par cons´equent
+D−ΨE > Ψ[T]+2K−1− 1Ψ[T +K +1].
+2
+Or, cette derni`ere expression est positive, d’apr`es (2.2).
+Ceci termine la preuve du dernier cas, et le th´eor`eme est d´emontr´e.
+4 Une cons´equence du th´eor`eme
+Du Th´eor`eme 2.9 on d´eduit imm´ediatement le r´esultat annonc´e en r´esum´e de cet article, par
+une argumentation qui est classique [BH], mais que je rappelle ci-dessous.
+Corollaire 4.1. Dans la variante a` quatre colonnes des tours de Hano¨ı, il faut au moins Φ(N)
+mouvements pour d´eplacer N disques d’une colonne vers une autre.
+D´emonstration. On peut supposer N > 1. Soit u : [N] → C l’empilement ou` tous les disques
+sont dans la colonne 0, et v celui ou` tous les disques sont dans la colonne 2. On d´efinit le
+chemin γ et les empilements interm´ediaires z ,z comme pr´ec´edemment; il les parcourt dans
+0 2
+l’ordre suivant:
+u−→ z −→ z −→ v
+0 2
+Dans l’empilement z′, la colonne 0 est vide ainsi qu’une autre; donc, par le Th´eor`eme 2.9,
+0
+d(u,z )> d(u′,z′)> Ψ k ∈[N −1] :u(k) = 0 = Ψ[N −1].
+0 0
+(cid:8) (cid:9)
+12
+--- Page 13 ---
+De mˆeme, dans z′ la colonne 2 est vide ainsi qu’une autre; par ce mˆeme th´eor`eme,
+2
+d(v,z )> d(v′,z′) > Ψ k ∈ [N −1] :v(k) = 2 = Ψ[N −1].
+2 2
+Ici encore d(z ,z )> 1, car le disque N −(cid:8) 1 doit changer de colo(cid:9)nne. Il en r´esulte que
+0 2
+d(u,v) =d(u,z )+d(z ,z )+d(z ,v) >1+2Ψ[N −1]= Φ(N)
+0 0 2 2
+par le Lemme 2.2, ce qu’il fallait d´emontrer.
+5 Remarques sur la d´emonstration
+Il faut maintenant expliquer comment je suis arriv´e `a cette preuve et en particulier, d’ou` vient
+cette fonction Ψ.
+Dans le probl`eme desTours deHano¨ı avec N disqueset P tiges (avec P > 3), unrˆoleparticulier
+est jou´e par les empilements critiques, c’est-`a-dire ceux ou` au moins deux tiges sont vides. En
+effet, pour d´eplacer le plus grand disque d’une tige vers une autre, il est n´ecessaire (et suffisant)
+que ces deux tiges ne contiennent aucun autre disque, c’est-`a-dire que les N −1 autres disques
+soient dans les P −2 colonnes restantes; autrement dit, que l’empilement restreint `a [N −1]
+soit critique.
+Ces empilements critiques (apr`es restriction) constituent donc des “checkpoints” dans le graphe
+des configurations C[N]: tout chemin, g´eod´esique ou non, entre deux empilements ou` la position
+du plus grand disque n’est pas la mˆeme, est oblig´e de traverser l’un d’eux. Pour dire les choses
+diff´eremment, le graphe C[N] pr´esente une structure r´ecursive: c’est une union de P copies du
+graphe C[N−1], et les arˆetes joignant ces copies correspondent pr´ecis´ement aux empilements
+critiques de N −1 disques.
+De ce point de vue, le probl`eme classique des Tours de Hano¨ı, avec P = 3, est essentiellement
+trivial: les empilements critiques nesontautres queles empilements parfaits, ou` tous les disques
+sont dans une mˆeme colonne. Il y a donc seulement trois empilements critiques, un pour
+chaque colonne. En revanche, dans le probl`eme de Dudeney, c’est-`a-dire pour P = 4, il y a
+2N configurations critiques pour chaque paire de colonnes. Ce tr`es grand nombre constitue
+´evidemment le cœur du probl`eme.
+La structure r´ecursive du graphe sugg`ere de proc´eder par r´ecurrence sur le nombre de disques,
+c’est-`a-dire de minorer certaines distances dans C[N] en se basant sur les minorations analogues
+pour N −1 disques (ou moins).
+Dans cette ´etude, on est constamment confront´e au probl`eme suivant: ´etant donn´e un empile-
+ment u, et une colonne c, donner une minoration du nombre de mouvements n´ecessaires pour
+transf´erer tous les disques vers P −2 colonnes autres que c, qui ne d´epende que du contenu de
+la colonne c dans l’empilement de d´epart, c’est-`a-dire de l’ensemble u−1{c}.
+Pour les Tours de Hano¨ı classiques, i.e. P = 3, le probl`eme est facile: si u,v : [N] → {0,1,2}
+sont deux empilements, avec v−1{2} = [N], on a
+d(u,v) > 2k (5.1)
+k∈[N]
+X
+u(k)=0
+et le membre de droite ne d´epend que de u−1{0}.
+Un autre ´enonc´e, dont on montre facilement l’´equivalence avec le pr´ec´edent, est celui-ci: pour
+u,v : [N] → {0,1,2} deux empilements arbitraires, on a
+d(u,v) > 2k − 2k − 2k (5.2)
+k∈[N] k∈[N] k∈[N]
+X X X
+u(k)6=0 v(k)6=2
+13
+--- Page 14 ---
+Dans le probl`eme de Dudeney, i.e. P = 4, la distance entre deux configurations parfaites est
+(conjecturalement) 2∇k au lieu de 2k, c’est pourquoiil paraˆıt naturel, par analo-
+k∈[N] k∈[N]
+gie avec la situation pr´ec´edente, de proposer l’in´egalit´e suivante: pour u,v : [N] → {0,1,2,3}
+P P
+deux empilements arbitraires, on a
+d(u,v) > 2∇k − 2∇k − 2∇k (5.3)
+k∈[N] k∈[N] k∈[N]
+X X X
+u(k)6=0 v(k)6=2
+En r´ealit´e, il existe d’autres arguments pour postuler une telle formule, plus convaincants que
+l’analogie formelle avec le probl`eme `a trois tiges, mais qui me m`eneraient trop loin. Disons
+simplement qu’on sait calculer, moyennant la conjecture de Frame-Stewart, un certain nombre
+de distances dans le graphe C[N], pas seulement entre configurations parfaites; et que pour
+minorer toutes ces distances par une expression commune ne d´ependant que de u−1{0} et
+v−1{2}, la formule ci-dessus est essentiellement la seule raisonnable.
+Un autre ´enonc´e, dont on montre facilement l’´equivalence avec le pr´ec´edent, est celui-ci: si
+u,v : [N] → {0,1,2,3} sont deux empilements avec v−1{0,1} = ∅, on a
+Φ(N +1)−1
+d(u,v) > − 2∇k (5.4)
+2
+k∈[N]
+X
+u(k)6=0
+C’est ce qu’on cherchait: une minoration (conjecturale) du nombre de mouvements n´ecessaires
+pour transf´erer tous les disques de u vers les colonnes 2 et 3, qui ne d´epend que de u−1{0}, et
+impliquelaconjecturedeFrame-Stewartpourquatretiges. Cetteminorationpr´esente´egalement
+l’avantage d’ˆetre facilement r´efutable par l’ordinateur. Et les calculs sur ordinateur, justement,
+ne font apparaˆıtre aucun contre-exemple pour les premi`eres valeurs de N, ce qui est encoura-
+geant.
+Il y a tout de mˆeme un probl`eme, qui est que les in´egalit´es (5.4) se prˆetent mal `a une
+d´emonstration par r´ecurrence sur N. La raison est que ces in´egalit´es, prises individuellement,
+sont parfois grossi`eres; par exemple, le membre de droite peut ˆetre n´egatif.
+On r´esout cette difficult´e par “monotonisation” des minorants, c’est-`a-dire en remplac¸ant cet
+ensemble d’in´egalit´es par un autre ensemble d’in´egalit´es qui sont collectivement ´equivalentes
+aux pr´ec´edentes, mais individuellement plus fortes, en se basant surunepropri´et´e de monotonie
+des distances.
+De fac¸on abstraite, cette proc´edure de monotonisation consiste juste `a dire ceci: consid´erons
+deux fonctions f,g : E → [0,∞] sur un ensemble partiellement ordonn´e E, qu’on souhaite
+comparer. La fonction f est inconnue, mais on sait qu’elle est croissante, tandis que g est
+connue, mais pas n´ecessairement croissante. Alors
+f > g ⇐⇒ f > g¯
+ou` g¯ est la plus petite fonction croissante qui majore g, i.e., g¯(x) = sup g(y).
+y6x
+Pour les empilements surC = {0,1,2,3}, lasituation estla suivante. Soient u,v :[N] → C deux
+empilements de N disques, M un entier naturel 6 N, et I : [M] → [N] une fonction strictement
+croissante. Alors u′ = u◦I et v′ = v◦I sont deuxempilements deM disques,et ilestmanifeste
+que d(u′,v′) 6 d(u,v). Intuitivement, cela revient `a s´electionner M disques parmi les N, et
+ignorer les autres. On a d´ej`a vu (et utilis´e) cette propri´et´e dans la d´emonstration du Th´eor`eme
+2.9, dans le cas ou` I est l’injection canonique de [M] dans [N].
+Si N est un entier naturel et E une partie de [N], d´efinissons
+Φ(N +1)−1
+Γ(N,E) = − 2∇k
+2
+k∈[N]−E
+X
+14
+--- Page 15 ---
+Les in´egalit´es (5.4) s’´ecrivent d(u,v) > Γ(N,u−1{0}) si v−1{0,1} = ∅. En appliquant cette
+in´egalit´e `a u◦I et v◦I au lieu de u et v, avec I quelconque, on obtient
+d(u,v) > Sup Sup Γ(M,I−1E) (5.5)
+M6N I:[M]→[N]
+strictement
+croissante
+ou` E = u−1{0}, toujours sous l’hypoth`ese v−1{0,1} = ∅.
+Voil`a donc nos in´egalit´es “monotonis´ees”. Il ne reste plus qu’`a calculer le membre de droite de
+(5.5). Le lecteur a d´ej`a devin´e la r´eponse: c’est Ψ(E).
+Lemme 5.1. Soit N un entier naturel, et E une partie de [N]. Pour tout entier naturel M 6 N
+et toute fonction strictement croissante I : [M]→ [N], on a Γ(M,I−1E) 6 ΨE.
+Deplus, l’´egalit´eestatteintepouraumoinsunentiernaturelM 6 N etunefonctionstrictement
+croissante I :[M] → [N].
+D´emonstration. Soit I : [M]→ [N] une fonction strictement croissante, avec M 6N, et posons
+B = I−1E. Par le Lemme 2.5, on a
+Ψ[M]−ΨB 6 2∇k
+k∈[M]−B
+X
+c’est-`a-dire Γ(M,B) 6 ΨB. Ensuite, on montre facilement que ΨB 6 Ψ(IB), avec les mˆemes
+argumentsquepourladeuxi`emein´egalit´e duLemme2.4(quienestd’ailleursuncasparticulier).
+Comme IB ⊆ E, ceci ´etablit la premi`ere partie du lemme.
+Montrons maintenant l’existence d’un cas d’´egalit´e. Soit L un entier naturel tel que Ψ(E) =
+Ψ (E). Notons K le nombre d’´el´ements > ∆(L+1) dans E, et soient b(0) < ··· < b(K −1)
+L
+ces ´el´ements. On a d’abord
+ΨE = (1−L)2L−1+ 2min(∇k,L) = (1−L)2L−1+K2L+ 2∇k
+k∈E k∈E
+X X
+k<∆(L+1)
+D´efinissons maintenant M = ∆(L+1)+K, et I :[M] → [N] l’injection croissante d´efinie par
+n si n < ∆(L+1),
+I(n)=
+(b(n−∆(L+1)) sinon.
+Pour cette fonction, on a
+Γ(M,I−1E) = Ψ[M] − 2∇k = Ψ[M] − 2∇k
+k∈[M] k<∆(L+1)
+X X
+I(k)∈/E k∈/E
+= Ψ[M]−Φ(∆(L+1)) + 2∇k
+k<∆(L+1)
+X
+k∈E
+et par suite
+Γ(M,I−1E)−ΨE = Ψ[M]−Φ(∆(L+1))−(1−L)2L+1−K2L
+= Ψ[M]−Ψ[∆(L+1)]−K2L
+= 2(∇k)−1−2L > 0
+∆(L+1)<k6M
+X (cid:0) (cid:1)
+ce qui montre l’´egalit´e de Γ(M,I−1E) et ΨE.
+15
+--- Page 16 ---
+R´ef´erences
+[BH] J.-P. Bode & A. M. Hinz, Results and open problems on the Tower of Hanoi, Con-
+gressus Numerantium 139 (1999), 113–122
+[CS] X. Chen & J. Shen, On the Frame-Stewart conjecture about the Towers of Hanoi,
+SIAM Journal on Computing 33 (2004), 584–589
+[Dud] H. E. Dudeney, The Canterbury puzzles and other curious problems, E. P. Dutton,
+New York (1908)
+[Dun] O.Dunkel,EditorialNoteconcerningAdvancedProblem3918,AmericanMathematical
+Monthly 48 (1941), page 219
+[H+] A. M. Hinz, S. Klavˇzar, U. Milutinovic´ & C. Petr, The tower of Hanoi, myths
+and maths, Birkhau¨ser (2013)
+[Fra] J. S. Frame, Solution to Advanced Problem 3918, American Mathematical Monthly 48
+(1941), 216–217
+[KF] R. E. Korf & A. Felner,Recent progress in heuristic search: a case study of the four-
+peg towers of Hanoi problem, Proceedings of the twentieth international joint conference
+on artificial intelligence, AAAI Press (2007), 2324–2329
+[St1] B. M. Stewart, Advanced Problem 3918, American Mathematical Monthly 46 (1939),
+page 363
+[St2] B. M. Stewart,Solution to Advanced Problem 3918, American Mathematical Monthly
+48 (1941), 217–219
+[Sto] P. K. Stockmeyer, Variations on the four-post Tower of Hanoi puzzle, Congressus
+Numerantium 102 (1994), 3–12
+[Sze] M. Szegedy, In how many steps the k-peg version of the Towers of Hanoi game can be
+solved?, Lecture Notes in Computer Science 1563 (1999), 356–361
+16

@@ -1,0 +1,284 @@
+{
+  "conversion_stats": {
+    "total": 44,
+    "successful": 44,
+    "failed": 0,
+    "total_chars": 1690192,
+    "total_pages": 722,
+    "total_time": 1.5707650184631348,
+    "errors": [],
+    "files": [
+      {
+        "filename": "01-intro.pdf",
+        "pages": 4,
+        "chars": 5970,
+        "time": 0.011623382568359375
+      },
+      {
+        "filename": "0a772baf96a2e11901122a2b04c3dd25596d.pdf",
+        "pages": 16,
+        "chars": 35453,
+        "time": 0.038225412368774414
+      },
+      {
+        "filename": "1011.2560.pdf",
+        "pages": 7,
+        "chars": 22404,
+        "time": 0.017107248306274414
+      },
+      {
+        "filename": "1604.06707.pdf",
+        "pages": 24,
+        "chars": 55876,
+        "time": 0.0552215576171875
+      },
+      {
+        "filename": "ACP_NB.pdf",
+        "pages": 3,
+        "chars": 4867,
+        "time": 0.007091045379638672
+      },
+      {
+        "filename": "ACP_NB_WRONG_TLC.pdf",
+        "pages": 2,
+        "chars": 3229,
+        "time": 0.005585432052612305
+      },
+      {
+        "filename": "ACP_SB.pdf",
+        "pages": 7,
+        "chars": 9831,
+        "time": 0.011945009231567383
+      },
+      {
+        "filename": "BPConProof.pdf",
+        "pages": 42,
+        "chars": 65475,
+        "time": 0.05584096908569336
+      },
+      {
+        "filename": "Consensus.pdf",
+        "pages": 5,
+        "chars": 9931,
+        "time": 0.011835336685180664
+      },
+      {
+        "filename": "Guanzhou_Hu_CV.pdf",
+        "pages": 1,
+        "chars": 3737,
+        "time": 0.006327152252197266
+      },
+      {
+        "filename": "KeithArticle2011.pdf",
+        "pages": 7,
+        "chars": 15950,
+        "time": 0.011805534362792969
+      },
+      {
+        "filename": "Loopless+Gray+code+enumeration+and+the+Tower+of+Bucharest.pdf",
+        "pages": 18,
+        "chars": 67232,
+        "time": 0.04715275764465332
+      },
+      {
+        "filename": "OSDI04.pdf",
+        "pages": 14,
+        "chars": 57703,
+        "time": 0.04774880409240723
+      },
+      {
+        "filename": "PConProof.pdf",
+        "pages": 10,
+        "chars": 20379,
+        "time": 0.019580602645874023
+      },
+      {
+        "filename": "RC474.pdf",
+        "pages": 8,
+        "chars": 40956,
+        "time": 0.026377201080322266
+      },
+      {
+        "filename": "VoteProof.pdf",
+        "pages": 30,
+        "chars": 42755,
+        "time": 0.038878679275512695
+      },
+      {
+        "filename": "a_new_approach-corrigendum.pdf",
+        "pages": 1,
+        "chars": 491,
+        "time": 0.002590179443359375
+      },
+      {
+        "filename": "biblio2.pdf",
+        "pages": 38,
+        "chars": 71862,
+        "time": 0.050705909729003906
+      },
+      {
+        "filename": "dbakery-complete.pdf",
+        "pages": 29,
+        "chars": 60096,
+        "time": 0.04066586494445801
+      },
+      {
+        "filename": "disk-paxos.pdf",
+        "pages": 53,
+        "chars": 97714,
+        "time": 0.06297159194946289
+      },
+      {
+        "filename": "epaxos-sosp2013.pdf",
+        "pages": 15,
+        "chars": 75932,
+        "time": 0.1323223114013672
+      },
+      {
+        "filename": "fast20-wang_zizhong.pdf",
+        "pages": 13,
+        "chars": 56481,
+        "time": 0.17571592330932617
+      },
+      {
+        "filename": "fifteen-supp.pdf",
+        "pages": 13,
+        "chars": 19652,
+        "time": 0.021564483642578125
+      },
+      {
+        "filename": "inductive-invariant.pdf",
+        "pages": 9,
+        "chars": 18611,
+        "time": 0.01572251319885254
+      },
+      {
+        "filename": "mryndzionek_tlaplus_specs_Blinker.pdf",
+        "pages": 2,
+        "chars": 1156,
+        "time": 0.004288911819458008
+      },
+      {
+        "filename": "mryndzionek_tlaplus_specs_Chameneos.pdf",
+        "pages": 2,
+        "chars": 1904,
+        "time": 0.005283355712890625
+      },
+      {
+        "filename": "mryndzionek_tlaplus_specs_CheckRequirements.pdf",
+        "pages": 1,
+        "chars": 528,
+        "time": 0.0030889511108398438
+      },
+      {
+        "filename": "mryndzionek_tlaplus_specs_CigaretteSmokers.pdf",
+        "pages": 1,
+        "chars": 1324,
+        "time": 0.002951383590698242
+      },
+      {
+        "filename": "mryndzionek_tlaplus_specs_GameOfLife.pdf",
+        "pages": 1,
+        "chars": 682,
+        "time": 0.0029621124267578125
+      },
+      {
+        "filename": "mryndzionek_tlaplus_specs_Requirements.pdf",
+        "pages": 1,
+        "chars": 1227,
+        "time": 0.003512144088745117
+      },
+      {
+        "filename": "mryndzionek_tlaplus_specs_SlidingPuzzles.pdf",
+        "pages": 1,
+        "chars": 1418,
+        "time": 0.003952741622924805
+      },
+      {
+        "filename": "nano-o_MultiPaxos_MultiPaxos.pdf",
+        "pages": 4,
+        "chars": 5964,
+        "time": 0.008991479873657227
+      },
+      {
+        "filename": "paxos-simple-Copy.pdf",
+        "pages": 14,
+        "chars": 26991,
+        "time": 0.016019344329833984
+      },
+      {
+        "filename": "pluscal-code.pdf",
+        "pages": 14,
+        "chars": 21063,
+        "time": 0.019010066986083984
+      },
+      {
+        "filename": "qrl.pdf",
+        "pages": 13,
+        "chars": 64551,
+        "time": 0.07748818397521973
+      },
+      {
+        "filename": "raft.pdf",
+        "pages": 18,
+        "chars": 91599,
+        "time": 0.07764768600463867
+      },
+      {
+        "filename": "summary-standalone.pdf",
+        "pages": 9,
+        "chars": 7908,
+        "time": 0.01508474349975586
+      },
+      {
+        "filename": "the-illusion-of-thinking.pdf",
+        "pages": 30,
+        "chars": 82553,
+        "time": 0.09600996971130371
+      },
+      {
+        "filename": "tr-2005-112.pdf",
+        "pages": 43,
+        "chars": 88059,
+        "time": 0.050470590591430664
+      },
+      {
+        "filename": "tr-2005-30.pdf",
+        "pages": 76,
+        "chars": 150786,
+        "time": 0.08328366279602051
+      },
+      {
+        "filename": "tr-2005-33.pdf",
+        "pages": 63,
+        "chars": 116717,
+        "time": 0.0912783145904541
+      },
+      {
+        "filename": "vertical-paxos.pdf",
+        "pages": 17,
+        "chars": 35131,
+        "time": 0.025157928466796875
+      },
+      {
+        "filename": "web-dsn-submission.pdf",
+        "pages": 9,
+        "chars": 38314,
+        "time": 0.020305156707763672
+      },
+      {
+        "filename": "zhang%20%281994%29%20representations%20in%20distributed%20cognitive%20tasks.pdf",
+        "pages": 34,
+        "chars": 89730,
+        "time": 0.04937338829040527
+      }
+    ]
+  },
+  "comparison_stats": {
+    "total_compared": 0,
+    "matches": [],
+    "differences": []
+  },
+  "output_directory": "/home/espencer2/Papers-dataset/scraped_pdfs/pymupdf",
+  "timestamp": "2026-02-04 18:08:38"
+}
